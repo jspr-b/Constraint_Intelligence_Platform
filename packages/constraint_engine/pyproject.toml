@@ -5,6 +5,7 @@ description = "Constraint detection, forecast and euro quantification. Open-sour
 requires-python = ">=3.12"
 dependencies = [
     "cip-schema",
+    "duckdb>=1.1",
     "polars>=1.9",
 ]
 

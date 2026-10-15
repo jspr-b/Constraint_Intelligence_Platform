@@ -10,6 +10,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from constraint_engine.io.parquet import to_parquet
 from constraint_engine.io.plant_loader import LoadedPlant, load_plant
 from constraint_engine.quality import quality_report
 from constraint_engine.quality.checklist import checklist, parse_requirements
@@ -96,12 +97,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--md", help="quality section: also write the report as Markdown to this file"
     )
     parser.add_argument("--input-data", help="path to docs/input-data.md (default: search upwards)")
+    parser.add_argument(
+        "--parquet-out", help="also write the loaded plant as Parquet to this directory"
+    )
     args = parser.parse_args(argv)
 
     if args.section in PLANNED:
         print(f"Section '{args.section}' is not available yet.")
         return 0
     plant = load_plant(args.plant_dir)
+    if args.parquet_out:
+        to_parquet(plant, args.parquet_out)
     if args.section == "quality":
         return _quality(plant, args)
     summary = summarise(plant)
