@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Amsterdam",
+  "packageRules": [
+    { "matchManagers": ["pep621"], "groupName": "python dependencies" },
+    { "matchManagers": ["npm"], "groupName": "js dependencies" },
+    { "matchManagers": ["github-actions"], "groupName": "github actions" },
+    { "matchManagers": ["dockerfile", "docker-compose"], "groupName": "docker images" }
+  ]
+}

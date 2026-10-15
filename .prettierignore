@@ -1,0 +1,11 @@
+.venv
+node_modules
+**/.next
+**/dist
+uv.lock
+pnpm-lock.yaml
+CLAUDE.md
+docs/
+.pytest_cache
+.mypy_cache
+.ruff_cache

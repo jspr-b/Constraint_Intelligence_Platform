@@ -1,0 +1,52 @@
+[project]
+name = "constraint-intelligence-platform"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/schema", "packages/constraint_engine", "packages/connectors", "apps/api", "workers"]
+
+[tool.uv.sources]
+cip-schema = { workspace = true }
+constraint-engine = { workspace = true }
+cip-connectors = { workspace = true }
+cip-api = { workspace = true }
+cip-workers = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "cip-schema",
+    "constraint-engine",
+    "cip-connectors",
+    "cip-api",
+    "cip-workers",
+    "hypothesis>=6.100",
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    "pytest>=8.3",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["packages", "apps/api", "workers"]
+exclude = ["/node_modules/"]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib -ra"
+testpaths = ["packages", "apps/api", "workers"]
+markers = [
+    "db: needs the Postgres service from docker compose",
+    "slow: long-running (regeneration, simulation)",
+]
