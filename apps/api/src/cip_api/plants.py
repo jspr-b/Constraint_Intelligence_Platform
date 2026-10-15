@@ -5,10 +5,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import Connection, text
+from sqlalchemy import text
 
 from cip_api.figures import FigureOut
-from cip_api.tenancy import tenant_db
+from cip_api.tenancy import Ctx, require
 from constraint_engine.summary import record_count
 
 router = APIRouter(prefix="/plants", tags=["plants"])
@@ -21,6 +21,12 @@ COUNTED = {
 }
 
 
+class PlantOut(BaseModel):
+    plant_code: str
+    name: str
+    timezone_iana: str
+
+
 class PlantSummaryOut(BaseModel):
     plant_code: str
     plant_name: str
@@ -29,10 +35,19 @@ class PlantSummaryOut(BaseModel):
     event_period_end_at: datetime | None
 
 
+@router.get("", response_model=list[PlantOut])
+def list_plants(ctx: Annotated[Ctx, Depends(require())]) -> list[PlantOut]:
+    """The plants this role may see: all, or only its own (ADR-0007)."""
+    rows = ctx.db.execute(text("SELECT plant_code, name, timezone_iana FROM plants ORDER BY name"))
+    return [PlantOut.model_validate(r._mapping) for r in rows if ctx.can_see_plant(r.plant_code)]
+
+
 @router.get("/{plant_code}/summary", response_model=PlantSummaryOut)
 def plant_summary(
-    plant_code: str, db: Annotated[Connection, Depends(tenant_db)]
+    plant_code: str, ctx: Annotated[Ctx, Depends(require(page="data"))]
 ) -> PlantSummaryOut:
+    ctx.check_plant(plant_code)
+    db = ctx.db
     plant = db.execute(
         text("SELECT name FROM plants WHERE plant_code = :p"), {"p": plant_code}
     ).first()

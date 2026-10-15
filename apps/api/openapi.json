@@ -1,6 +1,193 @@
 {
   "components": {
     "schemas": {
+      "AccessOut": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/Decision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "locked_decisions": {
+            "items": {
+              "$ref": "#/components/schemas/Decision"
+            },
+            "title": "Locked Decisions",
+            "type": "array"
+          },
+          "locked_pages": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "title": "Locked Pages",
+            "type": "object"
+          },
+          "pages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pages",
+            "type": "array"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleAccessOut"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pages",
+          "decisions",
+          "roles",
+          "locked_pages",
+          "locked_decisions"
+        ],
+        "title": "AccessOut",
+        "type": "object"
+      },
+      "AccountsOut": {
+        "properties": {
+          "station_logins": {
+            "items": {
+              "$ref": "#/components/schemas/StationLoginOut"
+            },
+            "title": "Station Logins",
+            "type": "array"
+          },
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/UserOut"
+            },
+            "title": "Users",
+            "type": "array"
+          }
+        },
+        "required": [
+          "users",
+          "station_logins"
+        ],
+        "title": "AccountsOut",
+        "type": "object"
+      },
+      "AuditOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "actor",
+          "action",
+          "target",
+          "detail"
+        ],
+        "title": "AuditOut",
+        "type": "object"
+      },
+      "DataIn": {
+        "properties": {
+          "money": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "plants": {
+            "$ref": "#/components/schemas/Plants"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "role",
+          "money",
+          "plants"
+        ],
+        "title": "DataIn",
+        "type": "object"
+      },
+      "Decision": {
+        "enum": [
+          "accept_exploit_subordinate",
+          "approve_elevate",
+          "release_expedite",
+          "report_stop",
+          "edit_setup_calendar",
+          "import_run_diagnostic",
+          "sign_off_value",
+          "manage_logins",
+          "change_access"
+        ],
+        "title": "Decision",
+        "type": "string"
+      },
+      "DecisionIn": {
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "role",
+          "decision",
+          "allowed"
+        ],
+        "title": "DecisionIn",
+        "type": "object"
+      },
+      "DevLoginIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "email"
+        ],
+        "title": "DevLoginIn",
+        "type": "object"
+      },
       "FigureOut": {
         "description": "A number with its unit, formula, inputs, data period and confidence.",
         "properties": {
@@ -85,6 +272,117 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InviteIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "plant_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Code"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "InviteIn",
+        "type": "object"
+      },
+      "MeOut": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "money": {
+            "title": "Money",
+            "type": "string"
+          },
+          "pages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pages",
+            "type": "array"
+          },
+          "plant_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Code"
+          },
+          "plants": {
+            "title": "Plants",
+            "type": "string"
+          },
+          "resource_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Code"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "start_page": {
+            "title": "Start Page",
+            "type": "string"
+          },
+          "subject_id": {
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_type": {
+            "title": "Subject Type",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "subject_type",
+          "subject_id",
+          "role",
+          "plant_code",
+          "resource_code",
+          "start_page",
+          "pages",
+          "money",
+          "plants",
+          "decisions"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
       "MissingOut": {
         "properties": {
           "confidence_impact": {
@@ -106,6 +404,93 @@
           "confidence_impact"
         ],
         "title": "MissingOut",
+        "type": "object"
+      },
+      "Money": {
+        "enum": [
+          "eur",
+          "hours"
+        ],
+        "title": "Money",
+        "type": "string"
+      },
+      "OidcLoginIn": {
+        "properties": {
+          "id_token": {
+            "title": "Id Token",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "id_token"
+        ],
+        "title": "OidcLoginIn",
+        "type": "object"
+      },
+      "PageIn": {
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "page": {
+            "title": "Page",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "role",
+          "page",
+          "allowed"
+        ],
+        "title": "PageIn",
+        "type": "object"
+      },
+      "PinIn": {
+        "properties": {
+          "pin": {
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Pin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pin"
+        ],
+        "title": "PinIn",
+        "type": "object"
+      },
+      "PlantOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "timezone_iana": {
+            "title": "Timezone Iana",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plant_code",
+          "name",
+          "timezone_iana"
+        ],
+        "title": "PlantOut",
         "type": "object"
       },
       "PlantSummaryOut": {
@@ -160,6 +545,136 @@
         "title": "PlantSummaryOut",
         "type": "object"
       },
+      "Plants": {
+        "enum": [
+          "all",
+          "own"
+        ],
+        "title": "Plants",
+        "type": "string"
+      },
+      "Role": {
+        "enum": [
+          "plant_director",
+          "coo",
+          "planner",
+          "shift_lead",
+          "station",
+          "it"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "RoleAccessOut": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/Decision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "money": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "pages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pages",
+            "type": "array"
+          },
+          "plants": {
+            "$ref": "#/components/schemas/Plants"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "start_page": {
+            "title": "Start Page",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "start_page",
+          "pages",
+          "money",
+          "plants",
+          "decisions"
+        ],
+        "title": "RoleAccessOut",
+        "type": "object"
+      },
+      "StationLoginOut": {
+        "properties": {
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "station_login_id": {
+            "format": "uuid",
+            "title": "Station Login Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_login_id",
+          "plant_code",
+          "resource_code",
+          "status"
+        ],
+        "title": "StationLoginOut",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "plant_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Code"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "role",
+          "plant_code",
+          "status"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -199,6 +714,62 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "cip_api__auth__routes__StationLoginIn": {
+        "properties": {
+          "pin": {
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Pin",
+            "type": "string"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "plant_code",
+          "resource_code",
+          "pin"
+        ],
+        "title": "StationLoginIn",
+        "type": "object"
+      },
+      "cip_api__auth__users__StationLoginIn": {
+        "properties": {
+          "pin": {
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Pin",
+            "type": "string"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pin",
+          "plant_code",
+          "resource_code"
+        ],
+        "title": "StationLoginIn",
+        "type": "object"
       }
     }
   },
@@ -208,6 +779,654 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/access": {
+      "get": {
+        "operationId": "get_access_access_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Access",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/access/data": {
+      "put": {
+        "operationId": "set_data_access_data_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Data",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/access/decisions": {
+      "put": {
+        "operationId": "set_decision_access_decisions_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Decision",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/access/pages": {
+      "put": {
+        "operationId": "set_page_access_pages_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Page",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/audit": {
+      "get": {
+        "operationId": "audit_log_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditOut"
+                  },
+                  "title": "Response Audit Log Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Log",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/auth/dev-login": {
+      "post": {
+        "description": "Pilot-only sign-in by email, for an account IT created. Not available outside dev.",
+        "operationId": "dev_login_auth_dev_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dev Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "me_auth_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/oidc-login": {
+      "post": {
+        "operationId": "oidc_login_auth_oidc_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Oidc Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/station-login": {
+      "post": {
+        "description": "Machine + PIN. Wrong PINs count up; at the limit the login locks until IT enables it.",
+        "operationId": "station_login_auth_station_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/cip_api__auth__routes__StationLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Station Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -244,6 +1463,92 @@
         "summary": "Meta"
       }
     },
+    "/plants": {
+      "get": {
+        "description": "The plants this role may see: all, or only its own (ADR-0007).",
+        "operationId": "list_plants_plants_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlantOut"
+                  },
+                  "title": "Response List Plants Plants Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Plants",
+        "tags": [
+          "plants"
+        ]
+      }
+    },
     "/plants/{plant_code}/summary": {
       "get": {
         "operationId": "plant_summary_plants__plant_code__summary_get",
@@ -272,6 +1577,38 @@
               ],
               "title": "X-Tenant-Id"
             }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
           }
         ],
         "responses": {
@@ -299,6 +1636,733 @@
         "summary": "Plant Summary",
         "tags": [
           "plants"
+        ]
+      }
+    },
+    "/station-logins": {
+      "post": {
+        "operationId": "add_station_login_station_logins_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/cip_api__auth__users__StationLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Station Login",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/station-logins/{login_id}/disable": {
+      "post": {
+        "operationId": "disable_station_login_station_logins__login_id__disable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "login_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Login Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disable Station Login",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/station-logins/{login_id}/enable": {
+      "post": {
+        "description": "Also unlocks a login locked by wrong PINs.",
+        "operationId": "enable_station_login_station_logins__login_id__enable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "login_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Login Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enable Station Login",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/station-logins/{login_id}/pin": {
+      "post": {
+        "operationId": "reset_station_pin_station_logins__login_id__pin_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "login_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Login Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Station Pin",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "list_accounts_users_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Accounts",
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "invite_users_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invite",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{user_id}/disable": {
+      "post": {
+        "operationId": "disable_user_users__user_id__disable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disable User",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{user_id}/enable": {
+      "post": {
+        "operationId": "enable_user_users__user_id__enable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enable User",
+        "tags": [
+          "users"
         ]
       }
     }

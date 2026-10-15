@@ -46,7 +46,7 @@ allowed-confusables = ["−", "×", "÷"]
 strict = true
 # Package sources resolve by import name; test files get unique path-based names, so the
 # conftest.py of each package does not clash.
-mypy_path = ["packages/schema/src", "packages/constraint_engine/src", "packages/connectors/src", "apps/api/src", "workers/src"]
+mypy_path = ["packages/schema/src", "packages/constraint_engine/src", "packages/connectors/src", "apps/api/src", "workers/src", "apps/api/tests"]
 explicit_package_bases = true
 plugins = ["pydantic.mypy"]
 python_version = "3.12"
@@ -57,6 +57,8 @@ exclude = ["/node_modules/"]
 addopts = "--import-mode=importlib -ra"
 filterwarnings = ["ignore::DeprecationWarning:fastapi.testclient", "ignore:Using `httpx` with `starlette.testclient`"]
 testpaths = ["packages", "apps/api", "workers"]
+# Shared API test helpers (cip_api_testkit) are importable from test modules.
+pythonpath = ["apps/api/tests"]
 markers = [
     "db: needs the Postgres service from docker compose",
     "slow: long-running (regeneration, simulation)",
@@ -77,4 +79,4 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.ruff.lint.isort]
-known-first-party = ["cip_schema", "constraint_engine", "cip_connectors", "cip_api", "cip_workers"]
+known-first-party = ["cip_schema", "constraint_engine", "cip_connectors", "cip_api", "cip_workers", "cip_api_testkit"]

@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 56379
     version: str = "0.0.0"
+    session_hours: int = 12
+    """A personal or station session lasts one long shift; then sign in again."""
+    pin_max_attempts: int = 5
+    auth_provider: str = "dev"
+    """``dev`` (dev login, pilot only) or ``oidc`` (e.g. Microsoft Entra ID, see docs/auth.md)."""
+    oidc_issuer: str | None = None
+    oidc_audience: str | None = None
+    oidc_jwks_url: str | None = None
 
     def db_url(self, as_owner: bool = False) -> str:
         user, password = (

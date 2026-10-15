@@ -80,8 +80,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ],
         }
 
+    from cip_api.auth.access_routes import router as access_router
+    from cip_api.auth.routes import router as auth_router
+    from cip_api.auth.users import router as users_router
     from cip_api.plants import router as plants_router
 
+    app.include_router(auth_router)
+    app.include_router(users_router)
+    app.include_router(access_router)
     app.include_router(plants_router)
     return app
 

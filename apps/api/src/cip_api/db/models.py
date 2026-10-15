@@ -6,7 +6,18 @@ No column identifies a person on the floor (ADR-0005).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Double, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Double,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -191,6 +202,93 @@ class OutsourcingPrice(Base):
     operation: Mapped[str] = mapped_column(String(100), nullable=False)
     sku: Mapped[str | None] = mapped_column(String(64))
     price_eur_cents_per_unit: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+
+class User(Base):
+    """A personal account for someone who plans, decides or administers (never floor tracking)."""
+
+    __tablename__ = "users"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    email: Mapped[str] = mapped_column(String(254), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    plant_code: Mapped[str | None] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="invited")
+    __table_args__ = (UniqueConstraint("tenant_id", "email"),)
+
+
+class StationLogin(Base):
+    """A login that belongs to a machine, not a person (ADR-0005)."""
+
+    __tablename__ = "station_logins"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    station_login_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    resource_code: Mapped[str] = mapped_column(String(16), nullable=False)
+    pin_hash: Mapped[str] = mapped_column(String(200), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")
+    failed_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    """Wrong PINs in a row; the login locks at the limit until IT enables it again."""
+    __table_args__ = (UniqueConstraint("tenant_id", "plant_code", "resource_code"),)
+
+
+class Session(Base):
+    """Only the SHA-256 of the session token is stored. A station session names the machine."""
+
+    __tablename__ = "sessions"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    subject_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    subject_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    plant_code: Mapped[str | None] = mapped_column(String(32))
+    resource_code: Mapped[str | None] = mapped_column(String(16))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AuditEntry(Base):
+    """Append-only: the app role may insert and read, never change or delete."""
+
+    __tablename__ = "audit_log"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
+    at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    actor: Mapped[str] = mapped_column(String(64), nullable=False)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    target: Mapped[str] = mapped_column(String(200), nullable=False)
+    detail: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+
+
+class AccessPage(Base):
+    """Override of the default (allowed) page access for a role."""
+
+    __tablename__ = "access_pages"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    role: Mapped[str] = mapped_column(String(32), primary_key=True)
+    page: Mapped[str] = mapped_column(String(32), primary_key=True)
+    allowed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class AccessData(Base):
+    __tablename__ = "access_data"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    role: Mapped[str] = mapped_column(String(32), primary_key=True)
+    money: Mapped[str] = mapped_column(String(8), nullable=False)
+    plants: Mapped[str] = mapped_column(String(8), nullable=False)
+
+
+class AccessDecision(Base):
+    __tablename__ = "access_decisions"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    role: Mapped[str] = mapped_column(String(32), primary_key=True)
+    decision: Mapped[str] = mapped_column(String(48), primary_key=True)
+    allowed: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 
 TENANT_TABLES = [t for t in Base.metadata.sorted_tables if t.name != "tenants"]

@@ -4,6 +4,182 @@
  */
 
 export interface paths {
+    "/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Access */
+        get: operations["get_access_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/access/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Data */
+        put: operations["set_data_access_data_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/access/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Decision */
+        put: operations["set_decision_access_decisions_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/access/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Page */
+        put: operations["set_page_access_pages_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit Log */
+        get: operations["audit_log_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/dev-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dev Login
+         * @description Pilot-only sign-in by email, for an account IT created. Not available outside dev.
+         */
+        post: operations["dev_login_auth_dev_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/oidc-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Oidc Login */
+        post: operations["oidc_login_auth_oidc_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/station-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Station Login
+         * @description Machine + PIN. Wrong PINs count up; at the limit the login locks until IT enables it.
+         */
+        post: operations["station_login_auth_station_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -38,6 +214,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Plants
+         * @description The plants this role may see: all, or only its own (ADR-0007).
+         */
+        get: operations["list_plants_plants_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/summary": {
         parameters: {
             query?: never;
@@ -55,10 +251,199 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/station-logins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Station Login */
+        post: operations["add_station_login_station_logins_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/station-logins/{login_id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disable Station Login */
+        post: operations["disable_station_login_station_logins__login_id__disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/station-logins/{login_id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable Station Login
+         * @description Also unlocks a login locked by wrong PINs.
+         */
+        post: operations["enable_station_login_station_logins__login_id__enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/station-logins/{login_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Station Pin */
+        post: operations["reset_station_pin_station_logins__login_id__pin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_users_get"];
+        put?: never;
+        /** Invite */
+        post: operations["invite_users_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{user_id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disable User */
+        post: operations["disable_user_users__user_id__disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{user_id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enable User */
+        post: operations["enable_user_users__user_id__enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessOut */
+        AccessOut: {
+            /** Decisions */
+            decisions: components["schemas"]["Decision"][];
+            /** Locked Decisions */
+            locked_decisions: components["schemas"]["Decision"][];
+            /** Locked Pages */
+            locked_pages: {
+                [key: string]: string[];
+            };
+            /** Pages */
+            pages: string[];
+            /** Roles */
+            roles: components["schemas"]["RoleAccessOut"][];
+        };
+        /** AccountsOut */
+        AccountsOut: {
+            /** Station Logins */
+            station_logins: components["schemas"]["StationLoginOut"][];
+            /** Users */
+            users: components["schemas"]["UserOut"][];
+        };
+        /** AuditOut */
+        AuditOut: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail: string;
+            /** Target */
+            target: string;
+        };
+        /** DataIn */
+        DataIn: {
+            money: components["schemas"]["Money"];
+            plants: components["schemas"]["Plants"];
+            role: components["schemas"]["Role"];
+        };
+        /**
+         * Decision
+         * @enum {string}
+         */
+        Decision: "accept_exploit_subordinate" | "approve_elevate" | "release_expedite" | "report_stop" | "edit_setup_calendar" | "import_run_diagnostic" | "sign_off_value" | "manage_logins" | "change_access";
+        /** DecisionIn */
+        DecisionIn: {
+            /** Allowed */
+            allowed: boolean;
+            decision: components["schemas"]["Decision"];
+            role: components["schemas"]["Role"];
+        };
+        /** DevLoginIn */
+        DevLoginIn: {
+            /** Email */
+            email: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+        };
         /**
          * FigureOut
          * @description A number with its unit, formula, inputs, data period and confidence.
@@ -86,6 +471,41 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** InviteIn */
+        InviteIn: {
+            /** Email */
+            email: string;
+            /** Plant Code */
+            plant_code?: string | null;
+            role: components["schemas"]["Role"];
+        };
+        /** MeOut */
+        MeOut: {
+            /** Decisions */
+            decisions: string[];
+            /** Money */
+            money: string;
+            /** Pages */
+            pages: string[];
+            /** Plant Code */
+            plant_code: string | null;
+            /** Plants */
+            plants: string;
+            /** Resource Code */
+            resource_code: string | null;
+            role: components["schemas"]["Role"];
+            /** Start Page */
+            start_page: string;
+            /** Subject Id */
+            subject_id: string;
+            /** Subject Type */
+            subject_type: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+        };
         /** MissingOut */
         MissingOut: {
             /** Confidence Impact */
@@ -94,6 +514,43 @@ export interface components {
             missing: string;
             /** Reason */
             reason: string;
+        };
+        /**
+         * Money
+         * @enum {string}
+         */
+        Money: "eur" | "hours";
+        /** OidcLoginIn */
+        OidcLoginIn: {
+            /** Id Token */
+            id_token: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+        };
+        /** PageIn */
+        PageIn: {
+            /** Allowed */
+            allowed: boolean;
+            /** Page */
+            page: string;
+            role: components["schemas"]["Role"];
+        };
+        /** PinIn */
+        PinIn: {
+            /** Pin */
+            pin: string;
+        };
+        /** PlantOut */
+        PlantOut: {
+            /** Name */
+            name: string;
+            /** Plant Code */
+            plant_code: string;
+            /** Timezone Iana */
+            timezone_iana: string;
         };
         /** PlantSummaryOut */
         PlantSummaryOut: {
@@ -110,6 +567,57 @@ export interface components {
             /** Plant Name */
             plant_name: string;
         };
+        /**
+         * Plants
+         * @enum {string}
+         */
+        Plants: "all" | "own";
+        /**
+         * Role
+         * @enum {string}
+         */
+        Role: "plant_director" | "coo" | "planner" | "shift_lead" | "station" | "it";
+        /** RoleAccessOut */
+        RoleAccessOut: {
+            /** Decisions */
+            decisions: components["schemas"]["Decision"][];
+            money: components["schemas"]["Money"];
+            /** Pages */
+            pages: string[];
+            plants: components["schemas"]["Plants"];
+            role: components["schemas"]["Role"];
+            /** Start Page */
+            start_page: string;
+        };
+        /** StationLoginOut */
+        StationLoginOut: {
+            /** Plant Code */
+            plant_code: string;
+            /** Resource Code */
+            resource_code: string;
+            /**
+             * Station Login Id
+             * Format: uuid
+             */
+            station_login_id: string;
+            /** Status */
+            status: string;
+        };
+        /** UserOut */
+        UserOut: {
+            /** Email */
+            email: string;
+            /** Plant Code */
+            plant_code: string | null;
+            role: components["schemas"]["Role"];
+            /** Status */
+            status: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -123,6 +631,29 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** StationLoginIn */
+        cip_api__auth__routes__StationLoginIn: {
+            /** Pin */
+            pin: string;
+            /** Plant Code */
+            plant_code: string;
+            /** Resource Code */
+            resource_code: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+        };
+        /** StationLoginIn */
+        cip_api__auth__users__StationLoginIn: {
+            /** Pin */
+            pin: string;
+            /** Plant Code */
+            plant_code: string;
+            /** Resource Code */
+            resource_code: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -132,6 +663,329 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_access_access_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_data_access_data_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_decision_access_decisions_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_page_access_pages_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_log_audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dev_login_auth_dev_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oidc_login_auth_oidc_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OidcLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    station_login_auth_station_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["cip_api__auth__routes__StationLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -174,11 +1028,46 @@ export interface operations {
             };
         };
     };
+    list_plants_plants_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     plant_summary_plants__plant_code__summary_get: {
         parameters: {
             query?: never;
             header?: {
                 "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
             };
             path: {
                 plant_code: string;
@@ -194,6 +1083,292 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlantSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_station_login_station_logins_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["cip_api__auth__users__StationLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_station_login_station_logins__login_id__disable_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                login_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_station_login_station_logins__login_id__enable_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                login_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_station_pin_station_logins__login_id__pin_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                login_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts_users_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_users_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_user_users__user_id__disable_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_user_users__user_id__enable_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
                 };
             };
             /** @description Validation Error */
