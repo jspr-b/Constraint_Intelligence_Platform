@@ -1,0 +1,48 @@
+{
+  "additionalProperties": false,
+  "description": "What extra capacity on a machine costs: input for Elevate actions.",
+  "properties": {
+    "extra_shift_eur_cents": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extra Shift Eur Cents"
+    },
+    "overtime_eur_cents_per_h": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Overtime Eur Cents Per H"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code"
+  ],
+  "title": "CapacityCost",
+  "type": "object"
+}

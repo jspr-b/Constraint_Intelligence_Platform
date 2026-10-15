@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "OrderStatus": {
+      "enum": [
+        "open",
+        "released",
+        "in_progress",
+        "shipped",
+        "cancelled"
+      ],
+      "title": "OrderStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "due_at": {
+      "format": "date-time",
+      "title": "Due At",
+      "type": "string"
+    },
+    "material_ready_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Material Ready At"
+    },
+    "order_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Order Id",
+      "type": "string"
+    },
+    "quantity_units": {
+      "exclusiveMinimum": 0,
+      "title": "Quantity Units",
+      "type": "integer"
+    },
+    "released_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Released At"
+    },
+    "shipped_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Shipped At"
+    },
+    "sku": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Sku",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/OrderStatus",
+      "default": "open"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "order_id",
+    "sku",
+    "quantity_units",
+    "due_at"
+  ],
+  "title": "Order",
+  "type": "object"
+}

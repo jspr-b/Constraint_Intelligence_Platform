@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "EventType": {
+      "enum": [
+        "start",
+        "end",
+        "setup_start",
+        "setup_end",
+        "down_start",
+        "down_end",
+        "scrap",
+        "move",
+        "scan"
+      ],
+      "title": "EventType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One thing that happened on the floor, at a machine or a station.",
+  "properties": {
+    "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+    },
+    "down_reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Down Reason Code"
+    },
+    "event_id": {
+      "minLength": 1,
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "$ref": "#/$defs/EventType"
+    },
+    "operation_seq": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Seq"
+    },
+    "order_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Order Id"
+    },
+    "quantity_units": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Quantity Units",
+      "type": "integer"
+    },
+    "resource_code": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z]{2,4}-\\d{2}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resource Code"
+    },
+    "scrap_reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scrap Reason Code"
+    },
+    "scrap_units": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Scrap Units",
+      "type": "integer"
+    },
+    "station_code": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Station Code"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "event_id",
+    "event_type",
+    "at"
+  ],
+  "title": "OperationEvent",
+  "type": "object"
+}

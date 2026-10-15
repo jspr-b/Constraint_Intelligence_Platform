@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "description": "A work area grouping one or more machines (e.g. a welding cell).",
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "station_code": {
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+      "title": "Station Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "station_code",
+    "name"
+  ],
+  "title": "Station",
+  "type": "object"
+}

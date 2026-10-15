@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "ResourceKind": {
+      "enum": [
+        "machine",
+        "station",
+        "work_centre"
+      ],
+      "title": "ResourceKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A machine or work centre. Belongs to exactly one station.",
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/ResourceKind",
+      "default": "machine"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "parallel_units": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Parallel Units",
+      "type": "integer"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "station_code": {
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+      "title": "Station Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code",
+    "name",
+    "station_code"
+  ],
+  "title": "Resource",
+  "type": "object"
+}

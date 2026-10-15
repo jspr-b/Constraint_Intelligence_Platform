@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "currency": {
+      "const": "EUR",
+      "default": "EUR",
+      "title": "Currency",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "plant_code": {
+      "pattern": "^[A-Z0-9][A-Z0-9-]{0,31}$",
+      "title": "Plant Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "timezone_iana": {
+      "title": "Timezone Iana",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "plant_code",
+    "name",
+    "timezone_iana"
+  ],
+  "title": "Plant",
+  "type": "object"
+}

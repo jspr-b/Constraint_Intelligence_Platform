@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "CalendarKind": {
+      "enum": [
+        "shift",
+        "break",
+        "maintenance",
+        "holiday",
+        "overtime"
+      ],
+      "title": "CalendarKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A period on one machine's capacity calendar.",
+  "properties": {
+    "covered": {
+      "default": false,
+      "title": "Covered",
+      "type": "boolean"
+    },
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/CalendarKind"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code",
+    "kind",
+    "start_at",
+    "end_at"
+  ],
+  "title": "CalendarWindow",
+  "type": "object"
+}

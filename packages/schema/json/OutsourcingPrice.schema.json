@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "description": "Price to have an operation done outside the plant.",
+  "properties": {
+    "operation": {
+      "minLength": 1,
+      "title": "Operation",
+      "type": "string"
+    },
+    "price_eur_cents_per_unit": {
+      "minimum": 0,
+      "title": "Price Eur Cents Per Unit",
+      "type": "integer"
+    },
+    "sku": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sku"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "operation",
+    "price_eur_cents_per_unit"
+  ],
+  "title": "OutsourcingPrice",
+  "type": "object"
+}

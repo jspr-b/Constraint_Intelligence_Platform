@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "description": "Capability: an operation a machine can run, with its ERP and measured rate.",
+  "properties": {
+    "measured_run_min_per_unit": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Measured Run Min Per Unit"
+    },
+    "operation": {
+      "minLength": 1,
+      "title": "Operation",
+      "type": "string"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "standard_run_min_per_unit": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Standard Run Min Per Unit"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code",
+    "operation"
+  ],
+  "title": "ResourceOperation",
+  "type": "object"
+}

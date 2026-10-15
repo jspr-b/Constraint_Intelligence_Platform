@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "description": "Overtime hours on one machine in one ISO week. Never per person (ADR-0005).",
+  "properties": {
+    "iso_week": {
+      "maximum": 53,
+      "minimum": 1,
+      "title": "Iso Week",
+      "type": "integer"
+    },
+    "iso_year": {
+      "maximum": 2100,
+      "minimum": 2000,
+      "title": "Iso Year",
+      "type": "integer"
+    },
+    "overtime_h": {
+      "minimum": 0,
+      "title": "Overtime H",
+      "type": "number"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code",
+    "iso_year",
+    "iso_week",
+    "overtime_h"
+  ],
+  "title": "OvertimeWorked",
+  "type": "object"
+}

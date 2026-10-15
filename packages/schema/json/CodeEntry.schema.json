@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "CodeKind": {
+      "enum": [
+        "resource",
+        "event_type",
+        "down_reason",
+        "scrap_reason"
+      ],
+      "title": "CodeKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One mapping, e.g. ERP machine code ``LAS2`` \u2192 ``WLD-02``.",
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "kind": {
+      "$ref": "#/$defs/CodeKind"
+    },
+    "source_code": {
+      "minLength": 1,
+      "title": "Source Code",
+      "type": "string"
+    },
+    "source_system": {
+      "minLength": 1,
+      "title": "Source System",
+      "type": "string"
+    },
+    "target_code": {
+      "minLength": 1,
+      "title": "Target Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "source_system",
+    "kind",
+    "source_code",
+    "target_code"
+  ],
+  "title": "CodeEntry",
+  "type": "object"
+}

@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "RoutingStep": {
+      "additionalProperties": false,
+      "description": "One step of a routing. The same machine may appear in several steps.",
+      "properties": {
+        "alternative_resource_codes": {
+          "default": [],
+          "items": {
+            "pattern": "^[A-Z]{2,4}-\\d{2}$",
+            "type": "string"
+          },
+          "title": "Alternative Resource Codes",
+          "type": "array"
+        },
+        "operation": {
+          "minLength": 1,
+          "title": "Operation",
+          "type": "string"
+        },
+        "operation_seq": {
+          "exclusiveMinimum": 0,
+          "title": "Operation Seq",
+          "type": "integer"
+        },
+        "resource_code": {
+          "pattern": "^[A-Z]{2,4}-\\d{2}$",
+          "title": "Resource Code",
+          "type": "string"
+        },
+        "standard_run_min_per_unit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Standard Run Min Per Unit"
+        },
+        "standard_setup_min": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Standard Setup Min"
+        }
+      },
+      "required": [
+        "operation_seq",
+        "operation",
+        "resource_code"
+      ],
+      "title": "RoutingStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sku": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Sku",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/RoutingStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "sku",
+    "steps"
+  ],
+  "title": "Routing",
+  "type": "object"
+}

@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "description": "Changeover time on a machine when switching from one setup family to another.",
+  "properties": {
+    "changeover_min": {
+      "minimum": 0,
+      "title": "Changeover Min",
+      "type": "number"
+    },
+    "from_setup_family": {
+      "minLength": 1,
+      "title": "From Setup Family",
+      "type": "string"
+    },
+    "resource_code": {
+      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "title": "Resource Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "to_setup_family": {
+      "minLength": 1,
+      "title": "To Setup Family",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "resource_code",
+    "from_setup_family",
+    "to_setup_family",
+    "changeover_min"
+  ],
+  "title": "Changeover",
+  "type": "object"
+}

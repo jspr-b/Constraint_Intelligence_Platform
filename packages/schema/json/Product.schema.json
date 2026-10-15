@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "family": {
+      "minLength": 1,
+      "title": "Family",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "sales_price_eur_cents": {
+      "minimum": 0,
+      "title": "Sales Price Eur Cents",
+      "type": "integer"
+    },
+    "setup_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Setup Family"
+    },
+    "sku": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Sku",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "truly_variable_cost_eur_cents": {
+      "minimum": 0,
+      "title": "Truly Variable Cost Eur Cents",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "sku",
+    "name",
+    "family",
+    "sales_price_eur_cents",
+    "truly_variable_cost_eur_cents"
+  ],
+  "title": "Product",
+  "type": "object"
+}

@@ -39,6 +39,7 @@ select = ["E", "F", "I", "B", "UP", "N", "SIM", "RUF"]
 
 [tool.mypy]
 strict = true
+plugins = ["pydantic.mypy"]
 python_version = "3.12"
 files = ["packages", "apps/api", "workers"]
 exclude = ["/node_modules/"]
@@ -50,3 +51,11 @@ markers = [
     "db: needs the Postgres service from docker compose",
     "slow: long-running (regeneration, simulation)",
 ]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["cip_schema", "constraint_engine", "cip_connectors", "cip_api", "cip_workers"]
