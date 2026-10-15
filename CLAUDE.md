@@ -297,7 +297,7 @@ The three questions that decide the product:
 | Machine data | OPC UA (asyncua), MQTT (paho-mqtt) via edge gateway | Standard industrial protocols |
 | ERP connectors | Per-ERP adapters: CSV/SQL first, then APIs (Exact Online, SAP OData, Odoo XML-RPC) | Exports before live integration |
 | LLM | Anthropic Claude API, explanation and ranking only | Never generates numbers or actions (see Recommendations) |
-| Auth | Keycloak or Auth0 with OIDC; SSO via Azure AD for enterprise | Plants use Microsoft identities |
+| Auth | Keycloak with OIDC (decided 2026-10-15); SSO via Azure AD / Entra ID brokered through Keycloak | Plants use Microsoft identities; self-hostable for on-premise |
 | Infrastructure | Docker, Kubernetes on an EU cloud region (Azure West Europe or AWS eu-central-1) | EU data residency; same images for on-premise |
 | IaC | Terraform | Reproducible environments per customer |
 | Observability | OpenTelemetry, Grafana, Sentry | Traces across ingestion → detection → UI |
@@ -366,20 +366,41 @@ uv run python -m constraint_engine.diagnose data/synthetic/plant_a  # offline di
 
 ### Direction: mission control for manufacturing
 
-The visual style follows the aesthetic of modern defence and aerospace software: SpaceX, Anduril and Palantir-style mission-control interfaces. Dark, monochrome, technical, precise. The plant is presented like a system under live command: every number matters, nothing is decorative.
+The visual style follows the aesthetic of modern defence and aerospace software: SpaceX, Anduril and Palantir-style mission-control interfaces. Clean, technical, precise. The plant is presented like a system under live command: every number matters, nothing is decorative.
 
 Take the aesthetic only. Never copy logos, wordmarks, proprietary fonts, icons or brand assets of these companies.
 
 ### Principles
 
 - **Operator-grade.** The interface looks like a control system, not a consumer app. Dense, exact, calm.
-- **Dark first.** Near-black canvas; light theme exists but is secondary.
+- **White first, dark as option.** White canvas with a blue accent is the default (decided 2026-10-15, ADR-0006); the dark mission-control theme is switchable per user.
 - **Monochrome base, signal colour only.** Greys and white carry the UI; colour appears only for status and the constraint.
 - **Data is the hero.** Large numerals, monospaced values, thin lines. No illustrations, no stock imagery, no rounded "friendly" shapes.
 - **Grid and precision.** Hairline borders, strict alignment, visible structure, coordinates and timestamps everywhere.
 - **Restraint.** One signal colour per screen dominates; everything else stays grey.
 
-### Colour tokens (dark, default)
+### Colour tokens (white, default)
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--bg` | #F7F9FB | Canvas |
+| `--surface` | #FFFFFF | Panels |
+| `--surface-raised` | #EEF3FC | Hover, selected rows, popovers |
+| `--line` | #E3E7EB | Hairline borders, grid |
+| `--line-strong` | #CBD2D9 | Dividers, active borders |
+| `--text` | #0B0D0F | Primary text and numerals |
+| `--text-muted` | #59616A | Labels, secondary text |
+| `--text-faint` | #6B747C | Disabled text and graphics only |
+| `--accent` | #1F5FD6 | Interactive elements (blue) |
+| `--constraint` | #C73E08 | The constraint only |
+| `--status-ok` | #0F7A50 | Running, buffer green |
+| `--status-warn` | #9A6400 | Buffer yellow, 85–100% load |
+| `--status-bad` | #C21B1B | Buffer red, >100% load, down |
+| `--status-idle` | #6B747C | Idle, no data |
+
+Source of truth: `packages/ui/src/tokens.css` (contrast-tested).
+
+### Colour tokens (dark, option)
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -390,15 +411,15 @@ Take the aesthetic only. Never copy logos, wordmarks, proprietary fonts, icons o
 | `--line-strong` | #2C333A | Dividers, active borders |
 | `--text` | #E8ECEF | Primary text and numerals |
 | `--text-muted` | #7C868F | Labels, secondary text |
-| `--text-faint` | #4A535B | Axis ticks, disabled |
+| `--text-faint` | #5C666F | Disabled text and graphics only |
 | `--accent` | #E8ECEF | Interactive elements are white, not blue |
 | `--constraint` | #FF5A1F | The constraint only: marker, outline, label |
 | `--status-ok` | #3DDC97 | Running, buffer green |
 | `--status-warn` | #FFB020 | Buffer yellow, 85–100% load |
 | `--status-bad` | #FF3B3B | Buffer red, >100% load, down |
-| `--status-idle` | #4A535B | Idle, no data |
+| `--status-idle` | #5C666F | Idle, no data |
 
-Light theme (secondary): `--bg` #F4F5F6, `--surface` #FFFFFF, `--line` #DADDE0, `--text` #0B0D0F, `--text-muted` #5B636B; status and constraint colours darkened one step for contrast.
+Dark `--text-faint` and `--status-idle` were raised from #4A535B to #5C666F to reach 3:1 contrast.
 
 Rules: the constraint colour is used for nothing else. Status colours always appear with a label or glyph, never colour alone. No gradients, glows or glassmorphism.
 
@@ -436,7 +457,7 @@ Rules: the constraint colour is used for nothing else. Status colours always app
 
 ### Data visualisation rules
 
-- Charts on near-black with `--line` grid at low contrast; data in white or grey, signal colour only where it carries meaning.
+- Charts on the canvas colour with `--line` grid at low contrast; data in white or grey, signal colour only where it carries meaning.
 - Heatmap: resources × weeks; cells neutral grey below 85%, `--status-warn` 85–100%, `--status-bad` above 100%; binding constraint per week marked with the constraint bracket.
 - Loss view: thin bars in € per week, stacked by cause in grey tones; the largest cause highlighted.
 - Forecasts: P50 as a solid line, P90 as a faint band; forecast region hatched.

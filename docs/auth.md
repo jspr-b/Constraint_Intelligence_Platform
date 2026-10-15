@@ -41,7 +41,20 @@ CIP_OIDC_AUDIENCE=<application-client-id>
 CIP_OIDC_JWKS_URL=https://login.microsoftonline.com/<directory-id>/discovery/v2.0/keys
 ```
 
-In the app registration: platform "Web", redirect URI on the web app's sign-in callback, ID tokens enabled, optional claim `email`. Keycloak and Auth0 work the same way with their issuer, client id and JWKS URL (the auth provider choice is still open).
+In the app registration: platform "Web", redirect URI on the web app's sign-in callback, ID tokens enabled, optional claim `email`. Entra ID is normally brokered through Keycloak (see below), so the platform trusts one issuer.
+
+### Keycloak (chosen provider)
+
+One realm per deployment; customers' Entra ID tenants are added as identity providers in that realm.
+
+```
+CIP_AUTH_PROVIDER=oidc
+CIP_OIDC_ISSUER=https://<keycloak-host>/realms/<realm>
+CIP_OIDC_AUDIENCE=<client-id>
+CIP_OIDC_JWKS_URL=https://<keycloak-host>/realms/<realm>/protocol/openid-connect/certs
+```
+
+In the client: standard flow on, valid redirect URI on the web app's sign-in callback, and an audience mapper so the ID token's `aud` is the client id.
 
 ## Not in this sequence
 

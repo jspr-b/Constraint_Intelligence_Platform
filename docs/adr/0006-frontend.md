@@ -1,6 +1,6 @@
 # ADR-0006: Frontend stack and theme
 
-- **Status:** Proposed
+- **Status:** Accepted (theme confirmed by the user, 2026-10-15)
 - **Date:** 2026-10-15
 - **CLAUDE.md reference:** Tech stack (frontend rows), Styling and design system
 

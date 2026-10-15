@@ -28,7 +28,7 @@ CLAUDE.md fixes the repository layout and most of the stack, but leaves some cho
 
 - **Polars** is the engine's dataframe library. pandas only at I/O edges where a library requires it. Reason: faster on event logs with millions of rows, strict types, and runs the same on a laptop and on data platforms.
 - **Dramatiq + Redis** for background jobs. Reason: smaller and simpler than Celery for our job types (import, reconstruction, detection runs).
-- **Auth provider is deferred** to the login sequence (ADR-0007 covers roles). The auth layer is OIDC-ready; Microsoft Entra ID is configuration, so the choice between Keycloak and Auth0 does not block the foundation.
+- **Keycloak** is the auth provider (decided by the user 2026-10-15). Reason: open source and self-hostable, so it also runs on-premise for defence and regulated plants; it brokers Microsoft Entra ID for enterprise SSO. The API stays plain OIDC (docs/auth.md).
 - **Synthetic plant generation lives in `constraint_engine.synthetic`**, because public benchmark datasets are part of the open core.
 
 ## Consequences

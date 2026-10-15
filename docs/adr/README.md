@@ -11,7 +11,7 @@ Every architecture decision is recorded here before it is implemented (CLAUDE.md
 | [0003](0003-provenance-and-missing-data.md) | Provenance and missing data | Proposed |
 | [0004](0004-tenancy.md) | Tenancy and deployment | Proposed |
 | [0005](0005-privacy.md) | Privacy: no individual monitoring | Proposed |
-| [0006](0006-frontend.md) | Frontend stack and theme | Proposed |
+| [0006](0006-frontend.md) | Frontend stack and theme | Accepted |
 | [0007](0007-roles-and-access.md) | Roles and access | Proposed |
 | [0008](0008-flow-views.md) | Plant flow views | Proposed |
 
