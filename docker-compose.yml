@@ -1,5 +1,5 @@
-# Local stack: data services, API and worker; the web app is added by a later sequence.
-# Host ports are offset (55432, 56379, 58000) to avoid clashing with other local projects.
+# Local stack: data services, API, worker and web.
+# Host ports are offset (55432, 56379, 58000, 53000) to avoid clashing with other local projects.
 name: cip
 
 services:
@@ -74,8 +74,38 @@ services:
       redis:
         condition: service_healthy
 
+  web:
+    image: node:24.5.0-bookworm-slim
+    working_dir: /app
+    # Dependencies live in container volumes, so host (macOS) binaries never mix with Linux ones.
+    command: >
+      sh -c "corepack enable && pnpm install --frozen-lockfile &&
+      pnpm --filter web exec next dev --hostname 0.0.0.0 --port 3000"
+    environment:
+      CIP_ENV: dev
+      CIP_API_URL: http://api:8000
+      # Dev only: the proxy adds X-Tenant-Id for this tenant when no session cookie is sent.
+      CIP_DEV_TENANT_ID: ${CIP_DEV_TENANT_ID:-}
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      # Keep the pnpm store inside the container, never in the bind-mounted repo.
+      npm_config_store_dir: /root/.pnpm-store
+    volumes:
+      - .:/app
+      - web_root_modules:/app/node_modules
+      - web_app_modules:/app/apps/web/node_modules
+      - web_ui_modules:/app/packages/ui/node_modules
+      - web_next:/app/apps/web/.next
+    ports:
+      - "${CIP_WEB_PORT:-53000}:3000"
+    depends_on:
+      - api
+
 volumes:
   db_data:
   redis_data:
   api_venv:
   worker_venv:
+  web_root_modules:
+  web_app_modules:
+  web_ui_modules:
+  web_next:

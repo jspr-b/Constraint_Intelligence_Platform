@@ -33,3 +33,7 @@ data/private/
 .DS_Store
 .idea/
 .vscode/
+next-env.d.ts
+
+# pnpm store written by the web container
+.pnpm-store/

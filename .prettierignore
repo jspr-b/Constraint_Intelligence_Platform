@@ -13,3 +13,6 @@ packages/schema/json
 data/synthetic
 apps/api/openapi.json
 apps/web/src/lib/api/schema.d.ts
+.pnpm-store
+apps/web/playwright-report
+apps/web/test-results

@@ -1,0 +1,46 @@
+/*
+ * Design tokens (CLAUDE.md "Styling and design system", ADR-0006).
+ * Default theme: white with blue accent. Alternative: the dark mission-control theme.
+ * Switch with data-theme="dark" on <html>. The constraint colour is for the constraint only.
+ * --text-faint and --status-idle are for disabled text and graphics only (contrast >= 3:1);
+ * every other text token meets WCAG 2.2 AA (>= 4.5:1) on --bg and --surface (tokens.test.ts).
+ */
+:root,
+[data-theme="white"] {
+  color-scheme: light;
+  --bg: #f7f9fb;
+  --surface: #ffffff;
+  --surface-raised: #eef3fc;
+  --line: #e3e7eb;
+  --line-strong: #cbd2d9;
+  --text: #0b0d0f;
+  --text-muted: #59616a;
+  --text-faint: #6b747c;
+  --accent: #1f5fd6;
+  --on-accent: #ffffff;
+  --constraint: #c73e08;
+  --status-ok: #0f7a50;
+  --status-warn: #9a6400;
+  --status-bad: #c21b1b;
+  --status-idle: #6b747c;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #050607;
+  --surface: #0b0d0f;
+  --surface-raised: #121518;
+  --line: #1e2328;
+  --line-strong: #2c333a;
+  --text: #e8ecef;
+  --text-muted: #7c868f;
+  /* CLAUDE.md has #4A535B (2.6:1 on --bg); raised to pass 3:1 for disabled text and graphics. */
+  --text-faint: #5c666f;
+  --accent: #e8ecef;
+  --on-accent: #050607;
+  --constraint: #ff5a1f;
+  --status-ok: #3ddc97;
+  --status-warn: #ffb020;
+  --status-bad: #ff3b3b;
+  --status-idle: #5c666f;
+}

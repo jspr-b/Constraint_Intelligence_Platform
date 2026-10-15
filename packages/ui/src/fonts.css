@@ -1,0 +1,57 @@
+/* Self-hosted fonts, SIL OFL 1.1 (licences in packages/ui/fonts). */
+@font-face {
+  font-family: "D-DIN";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/d-din/D-DIN.woff2") format("woff2");
+}
+@font-face {
+  font-family: "D-DIN";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/d-din/D-DIN-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "D-DIN Condensed";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/d-din/D-DINCondensed.woff2") format("woff2");
+}
+@font-face {
+  font-family: "D-DIN Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/d-din/D-DINCondensed-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/inter/inter-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/inter/inter-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}

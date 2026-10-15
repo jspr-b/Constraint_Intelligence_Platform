@@ -1,0 +1,4 @@
+/* Everything an app needs from the design system, after `@import "tailwindcss";`. */
+@import "./tokens.css";
+@import "./fonts.css";
+@import "./preset.css";

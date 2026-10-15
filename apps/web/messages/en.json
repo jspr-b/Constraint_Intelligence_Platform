@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "Constraint Intelligence",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "label": "Main",
+    "groups": {
+      "diagnose": "Diagnose",
+      "plan": "Plan",
+      "operate": "Operate",
+      "prove": "Prove",
+      "setup": "Setup"
+    },
+    "pages": {
+      "run": "Diagnostic run",
+      "data": "Data quality",
+      "main": "Overview",
+      "loss": "Loss",
+      "machines": "Machines",
+      "actions": "Recommendations",
+      "report": "Results report",
+      "planner": "Planner today",
+      "buffer": "Buffer board",
+      "plan": "Forecast and backlog",
+      "flow": "Plant flow",
+      "shift": "Shift and floor",
+      "station": "Station screen",
+      "value": "Value report",
+      "import": "Import",
+      "setup": "Plant setup",
+      "calendar": "Capacity calendar",
+      "access": "Access",
+      "users": "Users",
+      "conn": "Connections"
+    }
+  },
+  "roles": {
+    "plant_director": "Plant director",
+    "coo": "COO",
+    "planner": "Planner",
+    "shift_lead": "Shift lead",
+    "station": "Station (operators)",
+    "it": "IT / ERP owner"
+  },
+  "header": {
+    "role": "Role",
+    "roleSwitchHint": "Switch role · opens its start page",
+    "theme": "Theme",
+    "white": "White",
+    "dark": "Dark",
+    "language": "Language",
+    "apiOk": "API OK",
+    "apiDown": "API unreachable",
+    "apiChecking": "API …"
+  },
+  "drawer": {
+    "label": "Details",
+    "empty": "Select an item to see its details.",
+    "open": "Show details",
+    "close": "Hide details"
+  },
+  "empty": {
+    "notBuilt": "Not built yet",
+    "builtBy": {
+      "foundation": "This page is built in the foundation, in a later sequence.",
+      "diagnose": "This page arrives with the Diagnose pillar.",
+      "plan": "This page arrives with the Plan pillar.",
+      "operate": "This page arrives with the Operate pillar.",
+      "prove": "This page arrives with the Prove pillar."
+    },
+    "noNumbers": "No numbers are shown until the engine produces them."
+  },
+  "shell": {
+    "loading": "Loading…",
+    "apiUnreachable": "Cannot reach the platform API. Check that it is running.",
+    "signInRequired": "Sign in to continue.",
+    "notAllowed": "Your role may not open this page. The COO decides access.",
+    "stationOnly": "This screen belongs to a machine."
+  },
+  "login": {
+    "title": "Sign in"
+  },
+  "tv": {
+    "title": "Shift and floor · TV mode",
+    "open": "TV mode",
+    "exit": "Exit TV mode"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "home": "Go to your start page"
+  }
+}

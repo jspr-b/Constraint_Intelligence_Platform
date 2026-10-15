@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "Constraint Intelligence",
+    "skipToContent": "Naar de inhoud"
+  },
+  "nav": {
+    "label": "Hoofdmenu",
+    "groups": {
+      "diagnose": "Diagnose",
+      "plan": "Plannen",
+      "operate": "Uitvoeren",
+      "prove": "Bewijzen",
+      "setup": "Inrichting"
+    },
+    "pages": {
+      "run": "Diagnoserun",
+      "data": "Datakwaliteit",
+      "main": "Overzicht",
+      "loss": "Verlies",
+      "machines": "Machines",
+      "actions": "Aanbevelingen",
+      "report": "Resultatenrapport",
+      "planner": "Planner vandaag",
+      "buffer": "Bufferbord",
+      "plan": "Prognose en achterstand",
+      "flow": "Fabrieksstroom",
+      "shift": "Ploeg en vloer",
+      "station": "Stationscherm",
+      "value": "Waarderapport",
+      "import": "Import",
+      "setup": "Fabrieksinrichting",
+      "calendar": "Capaciteitskalender",
+      "access": "Toegang",
+      "users": "Gebruikers",
+      "conn": "Koppelingen"
+    }
+  },
+  "roles": {
+    "plant_director": "Fabrieksdirecteur",
+    "coo": "COO",
+    "planner": "Planner",
+    "shift_lead": "Ploegleider",
+    "station": "Station (operators)",
+    "it": "IT / ERP-beheerder"
+  },
+  "header": {
+    "role": "Rol",
+    "roleSwitchHint": "Wissel van rol · opent de startpagina",
+    "theme": "Thema",
+    "white": "Wit",
+    "dark": "Donker",
+    "language": "Taal",
+    "apiOk": "API OK",
+    "apiDown": "API onbereikbaar",
+    "apiChecking": "API …"
+  },
+  "drawer": {
+    "label": "Details",
+    "empty": "Kies een item om de details te zien.",
+    "open": "Details tonen",
+    "close": "Details verbergen"
+  },
+  "empty": {
+    "notBuilt": "Nog niet gebouwd",
+    "builtBy": {
+      "foundation": "Deze pagina wordt in het fundament gebouwd, in een latere stap.",
+      "diagnose": "Deze pagina komt met de pijler Diagnose.",
+      "plan": "Deze pagina komt met de pijler Plannen.",
+      "operate": "Deze pagina komt met de pijler Uitvoeren.",
+      "prove": "Deze pagina komt met de pijler Bewijzen."
+    },
+    "noNumbers": "Er staan pas getallen als de engine ze berekent."
+  },
+  "shell": {
+    "loading": "Laden…",
+    "apiUnreachable": "De platform-API is niet bereikbaar. Controleer of die draait.",
+    "signInRequired": "Log in om verder te gaan.",
+    "notAllowed": "Jouw rol mag deze pagina niet openen. De COO bepaalt de toegang.",
+    "stationOnly": "Dit scherm hoort bij een machine."
+  },
+  "login": {
+    "title": "Inloggen"
+  },
+  "tv": {
+    "title": "Ploeg en vloer · tv-modus",
+    "open": "Tv-modus",
+    "exit": "Tv-modus sluiten"
+  },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "home": "Naar je startpagina"
+  }
+}
