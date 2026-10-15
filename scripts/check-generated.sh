@@ -13,4 +13,6 @@ pnpm --filter web exec openapi-typescript ../api/openapi.json -o "$tmp/schema.d.
 diff -q apps/web/src/lib/api/schema.d.ts "$tmp/schema.d.ts" >/dev/null \
   || { echo "apps/web/src/lib/api/schema.d.ts is stale: run pnpm --filter web gen:api"; exit 1; }
 
+uv run python scripts/gen_onboarding.py --check
+
 echo "generated files are up to date"

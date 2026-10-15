@@ -10,7 +10,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "onboarding:pdf": "uv run python scripts/gen_onboarding.py && pnpm --filter web exec node scripts/onboarding-pdf.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
