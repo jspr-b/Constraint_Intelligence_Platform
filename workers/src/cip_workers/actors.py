@@ -4,10 +4,13 @@ Run: ``uv run dramatiq cip_workers.actors``
 """
 
 import logging
+import uuid
 from typing import Any
 
 import dramatiq
 
+from cip_api.imports import run_import as run_import_job
+from cip_api.settings import get_settings
 from cip_workers.broker import broker  # noqa: F401  (sets the broker before actors are declared)
 from constraint_engine.io.plant_loader import load_plant
 from constraint_engine.summary import summarise
@@ -37,3 +40,10 @@ def diagnose_plant(plant_dir: str) -> dict[str, Any]:
         "row_errors": len(plant.row_errors),
         "missing_files": sorted(plant.missing_files),
     }
+
+
+@dramatiq.actor(max_retries=0, store_results=True)
+def run_import(tenant_id: str, import_id: str) -> None:
+    """Run an uploaded import (cip_api.imports.run_import). Logs ids only."""
+    run_import_job(get_settings(), uuid.UUID(tenant_id), uuid.UUID(import_id))
+    log.info("run_import done", extra={"import_id": import_id})

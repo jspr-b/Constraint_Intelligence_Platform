@@ -58,3 +58,32 @@ def test_cli_quality_section_prints_report_and_checklist(
         and "## Data checklist" in text
         and "| 12 | Operation events |" in text
     )
+
+
+def test_minimum_set_rolls_up_item_statuses() -> None:
+    from constraint_engine.quality.checklist import (
+        ChecklistItem,
+        Requirement,
+        minimum_set,
+    )
+
+    def item(n: int, status: str) -> ChecklistItem:
+        return ChecklistItem(Requirement(n, "s", "d", "k", "Must", None), status, "")
+
+    items = [
+        item(9, "ok"),
+        item(4, "ok"),
+        item(6, "missing"),
+        item(12, "missing"),
+        item(16, "ok"),
+        item(17, "ok"),
+        item(19, "check"),
+    ]
+    result = {m.key: m.status for m in minimum_set(items)}
+    assert result == {
+        "orders": "ok",
+        "routings": "partial",
+        "products": "missing",
+        "events": "missing",
+        "calendar": "check",
+    }

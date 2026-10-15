@@ -37,3 +37,6 @@ next-env.d.ts
 
 # pnpm store written by the web container
 .pnpm-store/
+
+# Local uploads and import output (never commit plant data)
+var/

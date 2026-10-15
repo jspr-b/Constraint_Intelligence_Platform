@@ -56,6 +56,7 @@ export interface View {
   role: Role;
   pages: Set<PageKey>;
   startPage: PageKey;
+  decisions: Set<string>;
   preview: boolean;
 }
 
@@ -69,11 +70,17 @@ export function effectiveView(
   viewAs: string | undefined,
 ): View {
   const chosen = matrix?.roles.find((r) => r.role === viewAs);
-  const source = chosen ?? { role: me.role, pages: me.pages, start_page: me.start_page };
+  const source = chosen ?? {
+    role: me.role,
+    pages: me.pages,
+    start_page: me.start_page,
+    decisions: me.decisions,
+  };
   return {
     role: source.role as Role,
     pages: new Set(source.pages.filter(isPageKey)),
     startPage: isPageKey(source.start_page) ? source.start_page : "main",
+    decisions: new Set<string>(source.decisions),
     preview: chosen !== undefined && chosen.role !== me.role,
   };
 }

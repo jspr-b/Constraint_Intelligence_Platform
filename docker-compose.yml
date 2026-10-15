@@ -65,12 +65,16 @@ services:
       UV_PROJECT_ENVIRONMENT: /opt/venv
       UV_LINK_MODE: copy
       CIP_ENV: dev
+      CIP_DB_HOST: db
+      CIP_DB_PORT: "5432"
       CIP_REDIS_HOST: redis
       CIP_REDIS_PORT: "6379"
     volumes:
       - .:/app
       - worker_venv:/opt/venv
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
 

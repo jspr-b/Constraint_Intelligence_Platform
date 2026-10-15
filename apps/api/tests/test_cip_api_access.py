@@ -119,3 +119,29 @@ def test_unknown_values_are_rejected(sign_in: SignIn) -> None:
     )
     bad_money = {"role": "planner", "money": "dollars", "plants": "all"}
     assert coo.put("/access/data", json=bad_money).status_code == 422
+
+
+def test_presets(world: World, sign_in: SignIn) -> None:
+    coo = sign_in("coo")
+    assert sign_in("planner").post("/access/presets/role_menus").status_code == 403
+    body = coo.post("/access/presets/role_menus").json()
+    by_role = {r["role"]: r for r in body["roles"]}
+    assert by_role["station"]["pages"] == ["station"]
+    assert set(by_role["it"]["pages"]) == {"conn", "users", "import", "data"}
+    assert len(by_role["coo"]["pages"]) == len(PAGES)
+    assert "value" not in sign_in("planner").get("/auth/me").json()["pages"]
+    body = coo.post("/access/presets/everyone").json()
+    assert all(len(r["pages"]) == len(PAGES) for r in body["roles"])
+    assert coo.post("/access/presets/nonsense").status_code == 422
+    with world.owner.connect() as conn:
+        presets = (
+            conn.execute(
+                text(
+                    "SELECT target FROM audit_log WHERE tenant_id = :t AND action = :a ORDER BY id"
+                ),
+                {"t": world.a, "a": "access_preset_applied"},
+            )
+            .scalars()
+            .all()
+        )
+    assert presets == ["role_menus", "everyone"]

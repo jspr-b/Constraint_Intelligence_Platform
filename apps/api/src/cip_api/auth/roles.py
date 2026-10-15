@@ -47,6 +47,29 @@ START_PAGE = {
 }
 
 
+ROLE_MENUS: dict[Role, tuple[str, ...]] = {
+    Role.PLANT_DIRECTOR: ("main", "loss", "actions", "plan", "value", "report"),
+    Role.COO: PAGES,
+    Role.PLANNER: (
+        "planner",
+        "buffer",
+        "plan",
+        "actions",
+        "flow",
+        "machines",
+        "data",
+        "run",
+        "import",
+        "setup",
+        "calendar",
+    ),
+    Role.SHIFT_LEAD: ("shift", "flow", "buffer", "station"),
+    Role.STATION: ("station",),
+    Role.IT: ("conn", "users", "import", "data"),
+}
+"""Preset 'role menus only': each role opens just the pages it needs (mockup F3)."""
+
+
 class Decision(StrEnum):
     ACCEPT_EXPLOIT_SUBORDINATE = "accept_exploit_subordinate"
     APPROVE_ELEVATE = "approve_elevate"

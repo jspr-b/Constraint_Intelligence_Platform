@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { LiveDot } from "@cip/ui";
 import { isPageKey, type PageKey } from "@/lib/pages";
 import type { Theme } from "@/lib/prefs";
 import { effectiveView, useAccessMatrix, useApiHealth, useMe, type View } from "@/lib/session";
 import { Drawer } from "./Drawer";
 import { EmptyState } from "./EmptyState";
-import { LocaleSwitch, RoleSwitch, ThemeToggle } from "./HeaderControls";
+import { LocaleSwitch, RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
 import { NavRail } from "./NavRail";
 import { ViewContext } from "./ViewContext";
 
@@ -48,6 +48,10 @@ export function Shell({
   const view: View | null =
     session.status === "ready" ? effectiveView(session.me, matrix, viewAs) : null;
   const station = view?.role === "station";
+  const router = useRouter();
+  useEffect(() => {
+    if (session.status === "signed-out") router.replace("/login");
+  }, [session.status, router]);
 
   let body: ReactNode = children;
   if (session.status === "loading") body = <p className="text-muted">{t("shell.loading")}</p>;
@@ -79,6 +83,7 @@ export function Shell({
           {view && matrix && <RoleSwitch role={view.role} matrix={matrix} />}
           <LocaleSwitch />
           <ThemeToggle initial={theme} />
+          {view && <SignOut />}
         </div>
       </header>
       <div className="flex min-h-0 flex-1">

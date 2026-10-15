@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Button } from "./Button";
 import { ConstraintMarker } from "./ConstraintMarker";
 import { formatFigure, type FigureLike } from "./figure";
+import { FigureValue } from "./FigureValue";
 import { KpiReadout } from "./KpiReadout";
 import { LiveDot } from "./LiveDot";
 import { MicroLabel } from "./MicroLabel";
@@ -145,5 +146,18 @@ describe("formatFigure", () => {
     expect(formatFigure({ ...LOSS, value: 20.25, unit: "h" })).toBe("20.3 h");
     expect(formatFigure({ ...LOSS, value: 99.9, unit: "pct" })).toBe("99.9%");
     expect(formatFigure({ ...LOSS, value: 12, unit: "rows" })).toBe("12 rows");
+  });
+});
+
+describe("FigureValue", () => {
+  it("shows the value inline and its formula on keyboard focus", async () => {
+    render(
+      <FigureValue
+        figure={{ ...LOSS, value: 12.5, unit: "min_per_unit", formula_id: "task_time_median_v1" }}
+      />,
+    );
+    expect(screen.getByText("12.5 min/unit")).toBeInTheDocument();
+    await userEvent.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("task_time_median_v1");
   });
 });

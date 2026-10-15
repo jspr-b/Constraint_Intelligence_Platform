@@ -113,6 +113,316 @@
         "title": "AuditOut",
         "type": "object"
       },
+      "AuthConfigOut": {
+        "properties": {
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "tenant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Name"
+          }
+        },
+        "required": [
+          "provider",
+          "tenant_name"
+        ],
+        "title": "AuthConfigOut",
+        "type": "object"
+      },
+      "Body_upload_plants__plant_code__imports_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_upload_plants__plant_code__imports_post",
+        "type": "object"
+      },
+      "CalendarOut": {
+        "properties": {
+          "data_end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data End At"
+          },
+          "data_start_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Start At"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "exceptions": {
+            "items": {
+              "$ref": "#/components/schemas/WindowOut"
+            },
+            "title": "Exceptions",
+            "type": "array"
+          },
+          "machines": {
+            "items": {
+              "$ref": "#/components/schemas/MachineDay"
+            },
+            "title": "Machines",
+            "type": "array"
+          },
+          "overtime": {
+            "items": {
+              "$ref": "#/components/schemas/OvertimeOut"
+            },
+            "title": "Overtime",
+            "type": "array"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "timezone_iana": {
+            "title": "Timezone Iana",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plant_code",
+          "timezone_iana",
+          "day",
+          "machines",
+          "exceptions",
+          "data_start_at",
+          "data_end_at",
+          "overtime"
+        ],
+        "title": "CalendarOut",
+        "type": "object"
+      },
+      "CapacityCostIn": {
+        "properties": {
+          "extra_shift_eur_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Shift Eur Cents"
+          },
+          "overtime_eur_cents_per_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overtime Eur Cents Per H"
+          }
+        },
+        "title": "CapacityCostIn",
+        "type": "object"
+      },
+      "CapacityCostOut": {
+        "properties": {
+          "extra_shift_eur_cents": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Shift Eur Cents"
+          },
+          "overtime_eur_cents_per_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overtime Eur Cents Per H"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code"
+        ],
+        "title": "CapacityCostOut",
+        "type": "object"
+      },
+      "ChangeoverIn": {
+        "properties": {
+          "changeover_min": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Changeover Min",
+            "type": "number"
+          },
+          "from_setup_family": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "From Setup Family",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "to_setup_family": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "To Setup Family",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "from_setup_family",
+          "to_setup_family",
+          "changeover_min"
+        ],
+        "title": "ChangeoverIn",
+        "type": "object"
+      },
+      "ChangeoverOut": {
+        "properties": {
+          "changeover_min": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Changeover Min",
+            "type": "number"
+          },
+          "from_setup_family": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "From Setup Family",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "to_setup_family": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "To Setup Family",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "from_setup_family",
+          "to_setup_family",
+          "changeover_min"
+        ],
+        "title": "ChangeoverOut",
+        "type": "object"
+      },
+      "ColumnOut": {
+        "properties": {
+          "conversions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conversions",
+            "type": "array"
+          },
+          "example": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "fields",
+          "example",
+          "conversions"
+        ],
+        "title": "ColumnOut",
+        "type": "object"
+      },
+      "CoveredIn": {
+        "properties": {
+          "covered": {
+            "title": "Covered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "covered"
+        ],
+        "title": "CoveredIn",
+        "type": "object"
+      },
       "DataIn": {
         "properties": {
           "money": {
@@ -272,6 +582,91 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "import_id": {
+            "format": "uuid",
+            "title": "Import Id",
+            "type": "string"
+          },
+          "mapping": {
+            "title": "Mapping",
+            "type": "string"
+          },
+          "minimum_set": {
+            "items": {
+              "$ref": "#/components/schemas/MinimumOut"
+            },
+            "title": "Minimum Set",
+            "type": "array"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceOut"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "import_id",
+          "plant_code",
+          "status",
+          "created_at",
+          "files",
+          "mapping",
+          "sources",
+          "report",
+          "minimum_set",
+          "error"
+        ],
+        "title": "ImportOut",
+        "type": "object"
+      },
       "InviteIn": {
         "properties": {
           "email": {
@@ -298,6 +693,65 @@
           "role"
         ],
         "title": "InviteIn",
+        "type": "object"
+      },
+      "MachineDay": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WindowOut"
+            },
+            "title": "Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "resource_code",
+          "name",
+          "windows"
+        ],
+        "title": "MachineDay",
+        "type": "object"
+      },
+      "MachineOut": {
+        "properties": {
+          "has_station_login": {
+            "title": "Has Station Login",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parallel_units": {
+            "title": "Parallel Units",
+            "type": "integer"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "name",
+          "kind",
+          "parallel_units",
+          "has_station_login"
+        ],
+        "title": "MachineOut",
         "type": "object"
       },
       "MeOut": {
@@ -383,6 +837,32 @@
         "title": "MeOut",
         "type": "object"
       },
+      "MinimumOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "numbers": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Numbers",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "numbers",
+          "status"
+        ],
+        "title": "MinimumOut",
+        "type": "object"
+      },
       "MissingOut": {
         "properties": {
           "confidence_impact": {
@@ -433,6 +913,125 @@
         "title": "OidcLoginIn",
         "type": "object"
       },
+      "OperationOut": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "erp_min_per_unit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erp Min Per Unit"
+          },
+          "measured_min_per_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FigureOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation": {
+            "title": "Operation",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "used_by": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Used By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "resource_code",
+          "operation",
+          "erp_min_per_unit",
+          "measured_min_per_unit",
+          "alternatives",
+          "used_by"
+        ],
+        "title": "OperationOut",
+        "type": "object"
+      },
+      "OvertimeIn": {
+        "properties": {
+          "iso_week": {
+            "maximum": 53.0,
+            "minimum": 1.0,
+            "title": "Iso Week",
+            "type": "integer"
+          },
+          "iso_year": {
+            "maximum": 2100.0,
+            "minimum": 2000.0,
+            "title": "Iso Year",
+            "type": "integer"
+          },
+          "overtime_h": {
+            "maximum": 168.0,
+            "minimum": 0.0,
+            "title": "Overtime H",
+            "type": "number"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "iso_year",
+          "iso_week",
+          "overtime_h"
+        ],
+        "title": "OvertimeIn",
+        "type": "object"
+      },
+      "OvertimeOut": {
+        "properties": {
+          "iso_week": {
+            "title": "Iso Week",
+            "type": "integer"
+          },
+          "iso_year": {
+            "title": "Iso Year",
+            "type": "integer"
+          },
+          "overtime_h": {
+            "title": "Overtime H",
+            "type": "number"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "iso_year",
+          "iso_week",
+          "overtime_h"
+        ],
+        "title": "OvertimeOut",
+        "type": "object"
+      },
       "PageIn": {
         "properties": {
           "allowed": {
@@ -468,6 +1067,31 @@
           "pin"
         ],
         "title": "PinIn",
+        "type": "object"
+      },
+      "PlantIn": {
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "timezone_iana": {
+            "default": "Europe/Amsterdam",
+            "title": "Timezone Iana",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plant_code",
+          "name"
+        ],
+        "title": "PlantIn",
         "type": "object"
       },
       "PlantOut": {
@@ -553,6 +1177,121 @@
         "title": "Plants",
         "type": "string"
       },
+      "ProductOut": {
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sales_price_eur_cents": {
+            "title": "Sales Price Eur Cents",
+            "type": "integer"
+          },
+          "setup_family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Family"
+          },
+          "sku": {
+            "title": "Sku",
+            "type": "string"
+          },
+          "throughput_per_unit": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "truly_variable_cost_eur_cents": {
+            "title": "Truly Variable Cost Eur Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "family",
+          "setup_family",
+          "sales_price_eur_cents",
+          "truly_variable_cost_eur_cents",
+          "throughput_per_unit"
+        ],
+        "title": "ProductOut",
+        "type": "object"
+      },
+      "ResourceIn": {
+        "properties": {
+          "kind": {
+            "default": "machine",
+            "pattern": "^(machine|station|work_centre)$",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "parallel_units": {
+            "default": 1,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Parallel Units",
+            "type": "integer"
+          },
+          "station_code": {
+            "title": "Station Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "station_code"
+        ],
+        "title": "ResourceIn",
+        "type": "object"
+      },
+      "ResourceOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parallel_units": {
+            "title": "Parallel Units",
+            "type": "integer"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "station_code": {
+            "title": "Station Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "name",
+          "kind",
+          "station_code",
+          "parallel_units"
+        ],
+        "title": "ResourceOut",
+        "type": "object"
+      },
       "Role": {
         "enum": [
           "plant_director",
@@ -606,6 +1345,180 @@
         "title": "RoleAccessOut",
         "type": "object"
       },
+      "SetupOut": {
+        "properties": {
+          "capacity_costs": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityCostOut"
+            },
+            "title": "Capacity Costs",
+            "type": "array"
+          },
+          "changeovers": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeoverOut"
+            },
+            "title": "Changeovers",
+            "type": "array"
+          },
+          "measured_from_import": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured From Import"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/OperationOut"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductOut"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/StationOut"
+            },
+            "title": "Stations",
+            "type": "array"
+          },
+          "timezone_iana": {
+            "title": "Timezone Iana",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plant_code",
+          "name",
+          "timezone_iana",
+          "stations",
+          "operations",
+          "products",
+          "changeovers",
+          "capacity_costs",
+          "measured_from_import"
+        ],
+        "title": "SetupOut",
+        "type": "object"
+      },
+      "SourceOut": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnOut"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "missing_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Columns",
+            "type": "array"
+          },
+          "readable": {
+            "default": true,
+            "title": "Readable",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Targets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "targets",
+          "file",
+          "columns",
+          "missing_columns"
+        ],
+        "title": "SourceOut",
+        "type": "object"
+      },
+      "StationChoiceOut": {
+        "properties": {
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "resource_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Name"
+          }
+        },
+        "required": [
+          "plant_code",
+          "resource_code",
+          "resource_name"
+        ],
+        "title": "StationChoiceOut",
+        "type": "object"
+      },
+      "StationIn": {
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "StationIn",
+        "type": "object"
+      },
       "StationLoginOut": {
         "properties": {
           "plant_code": {
@@ -633,6 +1546,32 @@
           "status"
         ],
         "title": "StationLoginOut",
+        "type": "object"
+      },
+      "StationOut": {
+        "properties": {
+          "machines": {
+            "items": {
+              "$ref": "#/components/schemas/MachineOut"
+            },
+            "title": "Machines",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "station_code": {
+            "title": "Station Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_code",
+          "name",
+          "machines"
+        ],
+        "title": "StationOut",
         "type": "object"
       },
       "UserOut": {
@@ -713,6 +1652,99 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WindowIn": {
+        "description": "Times with a zone are taken as given; times without one are plant local time.",
+        "properties": {
+          "covered": {
+            "default": false,
+            "title": "Covered",
+            "type": "boolean"
+          },
+          "end_at": {
+            "format": "date-time",
+            "title": "End At",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "shift",
+              "break",
+              "maintenance",
+              "holiday",
+              "overtime"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "start_at": {
+            "format": "date-time",
+            "title": "Start At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_code",
+          "kind",
+          "start_at",
+          "end_at"
+        ],
+        "title": "WindowIn",
+        "type": "object"
+      },
+      "WindowOut": {
+        "properties": {
+          "covered": {
+            "title": "Covered",
+            "type": "boolean"
+          },
+          "end_at": {
+            "format": "date-time",
+            "title": "End At",
+            "type": "string"
+          },
+          "end_min": {
+            "title": "End Min",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          },
+          "start_at": {
+            "format": "date-time",
+            "title": "Start At",
+            "type": "string"
+          },
+          "start_min": {
+            "title": "Start Min",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "resource_code",
+          "kind",
+          "start_at",
+          "end_at",
+          "covered",
+          "start_min",
+          "end_min"
+        ],
+        "title": "WindowOut",
         "type": "object"
       },
       "cip_api__auth__routes__StationLoginIn": {
@@ -1133,6 +2165,101 @@
         ]
       }
     },
+    "/access/presets/{preset}": {
+      "post": {
+        "description": "Page presets: 'everyone' opens every page to every role; 'role_menus' limits each role\nto its own menu. Start pages and locked pages stay open. One audit entry.",
+        "operationId": "apply_preset_access_presets__preset__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset",
+            "required": true,
+            "schema": {
+              "enum": [
+                "everyone",
+                "role_menus"
+              ],
+              "title": "Preset",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Preset",
+        "tags": [
+          "access"
+        ]
+      }
+    },
     "/audit": {
       "get": {
         "operationId": "audit_log_audit_get",
@@ -1225,6 +2352,50 @@
         "summary": "Audit Log",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/auth/config": {
+      "get": {
+        "description": "What the sign-in page shows. Public: reveals only the tenant's display name.",
+        "operationId": "auth_config_auth_config_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Config",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -1427,6 +2598,54 @@
         ]
       }
     },
+    "/auth/stations": {
+      "get": {
+        "description": "Machines with an active station login, for the 'Which station is this?' picker.",
+        "operationId": "station_choices_auth_stations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StationChoiceOut"
+                  },
+                  "title": "Response Station Choices Auth Stations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Station Choices",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -1441,6 +2660,189 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/imports/{import_id}": {
+      "get": {
+        "operationId": "get_import_imports__import_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Import",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/imports/{import_id}/run": {
+      "post": {
+        "description": "Start the connector in a worker. The page polls this import until it is done or failed.",
+        "operationId": "run_imports__import_id__run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run",
+        "tags": [
+          "imports"
+        ]
       }
     },
     "/meta": {
@@ -1546,6 +2948,1505 @@
         "summary": "List Plants",
         "tags": [
           "plants"
+        ]
+      },
+      "post": {
+        "operationId": "create_plant_plants_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Plant",
+        "tags": [
+          "plant setup"
+        ]
+      }
+    },
+    "/plants/{plant_code}/calendar": {
+      "get": {
+        "operationId": "calendar_plants__plant_code__calendar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar",
+        "tags": [
+          "capacity calendar"
+        ]
+      }
+    },
+    "/plants/{plant_code}/calendar/windows": {
+      "post": {
+        "operationId": "add_window_plants__plant_code__calendar_windows_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindowIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Window",
+        "tags": [
+          "capacity calendar"
+        ]
+      }
+    },
+    "/plants/{plant_code}/calendar/windows/{window_id}": {
+      "delete": {
+        "operationId": "delete_window_plants__plant_code__calendar_windows__window_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "window_id",
+            "required": true,
+            "schema": {
+              "title": "Window Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Window",
+        "tags": [
+          "capacity calendar"
+        ]
+      },
+      "patch": {
+        "description": "Mark a break as covered: someone keeps the machine running during the break.",
+        "operationId": "set_covered_plants__plant_code__calendar_windows__window_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "window_id",
+            "required": true,
+            "schema": {
+              "title": "Window Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoveredIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Covered",
+        "tags": [
+          "capacity calendar"
+        ]
+      }
+    },
+    "/plants/{plant_code}/capacity-costs/{resource_code}": {
+      "put": {
+        "operationId": "put_capacity_cost_plants__plant_code__capacity_costs__resource_code__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resource_code",
+            "required": true,
+            "schema": {
+              "title": "Resource Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapacityCostIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Capacity Cost",
+        "tags": [
+          "plant setup"
+        ]
+      }
+    },
+    "/plants/{plant_code}/changeovers": {
+      "put": {
+        "operationId": "put_changeover_plants__plant_code__changeovers_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeoverIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Changeover",
+        "tags": [
+          "plant setup"
+        ]
+      }
+    },
+    "/plants/{plant_code}/imports": {
+      "get": {
+        "operationId": "list_imports_plants__plant_code__imports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportOut"
+                  },
+                  "title": "Response List Imports Plants  Plant Code  Imports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Imports",
+        "tags": [
+          "imports"
+        ]
+      },
+      "post": {
+        "description": "Store uploaded CSV/Excel exports for a plant. Nothing is read into the platform yet.",
+        "operationId": "upload_plants__plant_code__imports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_plants__plant_code__imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/plants/{plant_code}/overtime": {
+      "put": {
+        "description": "Overtime worked on one machine in one ISO week (never per person).",
+        "operationId": "put_overtime_plants__plant_code__overtime_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OvertimeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OvertimeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Overtime",
+        "tags": [
+          "capacity calendar"
+        ]
+      }
+    },
+    "/plants/{plant_code}/resources": {
+      "get": {
+        "description": "Machines of a plant (for pickers; the Plant setup page manages them).",
+        "operationId": "list_resources_plants__plant_code__resources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceOut"
+                  },
+                  "title": "Response List Resources Plants  Plant Code  Resources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Resources",
+        "tags": [
+          "plants"
+        ]
+      }
+    },
+    "/plants/{plant_code}/resources/{resource_code}": {
+      "delete": {
+        "operationId": "delete_resource_plants__plant_code__resources__resource_code__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resource_code",
+            "required": true,
+            "schema": {
+              "title": "Resource Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Resource",
+        "tags": [
+          "plant setup"
+        ]
+      },
+      "put": {
+        "operationId": "put_resource_plants__plant_code__resources__resource_code__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resource_code",
+            "required": true,
+            "schema": {
+              "title": "Resource Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Resource",
+        "tags": [
+          "plant setup"
+        ]
+      }
+    },
+    "/plants/{plant_code}/setup": {
+      "get": {
+        "operationId": "setup_plants__plant_code__setup_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Setup",
+        "tags": [
+          "plant setup"
+        ]
+      }
+    },
+    "/plants/{plant_code}/stations/{station_code}": {
+      "put": {
+        "operationId": "put_station_plants__plant_code__stations__station_code__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "station_code",
+            "required": true,
+            "schema": {
+              "title": "Station Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Station",
+        "tags": [
+          "plant setup"
         ]
       }
     },

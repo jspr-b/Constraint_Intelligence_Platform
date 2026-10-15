@@ -70,7 +70,8 @@ def engines() -> Iterator[tuple[Engine, Engine]]:
     cfg = Config(str(API / "alembic.ini"))
     command.upgrade(cfg, "head")
     with owner.begin() as conn:
-        conn.execute(text("TRUNCATE tenants CASCADE"))
+        # Only this test's tenants: never wipe other local data (e.g. the dev tenant).
+        conn.execute(text("DELETE FROM tenants WHERE id IN (:a, :b)"), {"a": A, "b": B})
         conn.execute(
             text("INSERT INTO tenants (id, name) VALUES (:a, 'Tenant A'), (:b, 'Tenant B')"),
             {"a": A, "b": B},
@@ -84,7 +85,8 @@ def engines() -> Iterator[tuple[Engine, Engine]]:
                 conn.execute(text(insert_sql(table, row)), row)
     yield owner, app
     with owner.begin() as conn:
-        conn.execute(text("TRUNCATE tenants CASCADE"))
+        # Only this test's tenants: never wipe other local data (e.g. the dev tenant).
+        conn.execute(text("DELETE FROM tenants WHERE id IN (:a, :b)"), {"a": A, "b": B})
 
 
 def test_app_role_is_not_owner_and_cannot_bypass(engines: tuple[Engine, Engine]) -> None:
@@ -118,7 +120,11 @@ def test_no_tenant_set_means_no_rows(engines: tuple[Engine, Engine], table: Tabl
 def test_owner_sees_both_tenants(engines: tuple[Engine, Engine]) -> None:
     owner, _ = engines
     with owner.connect() as conn:
-        assert conn.execute(text("SELECT count(DISTINCT tenant_id) FROM plants")).scalar_one() == 2
+        seen = conn.execute(
+            text("SELECT count(DISTINCT tenant_id) FROM plants WHERE tenant_id IN (:a, :b)"),
+            {"a": A, "b": B},
+        ).scalar_one()
+        assert seen == 2
 
 
 def test_cannot_write_into_another_tenant(engines: tuple[Engine, Engine]) -> None:

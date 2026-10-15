@@ -70,7 +70,7 @@ ignore_missing_imports = true
 
 # Dramatiq's broker and middleware constructors are untyped; only the broker module calls them.
 [[tool.mypy.overrides]]
-module = ["cip_workers.broker"]
+module = ["cip_api.jobs"]
 disallow_untyped_calls = false
 
 [tool.pydantic-mypy]

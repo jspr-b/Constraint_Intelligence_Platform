@@ -5,12 +5,15 @@ description = "FastAPI service."
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.14",
+    "cip-connectors",
     "cip-schema",
     "constraint-engine",
+    "dramatiq[redis]>=1.17",
     "fastapi>=0.115",
     "psycopg[binary]>=3.2",
     "pydantic-settings>=2.6",
     "pyjwt[crypto]>=2.9",
+    "python-multipart>=0.0.32",
     "redis>=5.2",
     "sqlalchemy>=2.0.36",
     "uvicorn[standard]>=0.32",
@@ -26,3 +29,4 @@ packages = ["src/cip_api"]
 [tool.uv.sources]
 cip-schema = { workspace = true }
 constraint-engine = { workspace = true }
+cip-connectors = { workspace = true }

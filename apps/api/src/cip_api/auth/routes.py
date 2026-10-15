@@ -48,6 +48,18 @@ class StationLoginIn(BaseModel):
     pin: str = Field(min_length=4, max_length=8)
 
 
+class AuthConfigOut(BaseModel):
+    provider: str
+    """``dev`` (email sign-in, pilots only) or ``oidc`` (company account via Keycloak)."""
+    tenant_name: str | None
+
+
+class StationChoiceOut(BaseModel):
+    plant_code: str
+    resource_code: str
+    resource_name: str | None
+
+
 class MeOut(BaseModel):
     tenant_id: uuid.UUID
     subject_type: str
@@ -60,6 +72,30 @@ class MeOut(BaseModel):
     money: str
     plants: str
     decisions: list[str]
+
+
+@router.get("/config", response_model=AuthConfigOut)
+def auth_config(tenant_id: uuid.UUID, settings: SettingsDep) -> AuthConfigOut:
+    """What the sign-in page shows. Public: reveals only the tenant's display name."""
+    provider = "dev" if settings.env == "dev" and settings.auth_provider == "dev" else "oidc"
+    with tenant_conn(settings, tenant_id) as conn:
+        name = conn.execute(text("SELECT name FROM tenants WHERE id = :t"), {"t": tenant_id})
+        return AuthConfigOut(provider=provider, tenant_name=name.scalar_one_or_none())
+
+
+@router.get("/stations", response_model=list[StationChoiceOut])
+def station_choices(tenant_id: uuid.UUID, settings: SettingsDep) -> list[StationChoiceOut]:
+    """Machines with an active station login, for the 'Which station is this?' picker."""
+    with tenant_conn(settings, tenant_id) as conn:
+        rows = conn.execute(
+            text(
+                "SELECT s.plant_code, s.resource_code, r.name AS resource_name "
+                "FROM station_logins s LEFT JOIN resources r "
+                "ON r.plant_code = s.plant_code AND r.resource_code = s.resource_code "
+                "WHERE s.status = 'active' ORDER BY s.plant_code, s.resource_code"
+            )
+        )
+        return [StationChoiceOut.model_validate(r._mapping) for r in rows]
 
 
 def _sign_in_user(settings: Settings, tenant: uuid.UUID, email: str, response: Response) -> None:

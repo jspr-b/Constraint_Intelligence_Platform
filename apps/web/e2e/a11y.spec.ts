@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { PAGES, stubApi } from "./api";
+import { PAGES, stubApi, stubPages } from "./api";
 
 const ROUTES = [...PAGES.map((p) => `/${p}`), "/login", "/shift/tv"];
 
@@ -11,10 +11,12 @@ for (const theme of ["white", "dark"]) {
         await context.addCookies([
           { name: "cip_theme", value: theme, url: "http://localhost:3300" },
         ]);
-        await stubApi(page);
+        await stubApi(page, { role: "it" });
+        await stubPages(page);
         await page.goto(route);
         await expect(page.locator("main")).toBeVisible();
-        await expect(page.getByText(/Not built yet|Sign in/).first()).toBeVisible();
+        await page.waitForLoadState("networkidle");
+        await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
         const results = await new AxeBuilder({ page })
           .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
           .analyze();

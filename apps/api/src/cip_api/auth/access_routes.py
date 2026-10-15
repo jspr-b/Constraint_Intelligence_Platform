@@ -1,13 +1,13 @@
 """The COO sets who may open, see and decide what (ADR-0007). Every change is audit-logged."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import text
 
 from cip_api.auth.access import decision_locked, load_access, page_locked
-from cip_api.auth.roles import PAGES, Decision, Money, Plants, Role
+from cip_api.auth.roles import PAGES, ROLE_MENUS, Decision, Money, Plants, Role
 from cip_api.auth.sessions import audit
 from cip_api.tenancy import Ctx, require
 
@@ -150,4 +150,28 @@ def set_decision(body: DecisionIn, ctx: Change) -> AccessOut:
         f"{body.role.value}/{body.decision.value}",
         f"{before} -> {body.allowed}",
     )
+    return _matrix(ctx)
+
+
+@router.post("/presets/{preset}", response_model=AccessOut)
+def apply_preset(preset: Literal["everyone", "role_menus"], ctx: Change) -> AccessOut:
+    """Page presets: 'everyone' opens every page to every role; 'role_menus' limits each role
+    to its own menu. Start pages and locked pages stay open. One audit entry."""
+    ctx.db.execute(text("DELETE FROM access_pages"))
+    if preset == "role_menus":
+        rows = [
+            {"t": ctx.principal.tenant_id, "r": role.value, "p": page}
+            for role, menu in ROLE_MENUS.items()
+            for page in PAGES
+            if page not in menu and not page_locked(role, page)
+        ]
+        if rows:
+            ctx.db.execute(
+                text(
+                    "INSERT INTO access_pages (tenant_id, role, page, allowed) "
+                    "VALUES (:t, :r, :p, false)"
+                ),
+                rows,
+            )
+    audit(ctx.db, ctx.principal.tenant_id, ctx.principal.actor, "access_preset_applied", preset)
     return _matrix(ctx)

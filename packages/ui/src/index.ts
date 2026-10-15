@@ -3,6 +3,8 @@ export const UI_VERSION = "0.0.0";
 export { Button, type ButtonProps, type ButtonVariant } from "./components/Button";
 export { ConstraintMarker, type ConstraintMarkerProps } from "./components/ConstraintMarker";
 export { formatFigure, isMissing, type FigureLike, type MissingValue } from "./components/figure";
+export { FigureTooltip } from "./components/FigureTooltip";
+export { FigureValue } from "./components/FigureValue";
 export { KpiReadout, type KpiReadoutProps } from "./components/KpiReadout";
 export { LiveDot } from "./components/LiveDot";
 export { MicroLabel } from "./components/MicroLabel";

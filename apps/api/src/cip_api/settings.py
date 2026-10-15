@@ -1,6 +1,7 @@
 """Service settings from environment variables (see .env.example)."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,6 +28,11 @@ class Settings(BaseSettings):
     oidc_issuer: str | None = None
     oidc_audience: str | None = None
     oidc_jwks_url: str | None = None
+    data_dir: Path = Path(__file__).resolve().parents[4] / "var" / "data"
+    """Uploaded exports and their standard layout, per tenant and plant (gitignored)."""
+    max_upload_mb: int = 100
+    run_jobs_inline: bool = False
+    """Run jobs in the request instead of a worker (tests only)."""
 
     def db_url(self, as_owner: bool = False) -> str:
         user, password = (

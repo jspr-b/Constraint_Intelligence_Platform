@@ -21,6 +21,8 @@ PUBLIC = {
     "/auth/oidc-login",
     "/auth/station-login",
     "/auth/logout",
+    "/auth/config",
+    "/auth/stations",
 }
 LOSS = Figure(value=4_100_000, unit="eur_cents", formula_id="test_loss_v1")
 RATE = Figure(value=205_000, unit="eur_cents_per_h", formula_id="test_rate_v1")
@@ -67,6 +69,10 @@ def test_own_plant_per_role(role: str, sign_in: SignIn) -> None:
     assert [p["plant_code"] for p in client.get("/plants").json()] == ["PLANT-1"]
     assert client.get("/plants/PLANT-1/summary").status_code == 200
     assert client.get("/plants/PLANT-2/summary").status_code == 403
+    assert client.get("/plants/PLANT-2/resources").status_code == 403
+    assert [r["resource_code"] for r in client.get("/plants/PLANT-1/resources").json()] == [
+        "PNT-01"
+    ]
 
 
 @pytest.mark.db

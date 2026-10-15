@@ -238,3 +238,28 @@ def test_oidc_rejects_a_token_signed_by_another_key(
     body = {"tenant_id": str(world.a), "id_token": _token(other)}
     response = make_client(OIDC, base_url="https://testserver").post("/auth/oidc-login", json=body)
     assert response.status_code == 401
+
+
+def test_sign_in_page_config(world: World) -> None:
+    body = make_client().get("/auth/config", params={"tenant_id": str(world.a)}).json()
+    assert body == {"provider": "dev", "tenant_name": "A"}
+    production = make_client(Settings(env="production", auth_provider="oidc"))
+    assert (
+        production.get("/auth/config", params={"tenant_id": str(world.a)}).json()["provider"]
+        == "oidc"
+    )
+
+
+def test_station_picker_lists_active_station_logins_of_the_tenant(world: World) -> None:
+    client = make_client()
+    stations = client.get("/auth/stations", params={"tenant_id": str(world.a)}).json()
+    assert stations == [
+        {"plant_code": "PLANT-1", "resource_code": "PNT-01", "resource_name": "Paint line"}
+    ]
+    assert client.get("/auth/stations", params={"tenant_id": str(world.b)}).json() == []
+    with world.owner.begin() as conn:
+        conn.execute(
+            text("UPDATE station_logins SET status = 'disabled' WHERE tenant_id = :t"),
+            {"t": world.a},
+        )
+    assert client.get("/auth/stations", params={"tenant_id": str(world.a)}).json() == []

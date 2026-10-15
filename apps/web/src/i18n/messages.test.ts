@@ -43,9 +43,9 @@ describe("messages", () => {
   it("components contain no hard-coded UI text", () => {
     const root = join(process.cwd(), "src");
     const offenders = files(root).flatMap((file) =>
-      [...readFileSync(file, "utf8").matchAll(/>\s*([A-Za-z][A-Za-z ,.'!?-]{2,})\s*</g)].map(
-        (m) => `${file.replace(root, "src")}: ${m[1]}`,
-      ),
+      [
+        ...readFileSync(file, "utf8").matchAll(/(?<![=-])>\s*([A-Za-z][A-Za-z ,.'!?-]{2,})\s*</g),
+      ].map((m) => `${file.replace(root, "src")}: ${m[1]}`),
     );
     expect(offenders).toEqual([]);
   });

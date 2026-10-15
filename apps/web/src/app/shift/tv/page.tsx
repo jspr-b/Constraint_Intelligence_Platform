@@ -8,7 +8,9 @@ export default async function ShiftTv() {
   return (
     <main id="content" className="flex min-h-screen flex-col gap-6 p-10">
       <div className="flex items-center justify-between">
-        <MicroLabel>{t("tv.title")}</MicroLabel>
+        <h1 className="m-0">
+          <MicroLabel>{t("tv.title")}</MicroLabel>
+        </h1>
         <Link href="/shift" className="text-sm text-accent">
           {t("tv.exit")}
         </Link>

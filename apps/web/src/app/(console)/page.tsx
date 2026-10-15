@@ -1,15 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
 import { useView } from "@/components/ViewContext";
 
 /** "/" opens the role's start page. */
 export default function Home() {
   const view = useView();
-  const router = useRouter();
-  useEffect(() => {
-    if (view) router.replace(`/${view.startPage}`);
-  }, [view, router]);
+  if (view) redirect(`/${view.startPage}`);
   return null;
 }

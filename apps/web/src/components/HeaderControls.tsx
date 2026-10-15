@@ -15,6 +15,7 @@ import {
   MenuSection,
 } from "react-aria-components";
 import { LOCALES, LOCALE_COOKIE } from "@/i18n/locales";
+import { api } from "@/lib/api/client";
 import { THEME_COOKIE, VIEW_AS_COOKIE, applyTheme, setPref, type Theme } from "@/lib/prefs";
 import { ROLES, type Role } from "@/lib/pages";
 import type { AccessMatrix } from "@/lib/session";
@@ -126,5 +127,24 @@ export function RoleSwitch({ role, matrix }: { role: Role; matrix: AccessMatrix 
         </Menu>
       </Popover>
     </MenuTrigger>
+  );
+}
+
+export function SignOut() {
+  const t = useTranslations("login");
+  const router = useRouter();
+  const queries = useQueryClient();
+  return (
+    <button
+      type="button"
+      className="min-h-7 cursor-pointer rounded-control border border-line-strong bg-transparent px-2.5 text-xs text-muted hover:bg-raised hover:text-text focus-visible:outline-1 focus-visible:outline-accent"
+      onClick={async () => {
+        await api.POST("/auth/logout");
+        queries.clear();
+        router.replace("/login");
+      }}
+    >
+      {t("signOut")}
+    </button>
   );
 }

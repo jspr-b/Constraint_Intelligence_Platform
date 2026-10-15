@@ -74,6 +74,11 @@
     line-height: 1.45;
     font-variant-numeric: tabular-nums;
   }
+  /* Links are underlined: status and meaning never by colour alone (WCAG link-in-text-block). */
+  a {
+    text-decoration-line: underline;
+    text-underline-offset: 3px;
+  }
   :focus-visible {
     outline: 1px solid var(--accent);
     outline-offset: 2px;

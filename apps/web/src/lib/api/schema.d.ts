@@ -72,6 +72,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/access/presets/{preset}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Preset
+         * @description Page presets: 'everyone' opens every page to every role; 'role_menus' limits each role
+         *     to its own menu. Start pages and locked pages stay open. One audit entry.
+         */
+        post: operations["apply_preset_access_presets__preset__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/audit": {
         parameters: {
             query?: never;
@@ -81,6 +102,26 @@ export interface paths {
         };
         /** Audit Log */
         get: operations["audit_log_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Auth Config
+         * @description What the sign-in page shows. Public: reveals only the tenant's display name.
+         */
+        get: operations["auth_config_auth_config_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -180,6 +221,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/stations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Station Choices
+         * @description Machines with an active station login, for the 'Which station is this?' picker.
+         */
+        get: operations["station_choices_auth_stations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -191,6 +252,43 @@ export interface paths {
         get: operations["health_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import_imports__import_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run
+         * @description Start the connector in a worker. The page polls this import until it is done or failed.
+         */
+        post: operations["run_imports__import_id__run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -227,6 +325,209 @@ export interface paths {
          */
         get: operations["list_plants_plants_get"];
         put?: never;
+        /** Create Plant */
+        post: operations["create_plant_plants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar */
+        get: operations["calendar_plants__plant_code__calendar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/calendar/windows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Window */
+        post: operations["add_window_plants__plant_code__calendar_windows_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/calendar/windows/{window_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Window */
+        delete: operations["delete_window_plants__plant_code__calendar_windows__window_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Set Covered
+         * @description Mark a break as covered: someone keeps the machine running during the break.
+         */
+        patch: operations["set_covered_plants__plant_code__calendar_windows__window_id__patch"];
+        trace?: never;
+    };
+    "/plants/{plant_code}/capacity-costs/{resource_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Capacity Cost */
+        put: operations["put_capacity_cost_plants__plant_code__capacity_costs__resource_code__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/changeovers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Changeover */
+        put: operations["put_changeover_plants__plant_code__changeovers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports_plants__plant_code__imports_get"];
+        put?: never;
+        /**
+         * Upload
+         * @description Store uploaded CSV/Excel exports for a plant. Nothing is read into the platform yet.
+         */
+        post: operations["upload_plants__plant_code__imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/overtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Overtime
+         * @description Overtime worked on one machine in one ISO week (never per person).
+         */
+        put: operations["put_overtime_plants__plant_code__overtime_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Resources
+         * @description Machines of a plant (for pickers; the Plant setup page manages them).
+         */
+        get: operations["list_resources_plants__plant_code__resources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/resources/{resource_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Resource */
+        put: operations["put_resource_plants__plant_code__resources__resource_code__put"];
+        post?: never;
+        /** Delete Resource */
+        delete: operations["delete_resource_plants__plant_code__resources__resource_code__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Setup */
+        get: operations["setup_plants__plant_code__setup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/stations/{station_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Station */
+        put: operations["put_station_plants__plant_code__stations__station_code__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -416,6 +717,96 @@ export interface components {
             /** Target */
             target: string;
         };
+        /** AuthConfigOut */
+        AuthConfigOut: {
+            /** Provider */
+            provider: string;
+            /** Tenant Name */
+            tenant_name: string | null;
+        };
+        /** Body_upload_plants__plant_code__imports_post */
+        Body_upload_plants__plant_code__imports_post: {
+            /** Files */
+            files: string[];
+        };
+        /** CalendarOut */
+        CalendarOut: {
+            /** Data End At */
+            data_end_at: string | null;
+            /** Data Start At */
+            data_start_at: string | null;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Exceptions */
+            exceptions: components["schemas"]["WindowOut"][];
+            /** Machines */
+            machines: components["schemas"]["MachineDay"][];
+            /** Overtime */
+            overtime: components["schemas"]["OvertimeOut"][];
+            /** Plant Code */
+            plant_code: string;
+            /** Timezone Iana */
+            timezone_iana: string;
+        };
+        /** CapacityCostIn */
+        CapacityCostIn: {
+            /** Extra Shift Eur Cents */
+            extra_shift_eur_cents?: number | null;
+            /** Overtime Eur Cents Per H */
+            overtime_eur_cents_per_h?: number | null;
+        };
+        /** CapacityCostOut */
+        CapacityCostOut: {
+            /** Extra Shift Eur Cents */
+            extra_shift_eur_cents?: number | null;
+            /** Overtime Eur Cents Per H */
+            overtime_eur_cents_per_h?: number | null;
+            /** Resource Code */
+            resource_code: string;
+        };
+        /** ChangeoverIn */
+        ChangeoverIn: {
+            /** Changeover Min */
+            changeover_min: number;
+            /** From Setup Family */
+            from_setup_family: string;
+            /** Resource Code */
+            resource_code: string;
+            /** To Setup Family */
+            to_setup_family: string;
+        };
+        /** ChangeoverOut */
+        ChangeoverOut: {
+            /** Changeover Min */
+            changeover_min: number;
+            /** From Setup Family */
+            from_setup_family: string;
+            /** Resource Code */
+            resource_code: string;
+            /** To Setup Family */
+            to_setup_family: string;
+        };
+        /** ColumnOut */
+        ColumnOut: {
+            /** Conversions */
+            conversions: string[];
+            /** Example */
+            example: string | null;
+            /** Fields */
+            fields: string[];
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+        };
+        /** CoveredIn */
+        CoveredIn: {
+            /** Covered */
+            covered: boolean;
+        };
         /** DataIn */
         DataIn: {
             money: components["schemas"]["Money"];
@@ -471,6 +862,39 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ImportOut */
+        ImportOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /** Files */
+            files: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Import Id
+             * Format: uuid
+             */
+            import_id: string;
+            /** Mapping */
+            mapping: string;
+            /** Minimum Set */
+            minimum_set: components["schemas"]["MinimumOut"][];
+            /** Plant Code */
+            plant_code: string;
+            /** Report */
+            report: {
+                [key: string]: unknown;
+            } | null;
+            /** Sources */
+            sources: components["schemas"]["SourceOut"][];
+            /** Status */
+            status: string;
+        };
         /** InviteIn */
         InviteIn: {
             /** Email */
@@ -478,6 +902,28 @@ export interface components {
             /** Plant Code */
             plant_code?: string | null;
             role: components["schemas"]["Role"];
+        };
+        /** MachineDay */
+        MachineDay: {
+            /** Name */
+            name: string;
+            /** Resource Code */
+            resource_code: string;
+            /** Windows */
+            windows: components["schemas"]["WindowOut"][];
+        };
+        /** MachineOut */
+        MachineOut: {
+            /** Has Station Login */
+            has_station_login: boolean;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Parallel Units */
+            parallel_units: number;
+            /** Resource Code */
+            resource_code: string;
         };
         /** MeOut */
         MeOut: {
@@ -506,6 +952,15 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** MinimumOut */
+        MinimumOut: {
+            /** Key */
+            key: string;
+            /** Numbers */
+            numbers: number[];
+            /** Status */
+            status: string;
+        };
         /** MissingOut */
         MissingOut: {
             /** Confidence Impact */
@@ -530,6 +985,42 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** OperationOut */
+        OperationOut: {
+            /** Alternatives */
+            alternatives: string[];
+            /** Erp Min Per Unit */
+            erp_min_per_unit: number | null;
+            measured_min_per_unit: components["schemas"]["FigureOut"] | null;
+            /** Operation */
+            operation: string;
+            /** Resource Code */
+            resource_code: string;
+            /** Used By */
+            used_by: string[];
+        };
+        /** OvertimeIn */
+        OvertimeIn: {
+            /** Iso Week */
+            iso_week: number;
+            /** Iso Year */
+            iso_year: number;
+            /** Overtime H */
+            overtime_h: number;
+            /** Resource Code */
+            resource_code: string;
+        };
+        /** OvertimeOut */
+        OvertimeOut: {
+            /** Iso Week */
+            iso_week: number;
+            /** Iso Year */
+            iso_year: number;
+            /** Overtime H */
+            overtime_h: number;
+            /** Resource Code */
+            resource_code: string;
+        };
         /** PageIn */
         PageIn: {
             /** Allowed */
@@ -542,6 +1033,18 @@ export interface components {
         PinIn: {
             /** Pin */
             pin: string;
+        };
+        /** PlantIn */
+        PlantIn: {
+            /** Name */
+            name: string;
+            /** Plant Code */
+            plant_code: string;
+            /**
+             * Timezone Iana
+             * @default Europe/Amsterdam
+             */
+            timezone_iana: string;
         };
         /** PlantOut */
         PlantOut: {
@@ -572,6 +1075,52 @@ export interface components {
          * @enum {string}
          */
         Plants: "all" | "own";
+        /** ProductOut */
+        ProductOut: {
+            /** Family */
+            family: string;
+            /** Name */
+            name: string;
+            /** Sales Price Eur Cents */
+            sales_price_eur_cents: number;
+            /** Setup Family */
+            setup_family: string | null;
+            /** Sku */
+            sku: string;
+            throughput_per_unit: components["schemas"]["FigureOut"];
+            /** Truly Variable Cost Eur Cents */
+            truly_variable_cost_eur_cents: number;
+        };
+        /** ResourceIn */
+        ResourceIn: {
+            /**
+             * Kind
+             * @default machine
+             */
+            kind: string;
+            /** Name */
+            name: string;
+            /**
+             * Parallel Units
+             * @default 1
+             */
+            parallel_units: number;
+            /** Station Code */
+            station_code: string;
+        };
+        /** ResourceOut */
+        ResourceOut: {
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Parallel Units */
+            parallel_units: number;
+            /** Resource Code */
+            resource_code: string;
+            /** Station Code */
+            station_code: string;
+        };
         /**
          * Role
          * @enum {string}
@@ -589,6 +1138,59 @@ export interface components {
             /** Start Page */
             start_page: string;
         };
+        /** SetupOut */
+        SetupOut: {
+            /** Capacity Costs */
+            capacity_costs: components["schemas"]["CapacityCostOut"][];
+            /** Changeovers */
+            changeovers: components["schemas"]["ChangeoverOut"][];
+            /** Measured From Import */
+            measured_from_import: string | null;
+            /** Name */
+            name: string;
+            /** Operations */
+            operations: components["schemas"]["OperationOut"][];
+            /** Plant Code */
+            plant_code: string;
+            /** Products */
+            products: components["schemas"]["ProductOut"][];
+            /** Stations */
+            stations: components["schemas"]["StationOut"][];
+            /** Timezone Iana */
+            timezone_iana: string;
+        };
+        /** SourceOut */
+        SourceOut: {
+            /** Columns */
+            columns: components["schemas"]["ColumnOut"][];
+            /** File */
+            file: string | null;
+            /** Missing Columns */
+            missing_columns: string[];
+            /**
+             * Readable
+             * @default true
+             */
+            readable: boolean;
+            /** Source */
+            source: string;
+            /** Targets */
+            targets: string[];
+        };
+        /** StationChoiceOut */
+        StationChoiceOut: {
+            /** Plant Code */
+            plant_code: string;
+            /** Resource Code */
+            resource_code: string;
+            /** Resource Name */
+            resource_name: string | null;
+        };
+        /** StationIn */
+        StationIn: {
+            /** Name */
+            name: string;
+        };
         /** StationLoginOut */
         StationLoginOut: {
             /** Plant Code */
@@ -602,6 +1204,15 @@ export interface components {
             station_login_id: string;
             /** Status */
             status: string;
+        };
+        /** StationOut */
+        StationOut: {
+            /** Machines */
+            machines: components["schemas"]["MachineOut"][];
+            /** Name */
+            name: string;
+            /** Station Code */
+            station_code: string;
         };
         /** UserOut */
         UserOut: {
@@ -630,6 +1241,59 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * WindowIn
+         * @description Times with a zone are taken as given; times without one are plant local time.
+         */
+        WindowIn: {
+            /**
+             * Covered
+             * @default false
+             */
+            covered: boolean;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "shift" | "break" | "maintenance" | "holiday" | "overtime";
+            /** Resource Code */
+            resource_code: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+        };
+        /** WindowOut */
+        WindowOut: {
+            /** Covered */
+            covered: boolean;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** End Min */
+            end_min: number;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Resource Code */
+            resource_code: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /** Start Min */
+            start_min: number;
         };
         /** StationLoginIn */
         cip_api__auth__routes__StationLoginIn: {
@@ -807,6 +1471,41 @@ export interface operations {
             };
         };
     };
+    apply_preset_access_presets__preset__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                preset: "everyone" | "role_menus";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     audit_log_audit_get: {
         parameters: {
             query?: {
@@ -829,6 +1528,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_config_auth_config_get: {
+        parameters: {
+            query: {
+                tenant_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthConfigOut"];
                 };
             };
             /** @description Validation Error */
@@ -986,6 +1716,37 @@ export interface operations {
             };
         };
     };
+    station_choices_auth_stations_get: {
+        parameters: {
+            query: {
+                tenant_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationChoiceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -1002,6 +1763,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_import_imports__import_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_imports__import_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1048,6 +1879,571 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlantOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_plant_plants_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlantIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_plants__plant_code__calendar_get: {
+        parameters: {
+            query?: {
+                day?: string | null;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_window_plants__plant_code__calendar_windows_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WindowIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WindowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_window_plants__plant_code__calendar_windows__window_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                window_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_covered_plants__plant_code__calendar_windows__window_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                window_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoveredIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WindowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_capacity_cost_plants__plant_code__capacity_costs__resource_code__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                resource_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapacityCostIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_changeover_plants__plant_code__changeovers_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeoverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_imports_plants__plant_code__imports_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_plants__plant_code__imports_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_plants__plant_code__imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_overtime_plants__plant_code__overtime_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OvertimeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OvertimeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_resources_plants__plant_code__resources_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_resource_plants__plant_code__resources__resource_code__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                resource_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_resource_plants__plant_code__resources__resource_code__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                resource_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setup_plants__plant_code__setup_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_station_plants__plant_code__stations__station_code__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                station_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
                 };
             };
             /** @description Validation Error */

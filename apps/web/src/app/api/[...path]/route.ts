@@ -55,3 +55,6 @@ export async function PUT(request: NextRequest, { params }: Context) {
 export async function DELETE(request: NextRequest, { params }: Context) {
   return proxy(request, (await params).path);
 }
+export async function PATCH(request: NextRequest, { params }: Context) {
+  return proxy(request, (await params).path);
+}

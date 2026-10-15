@@ -1,0 +1,4 @@
+src/lib/api/schema.d.ts
+playwright-report
+test-results
+.next

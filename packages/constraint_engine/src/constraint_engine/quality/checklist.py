@@ -212,3 +212,39 @@ def to_markdown(items: list[ChecklistItem]) -> str:
         r = i.requirement
         lines.append(f"| {r.number} | {r.data} | {r.level} | {i.status} | {i.detail} |")
     return "\n".join(lines) + "\n"
+
+
+MINIMUM_SET: tuple[tuple[str, tuple[int, ...]], ...] = (
+    ("orders", (9,)),
+    ("routings", (4, 6)),
+    ("products", (5,)),
+    ("events", (12,)),
+    ("calendar", (16, 17, 19)),
+)
+"""The 5 exports + 1 sheet needed to start a diagnostic (docs/input-data.md), by item number."""
+
+
+@dataclass(frozen=True, slots=True)
+class MinimumItem:
+    key: str
+    numbers: tuple[int, ...]
+    status: str
+    """ok when every item is ok; missing when every item is missing; check when the rest needs a
+    person to confirm (e.g. no holidays listed); otherwise partial."""
+
+
+def minimum_set(items: list[ChecklistItem]) -> list[MinimumItem]:
+    by_number = {i.requirement.number: i.status for i in items}
+    out = []
+    for key, numbers in MINIMUM_SET:
+        statuses = [by_number.get(n, "missing") for n in numbers]
+        if all(s == "ok" for s in statuses):
+            status = "ok"
+        elif all(s == "missing" for s in statuses):
+            status = "missing"
+        elif all(s in ("ok", "check") for s in statuses):
+            status = "check"
+        else:
+            status = "partial"
+        out.append(MinimumItem(key, numbers, status))
+    return out

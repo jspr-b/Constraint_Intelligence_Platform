@@ -42,6 +42,28 @@ def list_plants(ctx: Annotated[Ctx, Depends(require())]) -> list[PlantOut]:
     return [PlantOut.model_validate(r._mapping) for r in rows if ctx.can_see_plant(r.plant_code)]
 
 
+class ResourceOut(BaseModel):
+    resource_code: str
+    name: str
+    kind: str
+    station_code: str
+    parallel_units: int
+
+
+@router.get("/{plant_code}/resources", response_model=list[ResourceOut])
+def list_resources(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> list[ResourceOut]:
+    """Machines of a plant (for pickers; the Plant setup page manages them)."""
+    ctx.check_plant(plant_code)
+    rows = ctx.db.execute(
+        text(
+            "SELECT resource_code, name, kind, station_code, parallel_units FROM resources "
+            "WHERE plant_code = :p ORDER BY resource_code"
+        ),
+        {"p": plant_code},
+    )
+    return [ResourceOut.model_validate(r._mapping) for r in rows]
+
+
 @router.get("/{plant_code}/summary", response_model=PlantSummaryOut)
 def plant_summary(
     plant_code: str, ctx: Annotated[Ctx, Depends(require(page="data"))]
