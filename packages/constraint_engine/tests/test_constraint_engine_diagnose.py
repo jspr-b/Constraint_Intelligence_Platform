@@ -32,7 +32,7 @@ def test_json_summary_has_provenance(
     assert data["row_errors"][0]["line"] == 3
 
 
-@pytest.mark.parametrize("section", ["detection", "forecast", "quality"])
+@pytest.mark.parametrize("section", ["detection", "forecast", "loss"])
 def test_planned_sections_not_available_yet(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], section: str
 ) -> None:

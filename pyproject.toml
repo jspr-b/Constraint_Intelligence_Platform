@@ -43,6 +43,10 @@ allowed-confusables = ["−", "×", "÷"]
 
 [tool.mypy]
 strict = true
+# Package sources resolve by import name; test files get unique path-based names, so the
+# conftest.py of each package does not clash.
+mypy_path = ["packages/schema/src", "packages/constraint_engine/src", "packages/connectors/src", "apps/api/src", "workers/src"]
+explicit_package_bases = true
 plugins = ["pydantic.mypy"]
 python_version = "3.12"
 files = ["packages", "apps/api", "workers"]

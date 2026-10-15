@@ -107,6 +107,18 @@ source = { editable = "apps/api" }
 name = "cip-connectors"
 version = "0.0.0"
 source = { editable = "packages/connectors" }
+dependencies = [
+    { name = "cip-schema" },
+    { name = "openpyxl" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cip-schema", editable = "packages/schema" },
+    { name = "openpyxl", specifier = ">=3.1" },
+    { name = "pyyaml", specifier = ">=6" },
+]
 
 [[package]]
 name = "cip-schema"

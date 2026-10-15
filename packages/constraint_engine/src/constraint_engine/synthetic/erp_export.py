@@ -72,11 +72,9 @@ class Exporter:
     def local(self, iso: str) -> datetime | None:
         if not iso:
             return None
-        return (
-            datetime.fromisoformat(iso.replace("Z", "+00:00"))
-            .astimezone(self.tz)
-            .replace(tzinfo=None)
-        )
+        moment = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(self.tz)
+        # ERP exports show local time to the minute; CSV and xlsx carry the same value.
+        return moment.replace(tzinfo=None, second=0, microsecond=0)
 
     @staticmethod
     def euros(cents: str) -> str:

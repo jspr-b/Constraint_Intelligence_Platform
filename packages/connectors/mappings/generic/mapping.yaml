@@ -1,0 +1,150 @@
+# Generic mapping for a Dutch ERP + MES export (as produced by data/synthetic/plant_a/erp_export).
+# Organised by target: for each standard field, which source column and how to convert it.
+# Copy this file per customer source system and adjust column names and code tables.
+source_system: GENERIC-NL
+timezone: Europe/Amsterdam
+decimal: ","
+delimiter: ";"
+datetime_format: "%d-%m-%Y %H:%M"
+personal_columns: [Medewerker]
+
+code_tables:
+  resource:
+    { SNIJ1: CUT-01, LAS1: WLD-01, LAS2: WLD-02, LAK1: PNT-01, MONT1: ASM-01, INPAK1: PCK-01 }
+  station:
+    {
+      Cutting: CUTTING,
+      Welding cell: WELD-CELL,
+      Paint: PAINT,
+      Assembly: ASSEMBLY,
+      Packing: PACKING,
+    }
+  event_status:
+    GESTART: start
+    GEREED: end
+    OMSTEL_START: setup_start
+    OMSTEL_EINDE: setup_end
+    STORING_START: down_start
+    STORING_EINDE: down_end
+    AFKEUR: scrap
+    AANKOMST: scan
+    VERTREK: move
+  order_status: { Open: open, Vrijgegeven: released, In bewerking: in_progress, Verzonden: shipped }
+  calendar_kind: { Dienst: shift, Pauze: break, Onderhoud: maintenance, Feestdag: holiday }
+
+tables:
+  # werkplekken: Werkplek;Omschrijving;Afdeling  →  LAS2;Welding 2;Welding cell
+  - source: werkplekken
+    target: stations
+    unique: true
+    fields:
+      station_code: { from: Afdeling, code_table: station }
+      name: { from: Afdeling }
+  - source: werkplekken
+    target: resources
+    fields:
+      resource_code: { from: Werkplek, code_table: resource }
+      name: { from: Omschrijving }
+      station_code: { from: Afdeling, code_table: station }
+      kind: { constant: machine }
+      parallel_units: { constant: "1" }
+
+  # artikelen: Artikel;Omschrijving;Productgroep;Kleurgroep;Verkoopprijs;Variabele kosten
+  #            F-200;Frame;Frames;RAL7016;980,00;430,00
+  - source: artikelen
+    target: products
+    fields:
+      sku: { from: Artikel }
+      name: { from: Omschrijving }
+      family: { from: Productgroep }
+      setup_family: { from: Kleurgroep, optional: true }
+      sales_price_eur_cents: { from: Verkoopprijs, type: eur_cents }
+      truly_variable_cost_eur_cents: { from: Variabele kosten, type: eur_cents }
+
+  # bewerkingen: Artikel;Bewerking nr;Bewerking;Werkplek;Alternatief;Insteltijd (min);Stuktijd (min)
+  #              F-200;020;Weld;LAS1;LAS2;;9
+  - source: bewerkingen
+    target: routings
+    fields:
+      sku: { from: Artikel }
+      operation_seq: { from: Bewerking nr, type: int }
+      operation: { from: Bewerking }
+      resource_code: { from: Werkplek, code_table: resource }
+      alternative_resource_codes:
+        { from: Alternatief, type: list, code_table: resource, optional: true }
+      standard_setup_min: { from: Insteltijd (min), type: decimal, optional: true }
+      standard_run_min_per_unit: { from: Stuktijd (min), type: decimal, optional: true }
+
+  # orders: Ordernummer;Artikel;Aantal;Leverdatum;Status;Vrijgegeven;Verzonden;Materiaal gereed
+  #         24187;B-40;14;30-07-2026 10:12;Verzonden;20-07-2026 10:12;23-07-2026 15:40;20-07-2026 10:12
+  - source: orders
+    target: orders
+    fields:
+      order_id: { from: Ordernummer, prefix: SO- }
+      sku: { from: Artikel }
+      quantity_units: { from: Aantal, type: int }
+      due_at: { from: Leverdatum, type: datetime }
+      status: { from: Status, code_table: order_status }
+      released_at: { from: Vrijgegeven, type: datetime, optional: true }
+      shipped_at: { from: Verzonden, type: datetime, optional: true }
+      material_ready_at: { from: Materiaal gereed, type: datetime, optional: true }
+
+  # mes_events: Werkplek;Afdeling;Bon;Bewerking;Status;Tijdstip;Aantal;Afkeur;Storingscode;Afkeurcode;Medewerker
+  #             LAS2;;24187;020;GESTART;13-10-2026 09:15;14;;;;(dropped: personal)
+  - source: mes_events
+    target: events
+    fields:
+      event_id: { generate: row_id }
+      event_type: { from: Status, code_table: event_status }
+      at: { from: Tijdstip, type: datetime }
+      resource_code: { from: Werkplek, code_table: resource, optional: true }
+      station_code: { from: Afdeling, code_table: station, optional: true }
+      order_id: { from: Bon, prefix: SO-, optional: true }
+      operation_seq: { from: Bewerking, type: int, optional: true }
+      quantity_units: { from: Aantal, type: int, optional: true }
+      scrap_units: { from: Afkeur, type: int, optional: true }
+      down_reason_code: { from: Storingscode, optional: true }
+      scrap_reason_code: { from: Afkeurcode, optional: true }
+
+  # rooster: Werkplek;Type;Start;Einde;Overgenomen  →  LAK1;Pauze;13-10-2026 12:00;13-10-2026 12:30;nee
+  - source: rooster
+    target: calendar
+    fields:
+      resource_code: { from: Werkplek, code_table: resource }
+      kind: { from: Type, code_table: calendar_kind }
+      start_at: { from: Start, type: datetime }
+      end_at: { from: Einde, type: datetime }
+      covered: { from: Overgenomen, type: bool, optional: true }
+
+  # overuren: Werkplek;Jaar;Week;Overuren  →  LAS1;2026;34;6,0
+  - source: overuren
+    target: overtime
+    fields:
+      resource_code: { from: Werkplek, code_table: resource }
+      iso_year: { from: Jaar, type: int }
+      iso_week: { from: Week, type: int }
+      overtime_h: { from: Overuren, type: decimal }
+
+  # capaciteitskosten: Werkplek;Overwerk per uur;Extra dienst  →  LAK1;62,50;2500,00
+  - source: capaciteitskosten
+    target: capacity_costs
+    fields:
+      resource_code: { from: Werkplek, code_table: resource }
+      overtime_eur_cents_per_h: { from: Overwerk per uur, type: eur_cents, optional: true }
+      extra_shift_eur_cents: { from: Extra dienst, type: eur_cents, optional: true }
+
+  # omsteltijden: Werkplek;Van kleurgroep;Naar kleurgroep;Omsteltijd (min)  →  LAK1;RAL9005;RAL7016;25,0
+  - source: omsteltijden
+    target: changeovers
+    fields:
+      resource_code: { from: Werkplek, code_table: resource }
+      from_setup_family: { from: Van kleurgroep }
+      to_setup_family: { from: Naar kleurgroep }
+      changeover_min: { from: Omsteltijd (min), type: decimal }
+
+  # uitbesteding: Bewerking;Prijs per stuk  →  Paint;18,00
+  - source: uitbesteding
+    target: outsourcing
+    fields:
+      operation: { from: Bewerking }
+      price_eur_cents_per_unit: { from: Prijs per stuk, type: eur_cents }
