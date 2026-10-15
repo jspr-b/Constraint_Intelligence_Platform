@@ -6,6 +6,10 @@
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:api": "openapi-typescript ../api/openapi.json -o src/lib/api/schema.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.4.4"
   }
 }

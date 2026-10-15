@@ -1,5 +1,5 @@
-# Local stack. Data services now; api, web and worker are added by later sequences.
-# Host ports are offset (55432, 56379) to avoid clashing with other local databases.
+# Local stack: data services, API and worker; the web app is added by a later sequence.
+# Host ports are offset (55432, 56379, 58000) to avoid clashing with other local projects.
 name: cip
 
 services:
@@ -31,6 +31,51 @@ services:
       timeout: 3s
       retries: 20
 
+  api:
+    image: ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim
+    working_dir: /app
+    command: >
+      uv run --frozen --package cip-api uvicorn cip_api.main:app --host 0.0.0.0 --port 8000
+      --reload --reload-dir apps/api/src --reload-dir packages
+    environment:
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      UV_LINK_MODE: copy
+      CIP_ENV: dev
+      CIP_DB_HOST: db
+      CIP_DB_PORT: "5432"
+      CIP_REDIS_HOST: redis
+      CIP_REDIS_PORT: "6379"
+    volumes:
+      - .:/app
+      - api_venv:/opt/venv
+    ports:
+      - "${CIP_API_PORT:-58000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/astral-sh/uv:0.5.11-python3.12-bookworm-slim
+    working_dir: /app
+    command: >
+      uv run --frozen --package cip-workers dramatiq cip_workers.actors --processes 1 --threads 2
+    environment:
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      UV_LINK_MODE: copy
+      CIP_ENV: dev
+      CIP_REDIS_HOST: redis
+      CIP_REDIS_PORT: "6379"
+    volumes:
+      - .:/app
+      - worker_venv:/opt/venv
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   db_data:
   redis_data:
+  api_venv:
+  worker_venv:

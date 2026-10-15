@@ -16,7 +16,9 @@ class Settings(BaseSettings):
     db_owner_password: str = "cip_owner_dev"
     db_app_user: str = "cip_app"
     db_app_password: str = "cip_app_dev"
+    redis_host: str = "localhost"
     redis_port: int = 56379
+    version: str = "0.0.0"
 
     def db_url(self, as_owner: bool = False) -> str:
         user, password = (

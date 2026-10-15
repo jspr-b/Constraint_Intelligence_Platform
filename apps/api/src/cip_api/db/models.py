@@ -38,7 +38,9 @@ class Plant(Base):
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     timezone_iana: Mapped[str] = mapped_column(String(64), nullable=False)
-    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="EUR")
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="EUR", server_default="EUR"
+    )
 
 
 class Station(Base):
@@ -55,9 +57,13 @@ class Resource(Base):
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(16), primary_key=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
-    kind: Mapped[str] = mapped_column(String(16), nullable=False, default="machine")
+    kind: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="machine", server_default="machine"
+    )
     station_code: Mapped[str] = mapped_column(String(32), nullable=False)
-    parallel_units: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    parallel_units: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
 
 
 class Product(Base):
@@ -82,7 +88,9 @@ class RoutingStep(Base):
     operation_seq: Mapped[int] = mapped_column(Integer, primary_key=True)
     operation: Mapped[str] = mapped_column(String(100), nullable=False)
     resource_code: Mapped[str] = mapped_column(String(16), nullable=False)
-    alternative_resource_codes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    alternative_resource_codes: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
     standard_setup_min: Mapped[float | None] = mapped_column(Double)
     standard_run_min_per_unit: Mapped[float | None] = mapped_column(Double)
 
@@ -106,7 +114,9 @@ class CalendarWindow(Base):
     kind: Mapped[str] = mapped_column(String(16), nullable=False)
     start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    covered: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    covered: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
 
 class Order(Base):
@@ -136,8 +146,10 @@ class OperationEvent(Base):
     station_code: Mapped[str | None] = mapped_column(String(32))
     order_id: Mapped[str | None] = mapped_column(String(64))
     operation_seq: Mapped[int | None] = mapped_column(Integer)
-    quantity_units: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    scrap_units: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    quantity_units: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    scrap_units: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     down_reason_code: Mapped[str | None] = mapped_column(String(32))
     scrap_reason_code: Mapped[str | None] = mapped_column(String(32))
 

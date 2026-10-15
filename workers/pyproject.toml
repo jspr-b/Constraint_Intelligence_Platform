@@ -3,7 +3,10 @@ name = "cip-workers"
 version = "0.0.0"
 description = "Background jobs."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "constraint-engine",
+    "dramatiq[redis]>=1.17",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -11,3 +14,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cip_workers"]
+
+[tool.uv.sources]
+constraint-engine = { workspace = true }

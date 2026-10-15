@@ -11,3 +11,5 @@ docs/
 .ruff_cache
 packages/schema/json
 data/synthetic
+apps/api/openapi.json
+apps/web/src/lib/api/schema.d.ts
