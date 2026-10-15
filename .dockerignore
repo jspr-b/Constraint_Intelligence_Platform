@@ -1,0 +1,19 @@
+# Keep build contexts small and free of local state and secrets.
+.git
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.venv
+**/.next
+**/__pycache__
+**/*.pyc
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+.pnpm-store
+var
+data/private

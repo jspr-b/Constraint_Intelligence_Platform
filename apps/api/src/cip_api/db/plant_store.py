@@ -7,7 +7,7 @@ import uuid
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import Connection, Table, delete
+from sqlalchemy import Connection, Table, delete, text
 
 from cip_api.db.models import Base
 from constraint_engine.figure import Missing
@@ -57,6 +57,10 @@ def replace_plant_data(
     Record types the import did not deliver (empty) are left as they are, so machines and
     stations entered on the Plant setup page survive an import without a machine list.
     """
+    # One import per plant at a time: concurrent replaces would interleave deletes and inserts.
+    conn.execute(
+        text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": f"plant:{tenant}:{plant_code}"}
+    )
     counts: dict[str, int] = {}
     for name, table_name in TABLES.items():
         table: Table = Base.metadata.tables[table_name]

@@ -148,6 +148,6 @@ test("connections: IT start page shows the last import and runs it again", async
     "row-level security",
   );
   await page.getByRole("button", { name: "Run import now" }).click();
-  await expect(upload).toContainText(/Running|OK/);
+  await expect(upload).toContainText("Running");
   await expect(upload).toContainText("OK", { timeout: 90_000 });
 });

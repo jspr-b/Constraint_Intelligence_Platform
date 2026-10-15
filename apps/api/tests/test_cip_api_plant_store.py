@@ -63,3 +63,22 @@ def test_record_types_not_in_the_import_are_kept(tenant: uuid.UUID) -> None:
         machines = conn.execute(text("SELECT count(*) FROM resources")).scalar_one()
         events = conn.execute(text("SELECT count(*) FROM operation_events")).scalar_one()
     assert counts == {"events": 10} and machines == 6 and events == 10
+
+
+def test_concurrent_replaces_of_one_plant_are_serialised(tenant: uuid.UUID) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    plant = load_plant(PLANT_A)
+    settings = get_settings()
+
+    def store() -> dict[str, int]:
+        with tenant_conn(settings, tenant) as conn:
+            return replace_plant_data(conn, tenant, "PLANT-A", plant)
+
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        results = list(pool.map(lambda _: store(), range(3)))
+    assert results[0] == results[1] == results[2]
+    with tenant_conn(settings, tenant) as conn:
+        assert conn.execute(text("SELECT count(*) FROM stations")).scalar_one() == len(
+            plant.stations
+        )

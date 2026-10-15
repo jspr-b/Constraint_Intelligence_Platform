@@ -288,8 +288,12 @@ def run(
     """Start the connector in a worker. The page polls this import until it is done or failed."""
     row = _row(ctx.db, import_id)
     ctx.check_plant(row.plant_code)
-    if row.status == "running":
-        raise HTTPException(status.HTTP_409_CONFLICT, "this import is already running")
+    busy = ctx.db.execute(
+        text("SELECT 1 FROM imports WHERE plant_code = :p AND status = 'running'"),
+        {"p": row.plant_code},
+    ).first()
+    if busy:
+        raise HTTPException(status.HTTP_409_CONFLICT, "an import for this plant is running")
     # Committed at once in its own transaction, so the job never waits on this request.
     with tenant_conn(settings, ctx.principal.tenant_id) as conn:
         conn.execute(

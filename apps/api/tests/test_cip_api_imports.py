@@ -133,3 +133,5 @@ def test_outside_tests_the_run_is_queued_for_a_worker(
     message = stub.queues["default"].get_nowait()
     assert b'"actor_name":"run_import"' in message.replace(b" ", b"")
     assert client.post(f"/imports/{body['import_id']}/run").status_code == 409
+    other = client.post("/plants/PLANT-1/imports", files=_files(EXPORT / "clean" / "csv")).json()
+    assert client.post(f"/imports/{other['import_id']}/run").status_code == 409
