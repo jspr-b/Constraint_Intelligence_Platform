@@ -8,7 +8,7 @@ uses engine calculations, so tests against it are not circular.
 from datetime import date, time
 from typing import Any
 
-from constraint_engine.synthetic.intervals import Interval, intersect, normalise, subtract, total
+from constraint_engine.intervals import Interval, intersect, normalise, subtract, total
 from constraint_engine.synthetic.model import SimResult
 
 STATES = (

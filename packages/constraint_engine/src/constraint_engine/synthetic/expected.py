@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from constraint_engine.synthetic.intervals import intersect, subtract, total
+from constraint_engine.intervals import intersect, subtract, total
 from constraint_engine.synthetic.model import SimResult
 from constraint_engine.synthetic.truth import generator_log
 

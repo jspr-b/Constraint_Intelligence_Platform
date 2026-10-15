@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from constraint_engine.intervals import Interval, normalise
 from constraint_engine.synthetic.config import PlantCfg
-from constraint_engine.synthetic.intervals import Interval, normalise
 
 
 @dataclass

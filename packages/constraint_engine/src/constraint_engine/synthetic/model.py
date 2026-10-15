@@ -16,9 +16,9 @@ from typing import Any
 
 import simpy
 
+from constraint_engine.intervals import Interval, normalise, subtract, total
 from constraint_engine.synthetic.calendar import Clock, MachineCalendar, build_calendars
 from constraint_engine.synthetic.config import PlantCfg, ProductCfg
-from constraint_engine.synthetic.intervals import Interval, normalise, subtract, total
 
 NEVER = 10.0**9
 

@@ -88,3 +88,17 @@ def test_period_must_be_aware_and_ordered() -> None:
         Figure(value=1, unit="h", formula_id="x", period_start_at=datetime(2026, 1, 1))
     with pytest.raises(ValueError, match="before"):
         Figure(value=1, unit="h", formula_id="x", period_start_at=END, period_end_at=START)
+
+
+def test_coverage_index_matches_interval_arithmetic() -> None:
+    import random
+
+    from constraint_engine.intervals import CoverageIndex, intersect, total
+
+    rng = random.Random(3)
+    items = [(s, s + rng.uniform(1, 50)) for s in sorted(rng.uniform(0, 5000) for _ in range(200))]
+    index = CoverageIndex(items)
+    for _ in range(300):
+        a = rng.uniform(-100, 5200)
+        b = a + rng.uniform(0, 800)
+        assert index.covered(a, b) == pytest.approx(total(intersect(items, [(a, b)])), abs=1e-6)
