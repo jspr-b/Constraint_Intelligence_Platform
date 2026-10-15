@@ -422,6 +422,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/data-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Data Quality */
+        get: operations["data_quality_plants__plant_code__data_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/imports": {
         parameters: {
             query?: never;
@@ -813,6 +830,30 @@ export interface components {
             plants: components["schemas"]["Plants"];
             role: components["schemas"]["Role"];
         };
+        /** DataQualityOut */
+        DataQualityOut: {
+            /** Event Period End At */
+            event_period_end_at: string | null;
+            /** Event Period Start At */
+            event_period_start_at: string | null;
+            event_period_weeks: components["schemas"]["FigureOut"] | null;
+            /** Files */
+            files: components["schemas"]["FileOut"][];
+            /** Files Missing */
+            files_missing: string[];
+            /** Files Required */
+            files_required: number;
+            /** Gaps */
+            gaps: components["schemas"]["GapOut"][];
+            /** Import Id */
+            import_id: string | null;
+            /** Imported At */
+            imported_at: string | null;
+            /** Plant Code */
+            plant_code: string;
+            rows: components["schemas"]["FigureOut"] | null;
+            score: components["schemas"]["FigureOut"] | null;
+        };
         /**
          * Decision
          * @enum {string}
@@ -856,6 +897,38 @@ export interface components {
             unit: string;
             /** Value */
             value: number | components["schemas"]["MissingOut"];
+        };
+        /** FileOut */
+        FileOut: {
+            /** Examples */
+            examples: {
+                [key: string]: number | string;
+            }[];
+            /** File */
+            file: string;
+            /** Reasons */
+            reasons: {
+                [key: string]: number;
+            };
+            /** Rejected */
+            rejected: number;
+            /** Rows */
+            rows: number;
+        };
+        /** GapOut */
+        GapOut: {
+            /** Code */
+            code: string;
+            /** Confidence Impact */
+            confidence_impact: string;
+            /** Count */
+            count: number;
+            /** Description */
+            description: string;
+            /** Fix */
+            fix: string;
+            /** Resource Code */
+            resource_code: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2145,6 +2218,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    data_quality_plants__plant_code__data_quality_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataQualityOut"];
                 };
             };
             /** @description Validation Error */

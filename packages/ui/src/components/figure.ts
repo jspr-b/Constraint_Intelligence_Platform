@@ -37,6 +37,9 @@ export function formatFigure(figure: FigureLike, locale = "en"): string {
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} h`;
   if (unit === "min_per_unit")
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} min/unit`;
+  if (unit === "weeks")
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} wk`;
+  if (unit === "score") return new Intl.NumberFormat(locale).format(value);
   if (unit === "pct")
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)}%`;
   return `${new Intl.NumberFormat(locale).format(value)} ${unit}`;

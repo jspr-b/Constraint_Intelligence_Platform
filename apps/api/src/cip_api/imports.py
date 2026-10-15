@@ -29,9 +29,11 @@ from cip_connectors.importer import import_export
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
 from cip_connectors.readers import find_source
-from constraint_engine.io.plant_loader import load_plant
+from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError, load_plant
 from constraint_engine.quality.checklist import checklist, minimum_set, parse_requirements
+from constraint_engine.quality.report import QualityReport, event_period_weeks, quality_report
 from constraint_engine.reconstruct.durations import pair_operations, task_times
+from constraint_engine.summary import record_count
 
 router = APIRouter(tags=["imports"])
 REPO = Path(__file__).resolve().parents[4]
@@ -309,6 +311,41 @@ def run(
     return _out(settings, tenant, _row(ctx.db, import_id))
 
 
+def quality_dict(q: QualityReport, plant: LoadedPlant) -> dict[str, Any]:
+    """The engine's quality report as stored JSON: every number a Figure or a plain count."""
+    times = [e.at for e in plant.events]
+    return {
+        "score": q.score.to_dict(),
+        "rows": record_count("all", sum(f.rows for f in q.files), len(q.rejected_rows)).to_dict(),
+        "files": [
+            {
+                "file": f.file,
+                "rows": f.rows,
+                "rejected": f.rejected,
+                "reasons": f.reasons,
+                "examples": [{"line": e.line, "reason": e.reason} for e in f.examples[:5]],
+            }
+            for f in q.files
+        ],
+        "files_required": len(REQUIRED),
+        "files_missing": sorted(n for n in plant.missing_files if n in REQUIRED),
+        "gaps": [
+            {
+                "code": g.code,
+                "description": g.description,
+                "confidence_impact": g.confidence_impact.label,
+                "fix": g.fix,
+                "resource_code": g.resource_code,
+                "count": g.count,
+            }
+            for g in q.gaps
+        ],
+        "event_period_weeks": event_period_weeks(plant.events).to_dict(),
+        "event_period_start_at": min(times).isoformat() if times else None,
+        "event_period_end_at": max(times).isoformat() if times else None,
+    }
+
+
 def _run_quietly(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> None:
     with contextlib.suppress(Exception):  # the failure is recorded on the import
         run_import(settings, tenant, import_id)
@@ -332,6 +369,13 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
         loaded = load_plant(standard, tenant_id=tenant)
         items = checklist(parse_requirements(INPUT_DATA.read_text()), loaded)
         measured = task_times(pair_operations(loaded), per_product=False)
+        # Rejected rows count against the standard file they would have filled (e.g. events.csv).
+        target = {f"{t.source}.csv": f"{t.target}.csv" for t in mapping.tables}
+        target |= {f"{t.source}.xlsx": f"{t.target}.csv" for t in mapping.tables}
+        quality = quality_report(
+            loaded,
+            [RowError(target.get(e.file, e.file), e.line, e.reason) for e in report.row_errors],
+        )
         with tenant_conn(settings, tenant) as conn:
             stored = replace_plant_data(conn, tenant, row.plant_code, loaded)
             result = {
@@ -348,6 +392,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                     }
                     for i in items
                 ],
+                "quality": quality_dict(quality, loaded),
                 "task_times": [
                     {
                         "resource_code": m.resource_code,

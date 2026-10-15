@@ -87,3 +87,25 @@ def test_missing_events_file_is_a_high_impact_gap(tmp_path: Path) -> None:
     assert [(g.description, g.confidence_impact) for g in missing] == [
         ("events.csv is missing", Confidence.HIGH)
     ]
+
+
+def test_event_period_weeks() -> None:
+    from datetime import UTC, datetime
+
+    from cip_schema.transactional import OperationEvent
+    from constraint_engine.quality.report import event_period_weeks
+
+    def ev(day: int) -> OperationEvent:
+        return OperationEvent.model_validate(
+            {
+                "tenant_id": "00000000-0000-0000-0000-000000000000",
+                "event_id": f"e{day}",
+                "event_type": "scan",
+                "station_code": "PAINT",
+                "at": datetime(2026, 7, day, tzinfo=UTC),
+            }
+        )
+
+    weeks = event_period_weeks([ev(1), ev(29)])
+    assert (weeks.value, weeks.unit, weeks.formula_id) == (4.0, "weeks", "event_period_weeks_v1")
+    assert event_period_weeks([]).is_missing

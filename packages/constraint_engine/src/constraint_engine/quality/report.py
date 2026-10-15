@@ -5,10 +5,10 @@ Gaps never change data: they describe what is missing and how much it lowers con
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 
 from cip_schema.transactional import EventType, OperationEvent
-from constraint_engine.figure import Confidence, Figure
+from constraint_engine.figure import Confidence, Figure, Missing
 from constraint_engine.formulas.registry import Calc, Resolved, formula
 from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError
 
@@ -216,4 +216,32 @@ def quality_report(
         gaps=gaps,
         score=data_quality_score(rows, len(errors), gaps),
         rejected_rows=errors,
+    )
+
+
+@formula(
+    "event_period_weeks",
+    1,
+    "event period = (last event − first event) in weeks, one decimal",
+    unit="weeks",
+)
+def event_period_weeks(events: list[OperationEvent]) -> Calc:
+    """How much history the events cover; Missing when there are no events."""
+    times = [e.at for e in events]
+    first: datetime | Missing = min(times) if times else Missing("events", "no events loaded")
+    last: datetime | Missing = max(times) if times else Missing("events", "no events loaded")
+
+    def compute(i: Resolved) -> float:
+        start = datetime.fromisoformat(str(i["first_event_at"]))
+        end = datetime.fromisoformat(str(i["last_event_at"]))
+        return round((end - start).total_seconds() / (7 * 86_400), 1)
+
+    return Calc(
+        inputs={
+            "first_event_at": first.isoformat() if isinstance(first, datetime) else first,
+            "last_event_at": last.isoformat() if isinstance(last, datetime) else last,
+        },
+        compute=compute,
+        period_start_at=first if isinstance(first, datetime) else None,
+        period_end_at=last if isinstance(last, datetime) else None,
     )

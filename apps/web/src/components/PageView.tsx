@@ -7,6 +7,7 @@ import { PAGES, type PageKey } from "@/lib/pages";
 import { AccessPage } from "./pages/AccessPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { ConnectionsPage } from "./pages/ConnectionsPage";
+import { DataQualityPage } from "./pages/DataQualityPage";
 import { ImportPage } from "./pages/ImportPage";
 import { SetupPage } from "./pages/SetupPage";
 import { UsersPage } from "./pages/UsersPage";
@@ -19,6 +20,7 @@ const BUILT: Partial<Record<PageKey, ComponentType>> = {
   access: AccessPage,
   calendar: CalendarPage,
   conn: ConnectionsPage,
+  data: DataQualityPage,
   import: ImportPage,
   setup: SetupPage,
   users: UsersPage,
