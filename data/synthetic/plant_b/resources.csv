@@ -1,0 +1,7 @@
+resource_code,name,station_code,kind,parallel_units
+CUT-01,Laser cutting,CUTTING,machine,1
+WLD-01,Welding 1,WELD-CELL,machine,1
+WLD-02,Welding 2,WELD-CELL,machine,1
+PNT-01,Paint line,PAINT,machine,1
+ASM-01,Assembly,ASSEMBLY,machine,1
+PCK-01,Packing,PACKING,machine,1

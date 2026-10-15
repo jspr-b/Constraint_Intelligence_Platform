@@ -1,0 +1,140 @@
+plant_code: PLANT-B
+seed: 7
+constraint: none
+constraint_kind: market
+utilisation_pct:
+  CUT-01: 9.2
+  WLD-01: 9.56
+  WLD-02: 16.42
+  PNT-01: 42.11
+  ASM-01: 16.28
+  PCK-01: 3.17
+throughput_eur_cents_per_constraint_h:
+  B-40: null
+  F-200: null
+  H-12: null
+  C-3: null
+  R-8: null
+lost_constraint_h_by_month: {}
+forecast:
+- orderbook_week: 1
+  iso_week: 2026-W42
+  load_pct:
+    CUT-01: 13.13
+    WLD-01: 20.84
+    WLD-02: 19.07
+    PNT-01: 67.75
+    ASM-01: 24.48
+    PCK-01: 4.61
+  binding_resource: null
+- orderbook_week: 2
+  iso_week: 2026-W43
+  load_pct:
+    CUT-01: 9.64
+    WLD-01: 14.08
+    WLD-02: 13.49
+    PNT-01: 55.47
+    ASM-01: 18.94
+    PCK-01: 3.4
+  binding_resource: null
+- orderbook_week: 3
+  iso_week: 2026-W44
+  load_pct:
+    CUT-01: 13.16
+    WLD-01: 19.16
+    WLD-02: 20.31
+    PNT-01: 68.58
+    ASM-01: 25.01
+    PCK-01: 4.55
+  binding_resource: null
+- orderbook_week: 4
+  iso_week: 2026-W45
+  load_pct:
+    CUT-01: 10.99
+    WLD-01: 12.61
+    WLD-02: 18.1
+    PNT-01: 51.31
+    ASM-01: 18.9
+    PCK-01: 3.87
+  binding_resource: null
+- orderbook_week: 5
+  iso_week: 2026-W46
+  load_pct:
+    CUT-01: 7.39
+    WLD-01: 5.99
+    WLD-02: 10.3
+    PNT-01: 42.71
+    ASM-01: 13.63
+    PCK-01: 2.74
+  binding_resource: null
+- orderbook_week: 6
+  iso_week: 2026-W47
+  load_pct:
+    CUT-01: 13.67
+    WLD-01: 14.41
+    WLD-02: 24.12
+    PNT-01: 75.41
+    ASM-01: 27.75
+    PCK-01: 4.51
+  binding_resource: null
+- orderbook_week: 7
+  iso_week: 2026-W48
+  load_pct:
+    CUT-01: 7.56
+    WLD-01: 15.54
+    WLD-02: 8.31
+    PNT-01: 47.62
+    ASM-01: 16.87
+    PCK-01: 2.66
+  binding_resource: null
+- orderbook_week: 8
+  iso_week: 2026-W49
+  load_pct:
+    CUT-01: 10.56
+    WLD-01: 11.33
+    WLD-02: 17.44
+    PNT-01: 60.01
+    ASM-01: 21.75
+    PCK-01: 3.55
+  binding_resource: null
+- orderbook_week: 9
+  iso_week: 2026-W50
+  load_pct:
+    CUT-01: 4.66
+    WLD-01: 2.56
+    WLD-02: 4.4
+    PNT-01: 26.55
+    ASM-01: 8.9
+    PCK-01: 1.91
+  binding_resource: null
+- orderbook_week: 10
+  iso_week: 2026-W51
+  load_pct:
+    CUT-01: 12.58
+    WLD-01: 5.21
+    WLD-02: 23.68
+    PNT-01: 68.81
+    ASM-01: 24.9
+    PCK-01: 4.21
+  binding_resource: null
+- orderbook_week: 11
+  iso_week: 2026-W52
+  load_pct:
+    CUT-01: 10.49
+    WLD-01: 15.85
+    WLD-02: 16.03
+    PNT-01: 54.08
+    ASM-01: 18.05
+    PCK-01: 3.69
+  binding_resource: null
+- orderbook_week: 12
+  iso_week: 2026-W53
+  load_pct:
+    CUT-01: 7.07
+    WLD-01: 4.51
+    WLD-02: 10.79
+    PNT-01: 43.08
+    ASM-01: 14.71
+    PCK-01: 2.49
+  binding_resource: null
+constraint_moves: null

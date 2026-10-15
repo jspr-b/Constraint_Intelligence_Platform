@@ -19,7 +19,7 @@ cip-workers = { workspace = true }
 [dependency-groups]
 dev = [
     "cip-schema",
-    "constraint-engine",
+    "constraint-engine[synthetic]",
     "cip-connectors",
     "cip-api",
     "cip-workers",
@@ -28,6 +28,8 @@ dev = [
     "pre-commit>=3.8",
     "pytest>=8.3",
     "ruff>=0.6",
+    "types-openpyxl>=3.1",
+    "types-pyyaml>=6",
 ]
 
 [tool.ruff]
@@ -53,6 +55,10 @@ markers = [
     "db: needs the Postgres service from docker compose",
     "slow: long-running (regeneration, simulation)",
 ]
+
+[[tool.mypy.overrides]]
+module = ["simpy", "simpy.*"]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

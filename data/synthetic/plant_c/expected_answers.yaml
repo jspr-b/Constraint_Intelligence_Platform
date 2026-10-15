@@ -1,0 +1,176 @@
+plant_code: PLANT-C
+seed: 99
+constraint: PNT-01
+constraint_kind: internal
+utilisation_pct:
+  CUT-01: 20.07
+  WLD-01: 31.4
+  WLD-02: 28.39
+  PNT-01: 99.9
+  ASM-01: 34.64
+  PCK-01: 6.43
+throughput_eur_cents_per_constraint_h:
+  B-40: 180000.0
+  F-200: 200000.0
+  H-12: 185454.55
+  C-3: 153333.33
+  R-8: null
+  K-50: 708000.0
+lost_constraint_h_by_month:
+  2026-07:
+    breaks_h: 15.0
+    setup_h: 16.723
+    starved_h: 0.884
+    blocked_h: 0.0
+    breakdowns_h: 2.355
+    maintenance_h: 3.0
+    scrap_h: 1.342
+  2026-08:
+    breaks_h: 31.5
+    setup_h: 40.301
+    starved_h: 0.0
+    blocked_h: 0.0
+    breakdowns_h: 3.78
+    maintenance_h: 6.0
+    scrap_h: 4.113
+  2026-09:
+    breaks_h: 33.0
+    setup_h: 36.408
+    starved_h: 0.0
+    blocked_h: 0.0
+    breakdowns_h: 0.352
+    maintenance_h: 7.5
+    scrap_h: 1.955
+  2026-10:
+    breaks_h: 10.5
+    setup_h: 13.223
+    starved_h: 0.0
+    blocked_h: 0.0
+    breakdowns_h: 0.653
+    maintenance_h: 1.5
+    scrap_h: 1.388
+forecast:
+- orderbook_week: 1
+  iso_week: 2026-W42
+  load_pct:
+    CUT-01: 16.62
+    WLD-01: 24.25
+    WLD-02: 25.95
+    PNT-01: 87.12
+    ASM-01: 30.6
+    PCK-01: 5.75
+  binding_resource: PNT-01
+- orderbook_week: 2
+  iso_week: 2026-W43
+  load_pct:
+    CUT-01: 19.48
+    WLD-01: 20.17
+    WLD-02: 32.65
+    PNT-01: 104.24
+    ASM-01: 37.38
+    PCK-01: 6.66
+  binding_resource: PNT-01
+- orderbook_week: 3
+  iso_week: 2026-W44
+  load_pct:
+    CUT-01: 15.09
+    WLD-01: 21.48
+    WLD-02: 19.56
+    PNT-01: 90.66
+    ASM-01: 31.1
+    PCK-01: 5.38
+  binding_resource: PNT-01
+- orderbook_week: 4
+  iso_week: 2026-W45
+  load_pct:
+    CUT-01: 19.24
+    WLD-01: 19.31
+    WLD-02: 30.51
+    PNT-01: 113.06
+    ASM-01: 38.6
+    PCK-01: 6.62
+  binding_resource: PNT-01
+- orderbook_week: 5
+  iso_week: 2026-W46
+  load_pct:
+    CUT-01: 16.88
+    WLD-01: 27.38
+    WLD-02: 22.61
+    PNT-01: 89.67
+    ASM-01: 30.11
+    PCK-01: 6.11
+  binding_resource: PNT-01
+- orderbook_week: 6
+  iso_week: 2026-W47
+  load_pct:
+    CUT-01: 21.39
+    WLD-01: 23.28
+    WLD-02: 35.95
+    PNT-01: 114.37
+    ASM-01: 40.25
+    PCK-01: 7.31
+  binding_resource: PNT-01
+- orderbook_week: 7
+  iso_week: 2026-W48
+  load_pct:
+    CUT-01: 18.8
+    WLD-01: 15.58
+    WLD-02: 95.39
+    PNT-01: 83.4
+    ASM-01: 33.2
+    PCK-01: 7.82
+  binding_resource: WLD-02
+- orderbook_week: 8
+  iso_week: 2026-W49
+  load_pct:
+    CUT-01: 20.37
+    WLD-01: 10.79
+    WLD-02: 141.01
+    PNT-01: 70.7
+    ASM-01: 33.82
+    PCK-01: 8.54
+  binding_resource: WLD-02
+- orderbook_week: 9
+  iso_week: 2026-W50
+  load_pct:
+    CUT-01: 24.18
+    WLD-01: 20.97
+    WLD-02: 150.15
+    PNT-01: 101.64
+    ASM-01: 43.43
+    PCK-01: 10.25
+  binding_resource: WLD-02
+- orderbook_week: 10
+  iso_week: 2026-W51
+  load_pct:
+    CUT-01: 19.77
+    WLD-01: 14.69
+    WLD-02: 122.51
+    PNT-01: 80.25
+    ASM-01: 36.07
+    PCK-01: 8.26
+  binding_resource: WLD-02
+- orderbook_week: 11
+  iso_week: 2026-W52
+  load_pct:
+    CUT-01: 18.48
+    WLD-01: 8.94
+    WLD-02: 124.47
+    PNT-01: 77.38
+    ASM-01: 34.74
+    PCK-01: 7.88
+  binding_resource: WLD-02
+- orderbook_week: 12
+  iso_week: 2026-W53
+  load_pct:
+    CUT-01: 20.76
+    WLD-01: 10.7
+    WLD-02: 115.46
+    PNT-01: 89.51
+    ASM-01: 37.45
+    PCK-01: 8.64
+  binding_resource: WLD-02
+constraint_moves:
+  orderbook_week: 7
+  iso_week: 2026-W48
+  to: WLD-02

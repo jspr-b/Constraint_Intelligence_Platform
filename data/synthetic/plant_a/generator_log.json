@@ -1,0 +1,365 @@
+{
+  "history_end_at": "2026-10-11T22:00:00+00:00",
+  "history_start_at": "2026-07-19T22:00:00+00:00",
+  "machines": {
+    "ASM-01": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 0,
+          "break_min": 900.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 2914.155,
+          "scrap_run_min": 14.213,
+          "setup_min": 0,
+          "shift_min": 9600.0,
+          "starved_min": 5785.845
+        },
+        "2026-08": {
+          "blocked_min": 0,
+          "break_min": 1890.0,
+          "down_min": 10.059,
+          "maintenance_min": 0,
+          "running_min": 6174.081,
+          "scrap_run_min": 57.512,
+          "setup_min": 0,
+          "shift_min": 20160.0,
+          "starved_min": 12085.859
+        },
+        "2026-09": {
+          "blocked_min": 0,
+          "break_min": 1980.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 6404.356,
+          "scrap_run_min": 58.818,
+          "setup_min": 0,
+          "shift_min": 21120.0,
+          "starved_min": 12735.644
+        },
+        "2026-10": {
+          "blocked_min": 0,
+          "break_min": 630.0,
+          "down_min": 31.645,
+          "maintenance_min": 0,
+          "running_min": 2120.995,
+          "scrap_run_min": 14.483,
+          "setup_min": 0,
+          "shift_min": 6720.0,
+          "starved_min": 3937.36
+        }
+      },
+      "total": {
+        "blocked_min": 0,
+        "break_min": 5400.0,
+        "down_min": 41.704,
+        "maintenance_min": 0,
+        "running_min": 17613.587,
+        "scrap_run_min": 145.027,
+        "setup_min": 0,
+        "shift_min": 57600.0,
+        "starved_min": 34544.708
+      }
+    },
+    "CUT-01": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 337.381,
+          "break_min": 900.0,
+          "down_min": 0,
+          "maintenance_min": 120.0,
+          "running_min": 2203.345,
+          "scrap_run_min": 6.146,
+          "setup_min": 0,
+          "shift_min": 9600.0,
+          "starved_min": 6039.274
+        },
+        "2026-08": {
+          "blocked_min": 4375.333,
+          "break_min": 1890.0,
+          "down_min": 54.546,
+          "maintenance_min": 240.0,
+          "running_min": 3533.299,
+          "scrap_run_min": 24.827,
+          "setup_min": 0,
+          "shift_min": 20160.0,
+          "starved_min": 10066.822
+        },
+        "2026-09": {
+          "blocked_min": 5461.284,
+          "break_min": 1980.0,
+          "down_min": 62.051,
+          "maintenance_min": 300.0,
+          "running_min": 4019.944,
+          "scrap_run_min": 27.76,
+          "setup_min": 0,
+          "shift_min": 21120.0,
+          "starved_min": 9296.721
+        },
+        "2026-10": {
+          "blocked_min": 2821.652,
+          "break_min": 630.0,
+          "down_min": 0,
+          "maintenance_min": 60.0,
+          "running_min": 1188.146,
+          "scrap_run_min": 6.005,
+          "setup_min": 0,
+          "shift_min": 6720.0,
+          "starved_min": 2020.202
+        }
+      },
+      "total": {
+        "blocked_min": 12995.65,
+        "break_min": 5400.0,
+        "down_min": 116.597,
+        "maintenance_min": 720.0,
+        "running_min": 10944.734,
+        "scrap_run_min": 64.738,
+        "setup_min": 0,
+        "shift_min": 57600.0,
+        "starved_min": 27423.019
+      }
+    },
+    "PCK-01": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 0,
+          "break_min": 900.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 549.573,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 9600.0,
+          "starved_min": 8150.427
+        },
+        "2026-08": {
+          "blocked_min": 0,
+          "break_min": 1890.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 1150.632,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 20160.0,
+          "starved_min": 17119.368
+        },
+        "2026-09": {
+          "blocked_min": 0,
+          "break_min": 1980.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 1218.388,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 21120.0,
+          "starved_min": 17921.612
+        },
+        "2026-10": {
+          "blocked_min": 0,
+          "break_min": 630.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 329.524,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 6720.0,
+          "starved_min": 5760.476
+        }
+      },
+      "total": {
+        "blocked_min": 0,
+        "break_min": 5400.0,
+        "down_min": 0,
+        "maintenance_min": 0,
+        "running_min": 3248.117,
+        "scrap_run_min": 0,
+        "setup_min": 0,
+        "shift_min": 57600.0,
+        "starved_min": 48951.883
+      }
+    },
+    "PNT-01": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 0,
+          "break_min": 900.0,
+          "down_min": 76.822,
+          "maintenance_min": 180.0,
+          "running_min": 7566.411,
+          "scrap_run_min": 37.76,
+          "setup_min": 815.998,
+          "shift_min": 9600.0,
+          "starved_min": 60.769
+        },
+        "2026-08": {
+          "blocked_min": 0,
+          "break_min": 1890.0,
+          "down_min": 260.774,
+          "maintenance_min": 360.0,
+          "running_min": 15559.943,
+          "scrap_run_min": 132.961,
+          "setup_min": 2089.283,
+          "shift_min": 20160.0,
+          "starved_min": 0.0
+        },
+        "2026-09": {
+          "blocked_min": 0,
+          "break_min": 1980.0,
+          "down_min": 370.264,
+          "maintenance_min": 450.0,
+          "running_min": 15856.317,
+          "scrap_run_min": 141.033,
+          "setup_min": 2463.42,
+          "shift_min": 21120.0,
+          "starved_min": 0.0
+        },
+        "2026-10": {
+          "blocked_min": 0,
+          "break_min": 630.0,
+          "down_min": 102.142,
+          "maintenance_min": 90.0,
+          "running_min": 5099.957,
+          "scrap_run_min": 32.321,
+          "setup_min": 797.901,
+          "shift_min": 6720.0,
+          "starved_min": 0.0
+        }
+      },
+      "total": {
+        "blocked_min": 0,
+        "break_min": 5400.0,
+        "down_min": 810.001,
+        "maintenance_min": 1080.0,
+        "running_min": 44082.628,
+        "scrap_run_min": 344.076,
+        "setup_min": 6166.602,
+        "shift_min": 57600.0,
+        "starved_min": 60.769
+      }
+    },
+    "WLD-01": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 261.059,
+          "break_min": 900.0,
+          "down_min": 104.467,
+          "maintenance_min": 0,
+          "running_min": 3514.221,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 9600.0,
+          "starved_min": 4820.254
+        },
+        "2026-08": {
+          "blocked_min": 6302.564,
+          "break_min": 1890.0,
+          "down_min": 23.141,
+          "maintenance_min": 0,
+          "running_min": 6136.717,
+          "scrap_run_min": 31.855,
+          "setup_min": 0,
+          "shift_min": 20160.0,
+          "starved_min": 5807.578
+        },
+        "2026-09": {
+          "blocked_min": 8565.315,
+          "break_min": 1980.0,
+          "down_min": 58.367,
+          "maintenance_min": 0,
+          "running_min": 6351.247,
+          "scrap_run_min": 10.484,
+          "setup_min": 0,
+          "shift_min": 21120.0,
+          "starved_min": 4165.071
+        },
+        "2026-10": {
+          "blocked_min": 3974.529,
+          "break_min": 630.0,
+          "down_min": 37.078,
+          "maintenance_min": 0,
+          "running_min": 2078.394,
+          "scrap_run_min": 0,
+          "setup_min": 0,
+          "shift_min": 6720.0,
+          "starved_min": 0.0
+        }
+      },
+      "total": {
+        "blocked_min": 19103.466,
+        "break_min": 5400.0,
+        "down_min": 223.053,
+        "maintenance_min": 0,
+        "running_min": 18080.578,
+        "scrap_run_min": 42.339,
+        "setup_min": 0,
+        "shift_min": 57600.0,
+        "starved_min": 14792.903
+      }
+    },
+    "WLD-02": {
+      "months": {
+        "2026-07": {
+          "blocked_min": 718.193,
+          "break_min": 900.0,
+          "down_min": 0,
+          "maintenance_min": 0,
+          "running_min": 2869.84,
+          "scrap_run_min": 17.258,
+          "setup_min": 0,
+          "shift_min": 9600.0,
+          "starved_min": 5111.967
+        },
+        "2026-08": {
+          "blocked_min": 10223.222,
+          "break_min": 1890.0,
+          "down_min": 23.303,
+          "maintenance_min": 0,
+          "running_min": 4416.023,
+          "scrap_run_min": 41.545,
+          "setup_min": 0,
+          "shift_min": 20160.0,
+          "starved_min": 3607.452
+        },
+        "2026-09": {
+          "blocked_min": 13902.696,
+          "break_min": 1980.0,
+          "down_min": 44.659,
+          "maintenance_min": 0,
+          "running_min": 5192.646,
+          "scrap_run_min": 53.158,
+          "setup_min": 0,
+          "shift_min": 21120.0,
+          "starved_min": 0.0
+        },
+        "2026-10": {
+          "blocked_min": 4624.99,
+          "break_min": 630.0,
+          "down_min": 46.264,
+          "maintenance_min": 0,
+          "running_min": 1256.754,
+          "scrap_run_min": 20.691,
+          "setup_min": 0,
+          "shift_min": 6720.0,
+          "starved_min": 161.991
+        }
+      },
+      "total": {
+        "blocked_min": 29469.101,
+        "break_min": 5400.0,
+        "down_min": 114.226,
+        "maintenance_min": 0,
+        "running_min": 13735.262,
+        "scrap_run_min": 132.652,
+        "setup_min": 0,
+        "shift_min": 57600.0,
+        "starved_min": 8881.411
+      }
+    }
+  },
+  "orders_released": 487,
+  "orders_shipped": 402,
+  "plant_code": "PLANT-A",
+  "seed": 42,
+  "units_shipped": 5051
+}

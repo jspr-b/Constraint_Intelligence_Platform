@@ -1,0 +1,123 @@
+# Synthetic plant A: known constraint PNT-01 (paint line).
+# Demand is above PNT-01 capacity. PNT-01 stops for every (unstaggered) break, changes colour
+# often (high setup share), has planned maintenance inside production hours and random
+# breakdowns. Scrap is only found at assembly, after the constraint. Not real customer data.
+plant_code: PLANT-A
+name: Plant A (synthetic)
+timezone: Europe/Amsterdam
+seed: 42
+start_date: 2026-07-20
+weeks_history: 12
+weeks_orderbook: 12
+initial_backlog_weeks: 1.0
+stations:
+  CUTTING: Cutting
+  WELD-CELL: Welding cell
+  PAINT: Paint
+  ASSEMBLY: Assembly
+  PACKING: Packing
+resources:
+  - {code: CUT-01, name: Laser cutting, station: CUTTING, downs_per_week: 0.5, down_mean_min: 20, down_reasons: [MECH]}
+  - {code: WLD-01, name: Welding 1, station: WELD-CELL, downs_per_week: 0.5, down_mean_min: 25, down_reasons: [MECH, WIRE]}
+  - {code: WLD-02, name: Welding 2, station: WELD-CELL, downs_per_week: 0.5, down_mean_min: 25, down_reasons: [MECH, WIRE],
+     overtime_eur_cents_per_h: 5800}
+  - {code: PNT-01, name: Paint line, station: PAINT, buffer_orders: 30, downs_per_week: 1.5, down_mean_min: 40,
+     down_reasons: [MECH, ELEC, NOZZLE], overtime_eur_cents_per_h: 6250, extra_shift_eur_cents: 250000}
+  - {code: ASM-01, name: Assembly, station: ASSEMBLY, downs_per_week: 0.3, down_mean_min: 15, down_reasons: [MECH]}
+  - {code: PCK-01, name: Packing, station: PACKING}
+shifts:
+  - {start: "06:00", end: "14:00"}
+  - {start: "14:00", end: "22:00"}
+breaks:
+  - {start: "09:00", minutes: 15}
+  - {start: "12:00", minutes: 30}
+  - {start: "17:00", minutes: 15}
+  - {start: "18:30", minutes: 30}
+maintenance:
+  - {resource: PNT-01, weekday: 1, start: "10:00", minutes: 90}
+  - {resource: CUT-01, weekday: 2, start: "06:00", minutes: 60}
+scrap:
+  - {found_at: ASM-01, rate: 0.01, reason: PAINT_DEFECT}
+outsourcing:
+  - {operation: Paint, price_eur_cents_per_unit: 1800}
+overtime:
+  - {resource: WLD-01, week: 5, overtime_h: 6}
+  - {resource: WLD-01, week: 6, overtime_h: 6}
+  - {resource: WLD-01, week: 9, overtime_h: 4}
+  - {resource: PNT-01, week: 10, overtime_h: 4}
+products:
+  - sku: B-40
+    name: Bracket set
+    family: Brackets
+    setup_family: RAL9005
+    price_eur_cents: 42000
+    tvc_eur_cents: 18000
+    orders_per_week: 10
+    qty_min: 8
+    qty_max: 18
+    steps:
+      - {operation: Cut, resource: CUT-01, run_min_per_unit: 1.5, erp_run_min_per_unit: 1.4}
+      - {operation: Weld, resource: WLD-02, run_min_per_unit: 3.0, erp_run_min_per_unit: 2.8}
+      - {operation: Paint, resource: PNT-01, run_min_per_unit: 8.0, erp_run_min_per_unit: 6.8, setup_min: 25, erp_setup_min: 20}
+      - {operation: Assemble, resource: ASM-01, run_min_per_unit: 3.0}
+      - {operation: Pack, resource: PCK-01, run_min_per_unit: 0.5}
+  - sku: F-200
+    name: Frame
+    family: Frames
+    setup_family: RAL7016
+    price_eur_cents: 98000
+    tvc_eur_cents: 43000
+    orders_per_week: 8
+    qty_min: 8
+    qty_max: 18
+    steps:
+      - {operation: Cut, resource: CUT-01, run_min_per_unit: 2.5, erp_run_min_per_unit: 2.4}
+      - {operation: Weld, resource: WLD-01, run_min_per_unit: 9.8, erp_run_min_per_unit: 9.0, alternatives: [WLD-02]}
+      - {operation: Paint, resource: PNT-01, run_min_per_unit: 16.5, erp_run_min_per_unit: 14.0, setup_min: 25, erp_setup_min: 20}
+      - {operation: Assemble, resource: ASM-01, run_min_per_unit: 6.0}
+      - {operation: Pack, resource: PCK-01, run_min_per_unit: 1.0}
+  - sku: H-12
+    name: Housing
+    family: Housings
+    setup_family: RAL9005
+    price_eur_cents: 64000
+    tvc_eur_cents: 30000
+    orders_per_week: 6
+    qty_min: 8
+    qty_max: 18
+    steps:
+      - {operation: Cut, resource: CUT-01, run_min_per_unit: 2.0}
+      - {operation: Weld, resource: WLD-02, run_min_per_unit: 7.5, erp_run_min_per_unit: 6.8}
+      - {operation: Paint, resource: PNT-01, run_min_per_unit: 11.0, erp_run_min_per_unit: 9.3, setup_min: 25, erp_setup_min: 20}
+      - {operation: Assemble, resource: ASM-01, run_min_per_unit: 5.0}
+      - {operation: Test, resource: ASM-01, run_min_per_unit: 1.0}
+      - {operation: Mark, resource: CUT-01, run_min_per_unit: 0.8}
+      - {operation: Pack, resource: PCK-01, run_min_per_unit: 0.8}
+  - sku: C-3
+    name: Cover
+    family: Covers
+    setup_family: RAL9010
+    price_eur_cents: 21000
+    tvc_eur_cents: 9500
+    orders_per_week: 5
+    qty_min: 8
+    qty_max: 18
+    steps:
+      - {operation: Cut, resource: CUT-01, run_min_per_unit: 1.0}
+      - {operation: Paint, resource: PNT-01, run_min_per_unit: 4.5, erp_run_min_per_unit: 3.8, setup_min: 25, erp_setup_min: 20}
+      - {operation: Assemble, resource: ASM-01, run_min_per_unit: 2.0}
+      - {operation: Pack, resource: PCK-01, run_min_per_unit: 0.5}
+  - sku: R-8
+    name: Rail
+    family: Rails
+    setup_family: RAW
+    price_eur_cents: 16000
+    tvc_eur_cents: 7000
+    orders_per_week: 7
+    qty_min: 8
+    qty_max: 18
+    steps:
+      - {operation: Cut, resource: CUT-01, run_min_per_unit: 1.2}
+      - {operation: Weld, resource: WLD-01, run_min_per_unit: 3.0}
+      - {operation: Grind, resource: WLD-02, run_min_per_unit: 3.2}
+      - {operation: Pack, resource: PCK-01, run_min_per_unit: 0.4}

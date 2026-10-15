@@ -1,0 +1,10 @@
+resource_code,operation,standard_run_min_per_unit
+ASM-01,Assemble,4.0
+ASM-01,Test,1.0
+CUT-01,Cut,2.0
+CUT-01,Mark,0.8
+PCK-01,Pack,1.0
+PNT-01,Paint,5.0
+WLD-01,Weld,3.0
+WLD-02,Grind,3.2
+WLD-02,Weld,19.0
