@@ -10,11 +10,26 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-from cip_api.db.models import TENANT_TABLES
 from cip_api.settings import get_settings
 
 # Empty setting (a reused connection after SET LOCAL) means no tenant: zero rows, not an error.
 POLICY = "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
+# The tenant tables this revision creates. Frozen: later revisions secure their own tables.
+TENANT_TABLES = [
+    "plants",
+    "stations",
+    "resources",
+    "products",
+    "routing_steps",
+    "resource_operations",
+    "calendar_windows",
+    "orders",
+    "operation_events",
+    "changeovers",
+    "overtime_worked",
+    "capacity_costs",
+    "outsourcing_prices",
+]
 
 
 revision: str = "0001"
@@ -272,17 +287,17 @@ def _secure() -> None:
     op.execute(f"CREATE POLICY tenant_isolation ON tenants USING ({own_tenant})")
     op.execute(f"GRANT SELECT ON tenants TO {app}")
     for table in TENANT_TABLES:
-        op.execute(f"ALTER TABLE {table.name} ENABLE ROW LEVEL SECURITY")
+        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
         op.execute(
-            f"CREATE POLICY tenant_isolation ON {table.name} USING ({POLICY}) WITH CHECK ({POLICY})"
+            f"CREATE POLICY tenant_isolation ON {table} USING ({POLICY}) WITH CHECK ({POLICY})"
         )
-        op.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table.name} TO {app}")
+        op.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table} TO {app}")
     op.execute(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {app}")
 
 
 def _unsecure() -> None:
     app = get_settings().db_app_user
-    for name in [*(t.name for t in TENANT_TABLES), "tenants"]:
+    for name in [*TENANT_TABLES, "tenants"]:
         op.execute(f"DROP POLICY IF EXISTS tenant_isolation ON {name}")
     op.execute(
         f"DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname = '{app}') THEN "

@@ -115,7 +115,7 @@ PLAIN: dict[int, tuple[str, str]] = {
     ),
 }
 
-TEXT = {
+TEXT: dict[str, dict[str, str]] = {
     "en": {
         "title": "Data checklist for a diagnostic",
         "intro": "What we need from your plant to find what limits your output and what it costs. "
@@ -133,13 +133,6 @@ TEXT = {
         "history": "History",
         "weeks": "at least {n} weeks",
         "generated": "Generated from docs/input-data.md by scripts/gen_onboarding.py. Do not edit by hand.",
-        "minimum_titles": {
-            "orders": "Orders",
-            "routings": "Routings and operations per machine",
-            "products": "Products with price and truly variable cost",
-            "events": "Start and finish bookings (8+ weeks)",
-            "calendar": "Shifts, breaks and holidays (one sheet)",
-        },
     },
     "nl": {
         "title": "Datachecklist voor een diagnose",
@@ -158,13 +151,24 @@ TEXT = {
         "history": "Historie",
         "weeks": "minimaal {n} weken",
         "generated": "Gegenereerd uit docs/input-data.md door scripts/gen_onboarding.py. Niet met de hand wijzigen.",
-        "minimum_titles": {
-            "orders": "Orders",
-            "routings": "Routings en bewerkingen per machine",
-            "products": "Producten met prijs en echt variabele kosten",
-            "events": "Start- en gereedmeldingen (8+ weken)",
-            "calendar": "Diensten, pauzes en feestdagen (één sheet)",
-        },
+    },
+}
+
+
+MINIMUM_TITLES: dict[str, dict[str, str]] = {
+    "en": {
+        "orders": "Orders",
+        "routings": "Routings and operations per machine",
+        "products": "Products with price and truly variable cost",
+        "events": "Start and finish bookings (8+ weeks)",
+        "calendar": "Shifts, breaks and holidays (one sheet)",
+    },
+    "nl": {
+        "orders": "Orders",
+        "routings": "Routings en bewerkingen per machine",
+        "products": "Producten met prijs en echt variabele kosten",
+        "events": "Start- en gereedmeldingen (8+ weken)",
+        "calendar": "Diensten, pauzes en feestdagen (één sheet)",
     },
 }
 
@@ -189,7 +193,7 @@ def checklist_md(reqs: list[Requirement], lang: str) -> str:
         "",
     ]
     for i, (key, numbers) in enumerate(MINIMUM_SET, 1):
-        out.append(f"{i}. **{t['minimum_titles'][key]}** (#{', #'.join(map(str, numbers))})")
+        out.append(f"{i}. **{MINIMUM_TITLES[lang][key]}** (#{', #'.join(map(str, numbers))})")
         for n in numbers:
             out.append(f"   - {_plain(by_number[n], lang)}")
     out += ["", t["minimum_note"], "", f"## {t['should']}", ""]
