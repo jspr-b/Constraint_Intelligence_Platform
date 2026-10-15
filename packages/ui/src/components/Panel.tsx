@@ -26,7 +26,8 @@ export function Panel({ label, status, children, className = "" }: PanelProps) {
           <span className="flex items-center gap-2 font-mono text-xs text-muted">{status}</span>
         )}
       </header>
-      <div className="p-3">{children}</div>
+      {/* Wide tables scroll inside the panel instead of overflowing onto neighbours. */}
+      <div className="overflow-x-auto p-3">{children}</div>
     </section>
   );
 }
