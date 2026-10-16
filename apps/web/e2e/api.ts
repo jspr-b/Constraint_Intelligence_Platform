@@ -165,7 +165,50 @@ export async function stubPages(page: Page): Promise<void> {
           plant_code: "PLANT-A",
           status: "done",
           created_at: "2026-10-13T07:15:00Z",
-          files: [{ name: "mes_events.csv", size_bytes: 1000 }],
+          files: [
+            {
+              name: "mes_events.csv",
+              size_bytes: 1000,
+              recognised_as: "mes_events",
+              feeds: ["events"],
+              readable: true,
+              problem: null,
+              encoding: "utf-8",
+              delimiter: ";",
+              columns: 3,
+              header: ["Werkplek", "Status", "Medewerker"],
+              personal_columns: ["Medewerker"],
+              rows: 10,
+              preview: [{ Werkplek: "LAK1", Status: "GESTART" }],
+            },
+            {
+              name: "notes.csv",
+              size_bytes: 10,
+              recognised_as: null,
+              feeds: [],
+              readable: false,
+              problem: "single_column",
+              encoding: "utf-8",
+              delimiter: ";",
+              columns: 1,
+              header: ["notes"],
+              personal_columns: [],
+              rows: 1,
+              preview: [],
+            },
+          ],
+          expected_files: [
+            "werkplekken",
+            "artikelen",
+            "bewerkingen",
+            "orders",
+            "mes_events",
+            "rooster",
+          ],
+          needed: [
+            { key: "orders", sources: ["orders"], present: false },
+            { key: "events", sources: ["mes_events"], present: true },
+          ],
           mapping: "GENERIC-NL",
           sources: [
             {
@@ -194,8 +237,11 @@ export async function stubPages(page: Page): Promise<void> {
           ],
           report: {
             import: {
-              rows_written: { events: 10 },
-              row_errors: [],
+              rows_read: { mes_events: 10 },
+              rows_written: { events: 9 },
+              row_errors: [
+                { file: "mes_events.csv", line: 4, reason: "unknown resource code LAS9" },
+              ],
               dropped_columns: { mes_events: ["Medewerker"] },
             },
             checklist: [

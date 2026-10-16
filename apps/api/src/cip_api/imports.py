@@ -28,7 +28,7 @@ from cip_api.tenancy import Ctx, require
 from cip_connectors.importer import import_export
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
-from cip_connectors.readers import find_source
+from cip_connectors.readers import choose_delimiter, decode, find_source, inspect_file
 from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError, load_plant
 from constraint_engine.quality.checklist import checklist, minimum_set, parse_requirements
 from constraint_engine.quality.report import QualityReport, event_period_weeks, quality_report
@@ -75,12 +75,44 @@ class MinimumOut(BaseModel):
     status: str
 
 
+class FileCheckOut(BaseModel):
+    """One uploaded file as inspected at upload: what it is and what is in it."""
+
+    name: str
+    size_bytes: int
+    recognised_as: str | None
+    """The export (mapping source) this file is, by name; None when no export has this name."""
+    feeds: list[str]
+    """Standard tables this file fills."""
+    readable: bool
+    problem: str | None
+    """empty, no_header, not_text, single_column, unreadable_excel."""
+    encoding: str | None
+    delimiter: str | None
+    columns: int
+    header: list[str]
+    personal_columns: list[str]
+    rows: int
+    preview: list[dict[str, str]]
+
+
+class NeededOut(BaseModel):
+    """An export of the minimum diagnostic set and whether this upload has it."""
+
+    key: str
+    sources: list[str]
+    present: bool
+
+
 class ImportOut(BaseModel):
     import_id: uuid.UUID
     plant_code: str
     status: str
     created_at: datetime
-    files: list[dict[str, Any]]
+    files: list[FileCheckOut]
+    expected_files: list[str]
+    """Export names the mapping recognises (without .csv/.xlsx)."""
+    needed: list[NeededOut]
     mapping: str
     sources: list[SourceOut]
     report: dict[str, Any] | None
@@ -103,16 +135,18 @@ def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
                     examples[k] = str(v)
         return table.header + table.dropped_columns, examples
     import csv
+    import io
 
-    with path.open(newline="", encoding="utf-8-sig") as fh:
-        reader = csv.reader(fh, delimiter=mapping.delimiter)
-        header = [c.strip() for c in next(reader, [])]
-        keep = [(i, h) for i, h in enumerate(header) if not personal(h)]
-        found: dict[str, str] = {}
-        for _n, values in zip(range(50), reader, strict=False):
-            for i, h in keep:
-                if h not in found and i < len(values) and values[i].strip():
-                    found[h] = values[i].strip()
+    text_, _encoding = decode(path.read_bytes())
+    delimiter = choose_delimiter(text_.split("\n", 1)[0], mapping.delimiter)
+    reader = csv.reader(io.StringIO(text_, newline=""), delimiter=delimiter)
+    header = [c.strip() for c in next(reader, [])]
+    keep = [(i, h) for i, h in enumerate(header) if not personal(h)]
+    found: dict[str, str] = {}
+    for _n, values in zip(range(50), reader, strict=False):
+        for i, h in keep:
+            if h not in found and i < len(values) and values[i].strip():
+                found[h] = values[i].strip()
     return header, found
 
 
@@ -162,16 +196,60 @@ def preview(source_dir: Path, mapping: MappingSet) -> list[SourceOut]:
     return out
 
 
+MINIMUM_TARGETS = {
+    "orders": "orders",
+    "routings": "routings",
+    "products": "products",
+    "events": "events",
+    "calendar": "calendar",
+}
+"""Minimum diagnostic set (engine MINIMUM_SET keys) -> the standard table that must be filled."""
+
+
+def check_file(path: Path, mapping: MappingSet) -> dict[str, Any]:
+    """Inspect an uploaded file once (stored with the import); personal values are never read."""
+    sources = {t.source.lower(): t.source for t in mapping.tables}
+    source = sources.get(path.stem.lower())
+    info = inspect_file(path, mapping.delimiter, personal_column_rule(mapping.personal_columns))
+    return {
+        "name": path.name,
+        "size_bytes": path.stat().st_size,
+        "recognised_as": source,
+        "feeds": sorted({t.target for t in mapping.tables if t.source == source}),
+        "readable": info.readable,
+        "problem": info.problem,
+        "encoding": info.encoding,
+        "delimiter": info.delimiter,
+        "columns": len(info.header),
+        "header": info.header,
+        "personal_columns": info.personal_columns,
+        "rows": info.rows,
+        "preview": info.preview,
+    }
+
+
+def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
+    out = []
+    for key, target in MINIMUM_TARGETS.items():
+        sources = sorted({t.source for t in mapping.tables if t.target == target})
+        present = any(f.readable and f.recognised_as in sources for f in files)
+        out.append(NeededOut(key=key, sources=sources, present=present))
+    return out
+
+
 def _out(settings: Settings, tenant: uuid.UUID, row: Any) -> ImportOut:
     folder = import_dir(settings, tenant, row.plant_code, row.import_id) / "source"
     mapping = load_mapping(GENERIC_MAPPING)
     report = json.loads(row.report) if row.report else None
+    files = [FileCheckOut.model_validate(f) for f in json.loads(row.files) if "readable" in f]
     return ImportOut(
         import_id=row.import_id,
         plant_code=row.plant_code,
         status=row.status,
         created_at=row.created_at,
-        files=json.loads(row.files),
+        files=files,
+        expected_files=list(dict.fromkeys(t.source for t in mapping.tables)),
+        needed=_needed(files, mapping),
         mapping=mapping.source_system,
         sources=preview(folder, mapping) if folder.exists() else [],
         report=report,
@@ -239,7 +317,7 @@ async def upload(
                         f"files are limited to {settings.max_upload_mb} MB",
                     )
                 out.write(chunk)
-        stored.append({"name": f.filename, "size_bytes": size})
+        stored.append(check_file(target, load_mapping(GENERIC_MAPPING)))
     ctx.db.execute(
         text("UPDATE imports SET files = :f WHERE import_id = :i"),
         {"f": json.dumps(stored), "i": import_id},

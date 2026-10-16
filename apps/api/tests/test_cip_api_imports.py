@@ -135,3 +135,42 @@ def test_outside_tests_the_run_is_queued_for_a_worker(
     assert client.post(f"/imports/{body['import_id']}/run").status_code == 409
     other = client.post("/plants/PLANT-1/imports", files=_files(EXPORT / "clean" / "csv")).json()
     assert client.post(f"/imports/{other['import_id']}/run").status_code == 409
+
+
+def test_file_check_before_running(client_as: Callable[[str], TestClient]) -> None:
+    it = client_as("it")
+    files = _files(EXPORT / "clean" / "csv")
+    windows = (
+        "Artikel;Omschrijving;Productgroep;Kleurgroep;Verkoopprijs;Variabele kosten\n"
+        "F-200;Café frame;Frames;RAL7016;980,00;430,00\n"
+    )
+    files = [f for f in files if f[1][0] != "artikelen.csv"]
+    files += [
+        ("files", ("artikelen.csv", windows.encode("cp1252"), "text/csv")),
+        ("files", ("notes.csv", b"just some text\n", "text/csv")),
+        ("files", ("rooster.xlsx", b"broken", "application/octet-stream")),
+    ]
+    files = [f for f in files if f[1][0] != "rooster.csv"]
+    body = it.post("/plants/PLANT-1/imports", files=files).json()
+    by_name = {f["name"]: f for f in body["files"]}
+    events = by_name["mes_events.csv"]
+    assert events["recognised_as"] == "mes_events" and events["feeds"] == ["events"]
+    assert events["readable"] and events["rows"] > 1000 and events["delimiter"] == ";"
+    assert events["personal_columns"] == ["Medewerker"]
+    assert all("Medewerker" not in row for row in events["preview"]) and len(events["preview"]) == 5
+    products = by_name["artikelen.csv"]
+    assert (
+        products["encoding"] == "cp1252" and products["preview"][0]["Omschrijving"] == "Café frame"
+    )
+    notes = by_name["notes.csv"]
+    assert notes["recognised_as"] is None and notes["problem"] == "single_column"
+    assert by_name["rooster.xlsx"]["problem"] == "unreadable_excel"
+    needed = {n["key"]: n["present"] for n in body["needed"]}
+    assert needed == {
+        "orders": True,
+        "routings": True,
+        "products": True,
+        "events": True,
+        "calendar": False,
+    }
+    assert "mes_events" in body["expected_files"]

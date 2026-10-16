@@ -28,6 +28,12 @@ test("import plant_a with known defects, then Data quality shows the score and t
   await page.getByRole("button", { name: /^Run import/ }).click();
   await expect(page.getByText("DONE", { exact: true })).toBeVisible({ timeout: 90_000 });
 
+  await page.getByRole("tab", { name: /data checklist/i }).click();
+  const results = page.getByRole("region", { name: "Results per file" });
+  const eventsResult = results.getByRole("row").filter({ hasText: "mes_events.csv" });
+  await expect(eventsResult).toContainText("Imported, some rows rejected");
+  await expect(eventsResult).toContainText(`unknown: ${known.unknown_machine_code_rows} (lines`);
+
   await page.goto("/data");
   await page.waitForLoadState("networkidle");
   const score = page.getByRole("region", { name: "Data quality score" });

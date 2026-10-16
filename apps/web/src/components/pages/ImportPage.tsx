@@ -2,23 +2,31 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { Fragment, useRef, useState } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Button, Panel } from "@cip/ui";
 import { api } from "@/lib/api/client";
-import { Field } from "../FormDialog";
 import type { components } from "@/lib/api/schema";
+import { Field } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
 type ImportOut = components["schemas"]["ImportOut"];
+type FileCheck = components["schemas"]["FileCheckOut"];
+type ImportReport = {
+  rows_read?: Record<string, number>;
+  rows_written?: Record<string, number>;
+  row_errors?: { file: string; line: number; reason: string }[];
+  dropped_columns?: Record<string, string[]>;
+};
 
 const TAB =
   "min-h-10 cursor-pointer border-b-2 border-transparent px-3.5 text-sm text-muted outline-none data-[selected]:border-accent data-[selected]:text-text data-[focus-visible]:outline-1 data-[focus-visible]:outline-accent";
 const TH =
   "px-3 py-2 text-left text-micro font-medium uppercase tracking-[var(--tracking-micro)] text-muted";
+const TD = "px-3 py-2 align-top";
 const GLYPH: Record<string, string> = {
   ok: "●",
   partial: "◐",
@@ -27,9 +35,15 @@ const GLYPH: Record<string, string> = {
   "n/a": "·",
 };
 
-/** Import page (mockup F4): upload exports, see how columns map, run, data checklist. */
+/** Reason codes from the connector, e.g. "unknown resource code LAS9" -> "unknown". */
+function reasonKind(reason: string): string {
+  return reason.split(/[ :]/)[0] ?? reason;
+}
+
+/** Import page (mockup F4): upload and check files, see how columns map, run, results. */
 export function ImportPage() {
   const t = useTranslations("import");
+  const locale = useLocale();
   const view = useView();
   const queries = useQueryClient();
   const picker = usePlant();
@@ -37,6 +51,7 @@ export function ImportPage() {
   const canRun = (view?.decisions.has("import_run_diagnostic") ?? false) && view?.preview === false;
   const files = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const imports = useQuery({
     queryKey: ["imports", plant],
     enabled: plant !== null,
@@ -54,7 +69,7 @@ export function ImportPage() {
   const upload = useMutation({
     mutationFn: async () => {
       const chosen = files.current?.files;
-      if (!plant || !chosen || chosen.length === 0) return;
+      if (!plant || !chosen || chosen.length === 0) throw new Error("none");
       const form = new FormData();
       for (const f of Array.from(chosen)) form.append("files", f);
       const response = await fetch(`/api/plants/${encodeURIComponent(plant)}/imports`, {
@@ -68,7 +83,14 @@ export function ImportPage() {
       if (files.current) files.current.value = "";
       void refresh();
     },
-    onError: (e) => setError(e.message === "413" ? t("tooLarge") : t("uploadFailed")),
+    onError: (e) =>
+      setError(
+        e.message === "none"
+          ? t("chooseFirst")
+          : e.message === "413"
+            ? t("tooLarge")
+            : t("uploadFailed"),
+      ),
   });
   const run = useMutation({
     mutationFn: async (id: string) =>
@@ -76,6 +98,11 @@ export function ImportPage() {
     onSuccess: () => void refresh(),
   });
 
+  const checks: FileCheck[] = latest?.files ?? [];
+  const usable = checks.filter((f) => f.readable && f.recognised_as);
+  const ignored = checks.filter((f) => !f.recognised_as);
+  const missing = (latest?.needed ?? []).filter((n) => !n.present);
+  const report = latest?.report?.import as ImportReport | undefined;
   const minimum = latest?.minimum_set ?? [];
   const checklist = (latest?.report?.checklist ?? []) as {
     number: number;
@@ -84,13 +111,14 @@ export function ImportPage() {
     status: string;
     detail: string;
   }[];
-  const report = latest?.report?.import as
-    | {
-        rows_written: Record<string, number>;
-        row_errors: unknown[];
-        dropped_columns: Record<string, string[]>;
-      }
-    | undefined;
+  const runBlocked = usable.length === 0 ? t("runNoFiles") : null;
+  const n = (value: number) => value.toLocaleString(locale);
+
+  const fileStatus = (f: FileCheck) => {
+    if (!f.readable) return { glyph: "✕", text: t(`problem.${f.problem ?? "not_text"}`) };
+    if (!f.recognised_as) return { glyph: "▲", text: t("notRecognised") };
+    return { glyph: "●", text: t("readyToImport") };
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -108,6 +136,16 @@ export function ImportPage() {
         }
         actions={<PlantPicker {...picker} />}
       />
+      <details open={!latest} className="rounded-panel border border-line bg-surface p-3 text-sm">
+        <summary className="cursor-pointer font-medium">{t("howTitle")}</summary>
+        <ol className="m-0 mt-2 flex list-decimal flex-col gap-1.5 pl-5">
+          <li>{t("how1")}</li>
+          <li>{t("how2")}</li>
+          <li>{t("how3")}</li>
+          <li>{t("how4")}</li>
+        </ol>
+        <p className="m-0 mt-2 text-muted">{t("howPrivacy")}</p>
+      </details>
       {!canRun && <p className="m-0 text-sm text-muted">{t("readOnly")}</p>}
       <Tabs>
         <TabList aria-label={t("steps")} className="flex border-b border-line">
@@ -124,7 +162,7 @@ export function ImportPage() {
         <TabPanel id="upload" className="flex flex-col gap-4 pt-4 outline-none">
           {canRun && plant && (
             <Panel label={t("uploadLabel")}>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-end gap-3">
                 <Field label={t("chooseFiles")}>
                   {(id) => (
                     <input
@@ -153,6 +191,28 @@ export function ImportPage() {
               )}
             </Panel>
           )}
+          {latest && (
+            <Panel label={t("neededLabel")}>
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+                {latest.needed.map((need) => (
+                  <li key={need.key} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      <span aria-hidden="true">{need.present ? "●" : "○"}</span>{" "}
+                      {t(`minimum.${need.key}`)}
+                    </span>
+                    <span className={need.present ? "text-muted" : ""}>
+                      {need.present
+                        ? t("neededPresent")
+                        : t("neededMissing", {
+                            files: need.sources.map((s) => `${s}.csv`).join(", "),
+                          })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="m-0 mt-2 text-xs text-muted">{t("neededNote")}</p>
+            </Panel>
+          )}
           <Panel
             label={t("filesLabel")}
             status={latest ? <span>{t(`status.${latest.status}`)}</span> : undefined}
@@ -168,53 +228,150 @@ export function ImportPage() {
                         {t("colFile")}
                       </th>
                       <th scope="col" className={TH}>
-                        {t("colTargets")}
+                        {t("colRecognised")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colRows")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colColumns")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colFormat")}
                       </th>
                       <th scope="col" className={TH}>
                         {t("colStatus")}
                       </th>
+                      <th scope="col" className={TH}>
+                        {t("colPreview")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {latest.sources.map((s) => (
-                      <tr key={s.source} className="border-t border-line">
-                        <td className="px-3 py-2 font-mono text-xs">{s.file ?? s.source}</td>
-                        <td className="px-3 py-2">{s.targets.join(", ")}</td>
-                        <td className="px-3 py-2">
-                          {!s.file ? (
-                            <span>
-                              <span aria-hidden="true">○</span> {t("fileMissing")}
-                            </span>
-                          ) : !s.readable ? (
-                            <span className="text-bad">
-                              <span aria-hidden="true">✕</span> {t("unreadable")}
-                            </span>
-                          ) : report ? (
-                            <span>
-                              <span aria-hidden="true">●</span>{" "}
-                              {t("rowsStored", {
-                                rows: s.targets.reduce(
-                                  (n, target) => n + (report.rows_written[target] ?? 0),
-                                  0,
-                                ),
-                              })}
-                            </span>
-                          ) : (
-                            <span>
-                              <span aria-hidden="true">◐</span> {t("uploaded")}
-                            </span>
+                    {checks.map((f) => {
+                      const status = fileStatus(f);
+                      const isOpen = open === f.name;
+                      return (
+                        <Fragment key={f.name}>
+                          <tr className="border-t border-line">
+                            <td className={`${TD} font-mono text-xs`}>{f.name}</td>
+                            <td className={TD}>
+                              {f.recognised_as ? t(`source.${f.recognised_as}`) : "—"}
+                            </td>
+                            <td className={`${TD} font-mono text-xs`}>
+                              {f.readable ? n(f.rows) : "—"}
+                            </td>
+                            <td className={`${TD} font-mono text-xs`}>
+                              {f.readable ? n(f.columns) : "—"}
+                              {f.personal_columns.length > 0 && (
+                                <span className="block text-muted">
+                                  {t("personalDropped", { count: f.personal_columns.length })}
+                                </span>
+                              )}
+                            </td>
+                            <td className={`${TD} whitespace-nowrap font-mono text-xs text-muted`}>
+                              {f.encoding === "xlsx"
+                                ? "Excel"
+                                : f.readable
+                                  ? `${f.delimiter === "\t" ? "tab" : f.delimiter} · ${f.encoding}`
+                                  : "—"}
+                            </td>
+                            <td className={TD}>
+                              <span aria-hidden="true">{status.glyph}</span> {status.text}
+                            </td>
+                            <td className={TD}>
+                              {f.readable && f.preview.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  aria-expanded={isOpen}
+                                  aria-label={t(isOpen ? "hidePreviewOf" : "showPreviewOf", {
+                                    file: f.name,
+                                  })}
+                                  onPress={() => setOpen(isOpen ? null : f.name)}
+                                >
+                                  {isOpen ? t("hidePreview") : t("showPreview")}
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                          {isOpen && (
+                            <tr>
+                              <td colSpan={7} className="bg-raised p-2">
+                                <table
+                                  aria-label={t("previewOf", { file: f.name })}
+                                  className="w-full border-collapse font-mono text-xs"
+                                >
+                                  <thead>
+                                    <tr>
+                                      {f.header.map((h) => (
+                                        <th
+                                          key={h}
+                                          scope="col"
+                                          className="px-2 py-1 text-left font-medium"
+                                        >
+                                          {h}
+                                          {f.personal_columns.includes(h) && (
+                                            <span className="block font-sans font-normal text-muted">
+                                              {t("notImported")}
+                                            </span>
+                                          )}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {f.preview.map((row, i) => (
+                                      <tr key={i} className="border-t border-line">
+                                        {f.header.map((h) => (
+                                          <td key={h} className="px-2 py-1">
+                                            {f.personal_columns.includes(h) ? "—" : (row[h] ?? "")}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                                <p className="m-0 mt-1 font-sans text-xs text-muted">
+                                  {t("previewNote", { rows: n(f.rows) })}
+                                </p>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                      </tr>
-                    ))}
+                        </Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
+                {ignored.length > 0 && (
+                  <p className="m-0 text-sm">
+                    <span aria-hidden="true">▲</span>{" "}
+                    {t("ignoredFiles", {
+                      count: ignored.length,
+                      expected: latest.expected_files.map((s) => `${s}.csv`).join(", "),
+                    })}
+                  </p>
+                )}
                 {canRun && latest.status !== "running" && (
-                  <div>
-                    <Button variant="primary" onPress={() => run.mutate(latest.import_id)}>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      variant="primary"
+                      isDisabled={runBlocked !== null}
+                      onPress={() => run.mutate(latest.import_id)}
+                    >
                       {latest.status === "done" ? t("runAgain") : t("run")}
                     </Button>
+                    <span className="text-xs text-muted">
+                      {runBlocked ??
+                        (missing.length > 0
+                          ? t("runWithGaps", { count: missing.length })
+                          : t("runExplain", { files: usable.length }))}
+                    </span>
                   </div>
+                )}
+                {latest.status === "running" && (
+                  <p role="status" className="m-0 text-sm">
+                    {t("running")}
+                  </p>
                 )}
                 {latest.status === "failed" && (
                   <p role="alert" className="m-0 text-sm text-bad">
@@ -291,10 +448,88 @@ export function ImportPage() {
           )}
         </TabPanel>
         <TabPanel id="check" className="flex flex-col gap-4 pt-4 outline-none">
-          {latest?.status !== "done" ? (
+          {latest?.status !== "done" || !report ? (
             <p className="m-0 text-sm text-muted">{t("checkAfterRun")}</p>
           ) : (
             <>
+              <Panel label={t("resultsLabel")}>
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr>
+                      <th scope="col" className={TH}>
+                        {t("colFile")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colRead")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colImported")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colRejected")}
+                      </th>
+                      <th scope="col" className={TH}>
+                        {t("colStatus")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checks.map((f) => {
+                      const source = f.recognised_as;
+                      const read = source ? (report.rows_read?.[source] ?? 0) : 0;
+                      const errors = (report.row_errors ?? []).filter(
+                        (e) => e.file.split(".")[0] === source,
+                      );
+                      const reasons = new Map<string, number[]>();
+                      for (const e of errors) {
+                        const kind = reasonKind(e.reason);
+                        reasons.set(kind, [...(reasons.get(kind) ?? []), e.line]);
+                      }
+                      const state =
+                        !source || !f.readable
+                          ? "skipped"
+                          : errors.length > 0
+                            ? "partial"
+                            : "imported";
+                      return (
+                        <tr key={f.name} className="border-t border-line">
+                          <td className={`${TD} font-mono text-xs`}>{f.name}</td>
+                          <td className={`${TD} font-mono text-xs`}>{source ? n(read) : "—"}</td>
+                          <td className={`${TD} text-xs`}>
+                            {source
+                              ? f.feeds
+                                  .map(
+                                    (target) =>
+                                      `${target} ${n(report.rows_written?.[target] ?? 0)}`,
+                                  )
+                                  .join(" · ")
+                              : "—"}
+                          </td>
+                          <td className={TD}>
+                            <span className="font-mono text-xs">{n(errors.length)}</span>
+                            {[...reasons.entries()].map(([kind, lines]) => (
+                              <span key={kind} className="block text-xs text-muted">
+                                {t("rejectReason", {
+                                  reason: kind,
+                                  count: lines.length,
+                                  lines: lines.slice(0, 5).join(", "),
+                                })}
+                              </span>
+                            ))}
+                          </td>
+                          <td className={TD}>
+                            <span aria-hidden="true">
+                              {state === "imported" ? "●" : state === "partial" ? "◐" : "○"}
+                            </span>{" "}
+                            {t(`result.${state}`)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <p className="m-0 mt-2 text-xs text-muted">{t("resultsNote")}</p>
+              </Panel>
               <Panel label={t("minimumLabel")}>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {minimum.map((m) => (
@@ -337,14 +572,14 @@ export function ImportPage() {
                   <tbody>
                     {checklist.map((c) => (
                       <tr key={c.number} className="border-t border-line">
-                        <td className="px-3 py-2 font-mono text-xs">{c.number}</td>
-                        <td className="px-3 py-2">{c.data}</td>
-                        <td className="px-3 py-2 text-muted">{c.need}</td>
-                        <td className="px-3 py-2">
+                        <td className={`${TD} font-mono text-xs`}>{c.number}</td>
+                        <td className={TD}>{c.data}</td>
+                        <td className={`${TD} text-muted`}>{c.need}</td>
+                        <td className={TD}>
                           <span aria-hidden="true">{GLYPH[c.status] ?? "·"}</span>{" "}
                           {t(`itemStatus.${c.status}`)}
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted">{c.detail}</td>
+                        <td className={`${TD} text-xs text-muted`}>{c.detail}</td>
                       </tr>
                     ))}
                   </tbody>

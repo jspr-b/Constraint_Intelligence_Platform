@@ -696,6 +696,123 @@
         "title": "FigureOut",
         "type": "object"
       },
+      "FileCheckOut": {
+        "description": "One uploaded file as inspected at upload: what it is and what is in it.",
+        "properties": {
+          "columns": {
+            "title": "Columns",
+            "type": "integer"
+          },
+          "delimiter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delimiter"
+          },
+          "encoding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoding"
+          },
+          "feeds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Feeds",
+            "type": "array"
+          },
+          "header": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Header",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "personal_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Personal Columns",
+            "type": "array"
+          },
+          "preview": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Preview",
+            "type": "array"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "readable": {
+            "title": "Readable",
+            "type": "boolean"
+          },
+          "recognised_as": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recognised As"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "size_bytes",
+          "recognised_as",
+          "feeds",
+          "readable",
+          "problem",
+          "encoding",
+          "delimiter",
+          "columns",
+          "header",
+          "personal_columns",
+          "rows",
+          "preview"
+        ],
+        "title": "FileCheckOut",
+        "type": "object"
+      },
       "FileOut": {
         "properties": {
           "examples": {
@@ -821,10 +938,16 @@
             ],
             "title": "Error"
           },
+          "expected_files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Expected Files",
+            "type": "array"
+          },
           "files": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/FileCheckOut"
             },
             "title": "Files",
             "type": "array"
@@ -843,6 +966,13 @@
               "$ref": "#/components/schemas/MinimumOut"
             },
             "title": "Minimum Set",
+            "type": "array"
+          },
+          "needed": {
+            "items": {
+              "$ref": "#/components/schemas/NeededOut"
+            },
+            "title": "Needed",
             "type": "array"
           },
           "plant_code": {
@@ -879,6 +1009,8 @@
           "status",
           "created_at",
           "files",
+          "expected_files",
+          "needed",
           "mapping",
           "sources",
           "report",
@@ -1114,6 +1246,33 @@
         ],
         "title": "Money",
         "type": "string"
+      },
+      "NeededOut": {
+        "description": "An export of the minimum diagnostic set and whether this upload has it.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "sources",
+          "present"
+        ],
+        "title": "NeededOut",
+        "type": "object"
       },
       "OidcLoginIn": {
         "properties": {

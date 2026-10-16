@@ -20,6 +20,21 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
   await page.getByRole("button", { name: "Upload files" }).click();
   await expect(page.getByRole("cell", { name: "mes_events.csv", exact: true })).toBeVisible();
 
+  // Step 1 tells what each file is before anything is imported.
+  const eventsRow = page.getByRole("row").filter({ hasText: "mes_events.csv" });
+  await expect(eventsRow).toContainText("Operation events (MES)");
+  await expect(eventsRow).toContainText("Readable, ready to import");
+  await expect(eventsRow).toContainText("1 personal column dropped");
+  await page.getByRole("button", { name: "Show first rows of mes_events.csv" }).click();
+  const preview = page.getByRole("table", { name: "First rows of mes_events.csv" });
+  await expect(preview.getByRole("columnheader", { name: /Medewerker/ })).toContainText(
+    "Not imported",
+  );
+  await expect(preview.getByRole("row")).toHaveCount(6);
+  await expect(
+    page.getByRole("region", { name: /Needed to start a diagnostic/ }),
+  ).not.toContainText("Missing");
+
   await page.getByRole("tab", { name: /Map columns/ }).click();
   const events = page.getByRole("region", { name: "mes_events.csv" });
   const personal = events.getByRole("row").filter({ hasText: "Medewerker" });
@@ -29,9 +44,15 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
   await page.getByRole("tab", { name: /Upload files/ }).click();
   await page.getByRole("button", { name: "Run import" }).click();
   await expect(page.getByText("DONE")).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByText(/rows stored/).first()).toBeVisible();
 
-  await page.getByRole("tab", { name: /Data checklist/ }).click();
+  await page.getByRole("tab", { name: /data checklist/i }).click();
+  const results = page.getByRole("region", { name: "Results per file" });
+  await expect(results.getByRole("row").filter({ hasText: "mes_events.csv" })).toContainText(
+    "Imported",
+  );
+  await expect(results.getByRole("row").filter({ hasText: "mes_events.csv" })).toContainText(
+    /events \d/,
+  );
   const minimum = page.getByRole("region", { name: /Minimum to start a diagnostic/ });
   for (const item of [
     "Orders",

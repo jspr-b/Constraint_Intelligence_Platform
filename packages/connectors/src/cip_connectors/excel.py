@@ -44,7 +44,7 @@ def read_xlsx(path: Path, drop: DropRule, sheet: str | None = None) -> SourceTab
             v = values[i] if i < len(values) else None
             record[header[i]] = v if isinstance(v, str | int | float) or v is None else _as_cell(v)
         data.append((offset, record))
-    return SourceTable(path.stem, path, [header[i] for i in keep], data, dropped)
+    return SourceTable(path.stem, path, [header[i] for i in keep], data, dropped, "xlsx", None)
 
 
 def _as_cell(value: object) -> Cell:

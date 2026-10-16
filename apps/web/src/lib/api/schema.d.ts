@@ -898,6 +898,40 @@ export interface components {
             /** Value */
             value: number | components["schemas"]["MissingOut"];
         };
+        /**
+         * FileCheckOut
+         * @description One uploaded file as inspected at upload: what it is and what is in it.
+         */
+        FileCheckOut: {
+            /** Columns */
+            columns: number;
+            /** Delimiter */
+            delimiter: string | null;
+            /** Encoding */
+            encoding: string | null;
+            /** Feeds */
+            feeds: string[];
+            /** Header */
+            header: string[];
+            /** Name */
+            name: string;
+            /** Personal Columns */
+            personal_columns: string[];
+            /** Preview */
+            preview: {
+                [key: string]: string;
+            }[];
+            /** Problem */
+            problem: string | null;
+            /** Readable */
+            readable: boolean;
+            /** Recognised As */
+            recognised_as: string | null;
+            /** Rows */
+            rows: number;
+            /** Size Bytes */
+            size_bytes: number;
+        };
         /** FileOut */
         FileOut: {
             /** Examples */
@@ -944,10 +978,10 @@ export interface components {
             created_at: string;
             /** Error */
             error: string | null;
+            /** Expected Files */
+            expected_files: string[];
             /** Files */
-            files: {
-                [key: string]: unknown;
-            }[];
+            files: components["schemas"]["FileCheckOut"][];
             /**
              * Import Id
              * Format: uuid
@@ -957,6 +991,8 @@ export interface components {
             mapping: string;
             /** Minimum Set */
             minimum_set: components["schemas"]["MinimumOut"][];
+            /** Needed */
+            needed: components["schemas"]["NeededOut"][];
             /** Plant Code */
             plant_code: string;
             /** Report */
@@ -1048,6 +1084,18 @@ export interface components {
          * @enum {string}
          */
         Money: "eur" | "hours";
+        /**
+         * NeededOut
+         * @description An export of the minimum diagnostic set and whether this upload has it.
+         */
+        NeededOut: {
+            /** Key */
+            key: string;
+            /** Present */
+            present: boolean;
+            /** Sources */
+            sources: string[];
+        };
         /** OidcLoginIn */
         OidcLoginIn: {
             /** Id Token */
