@@ -826,7 +826,12 @@
       "idle_share_pct": "Waiting share = time starved (waiting for work) + time blocked (cannot pass work on), as a share of shift time.",
       "constraint_by_starved_blocked": "The lowest waiting share among all machines. A machine limits output when it waits 10% of its shift time or less.",
       "constraint_agreement_pct": "Checks that point at the answer ÷ checks run (4) × 100.",
-      "material_late_share_pct": "Released orders whose material arrived after release ÷ all released orders with a material date × 100."
+      "material_late_share_pct": "Released orders whose material arrived after release ÷ all released orders with a material date × 100.",
+      "lost_constraint_h": "Hours the bottleneck did not produce for this cause = its minutes for the cause ÷ 60.",
+      "scrap_constraint_min": "Bottleneck minutes lost to scrap = units scrapped at or after the bottleneck × the bottleneck's work minutes per unit on that order.",
+      "lost_constraint_h_total": "All hours the bottleneck lost = the sum of the causes (breakdowns, setups, waiting, blocked, breaks, maintenance, scrap).",
+      "throughput_per_constraint_h": "Throughput per bottleneck hour = Σ (units × (sales price − truly variable cost)) ÷ Σ bottleneck work hours, over the orders the bottleneck finished in the period.",
+      "lost_throughput_eur_cents": "Lost throughput = bottleneck hours lost × throughput per bottleneck hour. Every hour lost at the bottleneck is output the plant never ships."
     },
     "units": {
       "score": "points out of 100",
@@ -840,7 +845,8 @@
       "pct": "%",
       "parallel": "units side by side",
       "min": "minutes",
-      "orders": "orders waiting"
+      "orders": "orders waiting",
+      "eur_cents_per_h": "euros per bottleneck hour"
     },
     "countTitle": "Where this number comes from",
     "isCount": "A count, not a calculation.",
@@ -875,7 +881,15 @@
       "queue": "Waiting orders check points at",
       "active_period": "Longest working stretch check points at",
       "starved_blocked": "Waiting for work check points at",
-      "answer": "Answer"
+      "answer": "Answer",
+      "minutes": "Minutes",
+      "lost_h": "Bottleneck hours lost",
+      "throughput_per_constraint_h_eur_cents": "Throughput per bottleneck hour",
+      "bottleneck_work_min": "Bottleneck work minutes",
+      "units_without_price": "Units without a price",
+      "resource_code": "Machine",
+      "throughput_eur_cents": "Throughput of those orders",
+      "units": "Units finished"
     },
     "noMachine": "no machine"
   },
@@ -994,6 +1008,25 @@
         "queue": "waiting orders",
         "active_period": "longest working stretch",
         "starved_blocked": "waiting for work"
+      },
+      "queue_with_spare_time": "Orders sometimes queued at {machine}, but it was busy only {busy}% of its available time: it still had spare time, so it did not limit output."
+    },
+    "loss": {
+      "label": "Lost at the bottleneck in this period:",
+      "hours": "Bottleneck hours lost",
+      "worth": "worth",
+      "euros": "Lost throughput",
+      "noEuros": "Euros are not shown because your data has no sales prices. Add the products export (item master with sales price and truly variable cost) on Import to see them.",
+      "biggest": "Biggest cause: {cause}",
+      "causeHours": "Hours lost to {cause}",
+      "cause": {
+        "breakdowns": "breakdowns",
+        "setup": "setups",
+        "starved": "waiting for work (starved)",
+        "blocked": "blocked",
+        "breaks": "breaks when it stops",
+        "maintenance": "planned maintenance",
+        "scrap": "scrap after the bottleneck"
       }
     }
   }

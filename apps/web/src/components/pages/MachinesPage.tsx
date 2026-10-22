@@ -168,6 +168,14 @@ export function MachinesPage() {
       : { period_kind: "all" },
   );
   const found = detection.data?.detections[0];
+  const loss = useFacts(
+    plant,
+    {
+      family: ["loss"],
+      ...(found ? { period_kind: found.period_kind, period_start_at: found.period_start_at } : {}),
+    },
+    found?.kind === "internal",
+  );
   const bottleneck = found?.resource_code ?? null;
 
   const date = (iso: string) =>
@@ -310,7 +318,12 @@ export function MachinesPage() {
       <p className="m-0 max-w-3xl text-sm">{t.rich("intro", termTags)}</p>
       {state}
       {found && run?.status === "ready" && (
-        <ConstraintBanner detection={found} label={label} periodName={periodName(chosen)} />
+        <ConstraintBanner
+          detection={found}
+          label={label}
+          periodName={periodName(chosen)}
+          loss={loss.data?.facts ?? []}
+        />
       )}
       {rows.length > 0 && run?.status === "ready" && (
         <Panel label={t("tableLabel", { period: periodName(chosen) })}>

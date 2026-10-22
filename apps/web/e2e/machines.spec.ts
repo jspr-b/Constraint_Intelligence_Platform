@@ -71,6 +71,14 @@ test("the bottleneck is named with its checks, confidence and reasons", async ({
   await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
     "Busy time check points at",
   );
+  await expect(banner).toContainText("Lost at the bottleneck in this period:");
+  await expect(banner).toContainText("231 h");
+  await expect(banner).toContainText("€433,313");
+  await expect(banner).toContainText("Biggest cause: setups");
+  await banner.getByRole("button", { name: /€433,313/ }).click();
+  const how = page.getByRole("region", { name: "How this is calculated" });
+  await expect(how).toContainText("Lost throughput = bottleneck hours lost");
+  await expect(how).toContainText("Throughput per bottleneck hour (€): €1,876/h");
   await page.keyboard.press("Escape");
   await banner.getByText("How we found it: 4 checks").click();
   await expect(banner.getByRole("row")).toHaveCount(5);

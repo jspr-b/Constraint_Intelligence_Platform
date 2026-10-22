@@ -48,6 +48,14 @@ class Missing:
             "confidence_impact": self.confidence_impact.label,
         }
 
+    @classmethod
+    def from_dict(cls, data: Mapping[str, JsonValue]) -> Missing:
+        return cls(
+            what=str(data["missing"]),
+            reason=str(data["reason"]),
+            confidence_impact=Confidence[str(data["confidence_impact"]).upper()],
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class Figure:
@@ -113,6 +121,37 @@ class Figure:
             "period_end_at": self.period_end_at.isoformat() if self.period_end_at else None,
             "confidence": self.confidence.label,
         }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, JsonValue]) -> Figure:
+        return figure_from_dict(data)
+
+
+def _decode(v: JsonValue) -> Figure | Missing | int | float | str:
+    if isinstance(v, Mapping) and "formula_id" in v:
+        return Figure.from_dict(v)
+    if isinstance(v, Mapping) and "missing" in v:
+        return Missing.from_dict(v)
+    return v  # type: ignore[no-any-return]
+
+
+def _moment(v: JsonValue) -> datetime | None:
+    return datetime.fromisoformat(v) if isinstance(v, str) else v
+
+
+def figure_from_dict(data: Mapping[str, JsonValue]) -> Figure:
+    """The inverse of :meth:`Figure.to_dict`: a stored envelope back as a Figure."""
+    value = _decode(data["value"])
+    assert not isinstance(value, Figure | str)
+    return Figure(
+        value=value,
+        unit=str(data["unit"]),
+        formula_id=str(data["formula_id"]),
+        inputs={k: _decode(v) for k, v in dict(data.get("inputs") or {}).items()},
+        period_start_at=_moment(data.get("period_start_at")),
+        period_end_at=_moment(data.get("period_end_at")),
+        confidence=Confidence[str(data["confidence"]).upper()],
+    )
 
 
 def first_missing(inputs: Mapping[str, Figure | Missing | int | float | str]) -> Missing | None:

@@ -13,6 +13,9 @@ test("after the import the planner sees the bottleneck on Machines, with its fou
   await expect(banner).toContainText("PNT-01", { timeout: 90_000 });
   await expect(banner).toContainText("4 of 4 checks point at");
   await expect(banner).toContainText("high");
+  await expect(banner).toContainText("Lost at the bottleneck in this period:");
+  await expect(banner).toContainText(/€\d/);
+  await expect(banner).toContainText("Biggest cause:");
   await banner.getByText("How we found it: 4 checks").click();
   await expect(banner.getByRole("row")).toHaveCount(5);
   await expect(page.getByRole("table").last().locator("[data-constraint]")).toContainText("PNT-01");

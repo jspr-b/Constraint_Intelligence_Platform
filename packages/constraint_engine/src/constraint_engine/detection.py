@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from constraint_engine.facts import Fact
 
 BINDING_UTILISATION_PCT = 85.0
+MIN_BUSY_PCT = 70.0
+"""Without the utilisation method, a machine needs at least this busy share to be the constraint."""
 BINDING_WIP_ORDERS = 1.0
 BINDING_ACTIVE_SHARE_PCT = 75.0
 BINDING_IDLE_SHARE_PCT = 10.0
@@ -348,8 +350,19 @@ def detect(
             votes[r.resource_code] = votes.get(r.resource_code, 0) + 1
     reasons: list[Reason] = []
     internal = bool(votes) and (picks["utilisation"] != NONE or max(votes.values()) >= 2)
+    answer = (
+        max(sorted(votes), key=lambda c: (votes[c], c == picks["utilisation"])) if votes else NONE
+    )
+    if internal and picks["utilisation"] == NONE:
+        # Queues and long active stretches alone (e.g. at start-up) do not make a machine with
+        # plenty of spare time the bottleneck: it must also be busy most of its available time.
+        busy_pct = _numeric(busy[answer]) if answer in busy else None
+        internal = busy_pct is not None and busy_pct >= MIN_BUSY_PCT
+        if not internal:
+            reasons.append(
+                Reason("queue_with_spare_time", {"machine": answer, "busy_pct": busy_pct or 0})
+            )
     if internal:
-        answer = max(sorted(votes), key=lambda c: (votes[c], c == picks["utilisation"]))
         kind = "internal"
         reasons.append(
             Reason(
@@ -370,13 +383,14 @@ def detect(
         late = _numeric(material)
         if late is not None and late >= MATERIAL_SHARE_PCT:
             kind = "material"
-            reasons.append(Reason("material_late", {"share_pct": late}))
+            reasons.insert(0, Reason("material_late", {"share_pct": late}))
         else:
             kind = "market"
-            reasons.append(
+            reasons.insert(
+                0,
                 Reason(
                     "no_machine_binding", {"top": _top(busy) or NONE, "busy_pct": _numeric(u) or 0}
-                )
+                ),
             )
     agree = agreement(picks, answer, span)
     level = {4: Confidence.HIGH, 3: Confidence.HIGH, 2: Confidence.MEDIUM}.get(

@@ -16,16 +16,19 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import Connection, text
 
+from cip_api.auth.roles import Money
 from cip_api.auth.sessions import tenant_conn
 from cip_api.errors import ApiProblem
-from cip_api.figures import FigureOut, MissingOut
+from cip_api.figures import FigureOut, MissingOut, money_out
 from cip_api.jobs import enqueue
 from cip_api.settings import Settings
 from cip_api.tenancy import Ctx, require
 from constraint_engine.facts import Fact, measured_facts
-from constraint_engine.figure import Missing
+from constraint_engine.figure import Figure, Missing
+from constraint_engine.formulas.money import NO_RATE
 from constraint_engine.formulas.registry import registry
 from constraint_engine.io.plant_loader import load_plant
+from constraint_engine.loss import loss_facts
 
 FactStatus = Literal["calculating", "ready", "failed"]
 
@@ -114,7 +117,7 @@ INSERT = text(
 
 def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
     """The job: reconstruct the import's data and replace the plant's facts. Returns the count."""
-    from cip_api.detection import store_detections  # detection.py reads this module
+    from cip_api.detection import detect, store_detections  # detection.py reads this module
     from cip_api.imports import import_dir  # imports.py queues this job
 
     try:
@@ -125,13 +128,15 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
             ).one()
         plant = load_plant(import_dir(settings, tenant, plant_code, import_id) / "standard")
         facts = measured_facts(plant)
+        detections = detect(plant, facts, report)
+        facts += loss_facts(plant, facts, detections)
         whole = next((f.figure for f in facts if f.period_kind == "all"), None)
         rows = [fact_row(tenant, plant_code, import_id, f) for f in facts]
         with tenant_conn(settings, tenant) as conn:
             conn.execute(text("DELETE FROM facts WHERE plant_code = :p"), {"p": plant_code})
             if rows:
                 conn.execute(INSERT, rows)
-            store_detections(conn, tenant, plant_code, import_id, plant, facts, report)
+            store_detections(conn, tenant, plant_code, import_id, detections)
             conn.execute(
                 text(
                     "UPDATE fact_runs SET status = 'ready', finished_at = :now, error = NULL, "
@@ -171,6 +176,8 @@ Family = Literal[
     "queue",
     "wip",
     "task_time",
+    "loss",
+    "throughput",
 ]
 PeriodKind = Literal["all", "month", "week", "day"]
 
@@ -202,12 +209,20 @@ class FactsOut(BaseModel):
     facts: list[FactOut]
 
 
+def _as_hours(fig: FigureOut) -> FigureOut:
+    """A stored € Figure as constraint hours, converted by the engine with its own rate."""
+    amount = Figure.from_dict(fig.model_dump(mode="json"))
+    rate = amount.inputs.get("throughput_per_constraint_h_eur_cents")
+    return money_out(amount, Money.HOURS.value, rate if isinstance(rate, Figure) else NO_RATE)
+
+
 def _figure(row: Any) -> FigureOut:
     value: float | int | MissingOut
     if row.missing:
         value = MissingOut.model_validate(json.loads(row.missing))
     else:
-        value = int(row.value) if row.measure == "wip_max_units" else row.value
+        whole = row.measure == "wip_max_units" or row.unit == "eur_cents"  # counts and cents
+        value = int(row.value) if whole else row.value
     return FigureOut(
         value=value,
         unit=row.unit,
@@ -271,6 +286,7 @@ def read_facts(
         ),
         params,
     ).all()
+    hours = ctx.access.money is Money.HOURS
     return FactsOut(
         plant_code=plant_code,
         run=fact_run(ctx.db, run.import_id) if run else None,
@@ -283,9 +299,11 @@ def read_facts(
                 operation=r.operation,
                 reason_code=r.reason_code,
                 period_kind=r.period_kind,
-                figure=_figure(r),
+                figure=_as_hours(_figure(r)) if hours and r.unit == "eur_cents" else _figure(r),
             )
             for r in rows
+            # A role that sees hours only never gets a € rate either (ADR-0007).
+            if not (hours and r.family == "throughput")
         ],
     )
 

@@ -92,3 +92,14 @@ def test_every_week_and_month_gets_a_detection(plant_a: LoadedPlant) -> None:
     kinds = [k for k, _ in detections]
     assert kinds.count("all") == 1 and kinds.count("month") == 4 and kinds.count("week") == 12
     assert all(d.resource_code == "PNT-01" for _, d in detections)
+
+
+def test_a_machine_with_spare_time_is_never_the_bottleneck() -> None:
+    """Plant B's start-up weeks queue at PNT-01, but it is busy well under 70%: still market."""
+    plant = load_plant(DATA / "plant_b")
+    detections = detect_periods(plant, measured_facts(plant))
+    assert len(detections) == 17
+    assert all(d.resource_code is None and d.kind == "market" for _, d in detections)
+    assert all(d.reasons[0].code == "no_machine_binding" for _, d in detections)
+    july = detections[1][1]
+    assert [r.code for r in july.reasons] == ["no_machine_binding", "queue_with_spare_time"]

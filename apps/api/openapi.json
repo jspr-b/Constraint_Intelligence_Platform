@@ -766,7 +766,9 @@
               "effective_capacity",
               "queue",
               "wip",
-              "task_time"
+              "task_time",
+              "loss",
+              "throughput"
             ],
             "title": "Family",
             "type": "string"
@@ -4961,7 +4963,9 @@
                       "effective_capacity",
                       "queue",
                       "wip",
-                      "task_time"
+                      "task_time",
+                      "loss",
+                      "throughput"
                     ],
                     "type": "string"
                   },

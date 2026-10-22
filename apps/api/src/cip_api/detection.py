@@ -98,20 +98,22 @@ def _row(
     }
 
 
+def detect(
+    plant: LoadedPlant, facts: list[Fact], report: str | None
+) -> list[tuple[str, Detection]]:
+    """The engine's detection for every period, with the import's data gaps."""
+    return detect_periods(plant, facts, gap_impacts(report))
+
+
 def store_detections(
     conn: Connection,
     tenant: uuid.UUID,
     plant_code: str,
     import_id: uuid.UUID,
-    plant: LoadedPlant,
-    facts: list[Fact],
-    report: str | None,
+    detections: list[tuple[str, Detection]],
 ) -> int:
     """Replace the plant's detections (in the caller's transaction). Returns the count."""
-    rows = [
-        _row(tenant, plant_code, import_id, kind, d)
-        for kind, d in detect_periods(plant, facts, gap_impacts(report))
-    ]
+    rows = [_row(tenant, plant_code, import_id, kind, d) for kind, d in detections]
     conn.execute(text("DELETE FROM detections WHERE plant_code = :p"), {"p": plant_code})
     if rows:
         conn.execute(

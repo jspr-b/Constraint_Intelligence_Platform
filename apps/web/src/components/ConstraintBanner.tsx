@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ConstraintMarker, MicroLabel, type FigureLike } from "@cip/ui";
+import { ConstraintMarker, isMissing, MicroLabel, type FigureLike } from "@cip/ui";
 import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Figure } from "./Figure";
@@ -10,6 +10,7 @@ import { termTags } from "./terms";
 
 type Detection = components["schemas"]["DetectionOut"];
 type Reason = components["schemas"]["ReasonOut"];
+type Fact = components["schemas"]["FactOut"];
 export type DetectionPeriod = { period_kind: "all" | "month" | "week"; period_start_at?: string };
 
 /** The plant's constraint for a period, read from the stored detection. */
@@ -59,6 +60,15 @@ function ReasonText({ reason, label }: { reason: Reason; label: (code: string) =
           {t("market", { machine: machine("top") || "—", busy: Math.round(Number(v.busy_pct)) })}
         </span>
       );
+    case "queue_with_spare_time":
+      return (
+        <span data-raw>
+          {t("queue_with_spare_time", {
+            machine: machine("machine") || "—",
+            busy: Math.round(Number(v.busy_pct)),
+          })}
+        </span>
+      );
     case "material_late":
       return <span data-raw>{t("material", { share: Math.round(Number(v.share_pct)) })}</span>;
     case "weak_evidence":
@@ -74,14 +84,58 @@ function ReasonText({ reason, label }: { reason: Reason; label: (code: string) =
  * The answer: which machine limits output (or that none does), how many checks agree and how
  * sure we are. Every number opens its calculation.
  */
+/** What the bottleneck lost in the period: hours, euros (or why not) and the biggest cause. */
+function LostLine({ loss }: { loss: Fact[] }) {
+  const t = useTranslations("detection.loss");
+  const pick = (measure: string, cause: string) =>
+    loss.find((f) => f.measure === measure && f.reason_code === cause)?.figure;
+  const hours = pick("lost_h", "total");
+  const money = pick("lost_eur_cents", "total");
+  if (!hours) return null;
+  const causes = loss
+    .filter((f) => f.measure === "lost_h" && f.reason_code !== "total")
+    .filter((f) => !isMissing(f.figure.value));
+  const top = causes.sort((a, b) => Number(b.figure.value) - Number(a.figure.value))[0];
+  return (
+    <div className="flex flex-col gap-1 border-t border-line pt-3 text-sm">
+      <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-muted">{t("label")}</span>
+        <Figure figure={hours as FigureLike} label={t("hours")} />
+        {money && money.unit === "eur_cents" && (
+          <>
+            <span className="text-muted">{t("worth")}</span>
+            <Figure figure={money as FigureLike} label={t("euros")} />
+          </>
+        )}
+      </p>
+      {money && money.unit === "eur_cents" && isMissing(money.value) && (
+        <p className="m-0 text-muted">{t("noEuros")}</p>
+      )}
+      {top && (
+        <p className="m-0 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-muted">
+            {t("biggest", { cause: t(`cause.${top.reason_code}`) })}
+          </span>
+          <Figure
+            figure={top.figure as FigureLike}
+            label={t("causeHours", { cause: t(`cause.${top.reason_code}`) })}
+          />
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ConstraintBanner({
   detection,
   label,
   periodName,
+  loss = [],
 }: {
   detection: Detection;
   label: (code: string) => string;
   periodName: string;
+  loss?: Fact[];
 }) {
   const t = useTranslations("detection");
   const d = detection;
@@ -125,6 +179,7 @@ export function ConstraintBanner({
           </li>
         ))}
       </ul>
+      {d.kind === "internal" && <LostLine loss={loss} />}
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">
           <span data-raw>{t("howFound")}</span>

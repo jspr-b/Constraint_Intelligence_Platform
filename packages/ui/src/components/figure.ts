@@ -33,6 +33,14 @@ export function formatFigure(figure: FigureLike, locale = "en"): string {
       maximumFractionDigits: 0,
     }).format(value / 100);
   }
+  if (unit === "eur_cents_per_h") {
+    const euros = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(value / 100);
+    return `${euros}/h`;
+  }
   if (unit === "h")
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} h`;
   if (unit === "min_per_unit")

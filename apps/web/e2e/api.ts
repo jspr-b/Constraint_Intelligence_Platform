@@ -229,6 +229,28 @@ export function stubFacts(url: URL): Record<string, unknown>[] {
         reason_code: "MECH",
       }),
     ];
+    if (code === "PNT-01") {
+      const rate = FIG(187_581.28, "eur_cents_per_h", "throughput_per_constraint_h_v1");
+      for (const [cause, h] of [
+        ["setup", 102.8],
+        ["breaks", 90],
+        ["total", 231],
+      ] as const) {
+        const hours = FIG(h, "h", "lost_constraint_h_total_v1");
+        all.push(
+          fact("loss", code, "lost_h", h, "h", "lost_constraint_h_v1", { reason_code: cause }),
+        );
+        all.push({
+          ...fact("loss", code, "lost_eur_cents", 0, "eur_cents", "lost_throughput_eur_cents_v1", {
+            reason_code: cause,
+          }),
+          figure: {
+            ...FIG(Math.round(h * 187_581.28), "eur_cents", "lost_throughput_eur_cents_v1"),
+            inputs: { lost_h: hours, throughput_per_constraint_h_eur_cents: rate },
+          },
+        });
+      }
+    }
     out.push(...all.filter((f) => families.length === 0 || families.includes(f.family as string)));
   }
   return out;
