@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { LiveDot } from "@cip/ui";
 import { isPageKey, type PageKey } from "@/lib/pages";
-import type { Theme } from "@/lib/prefs";
+import { GUIDE_COOKIE, VIEW_AS_COOKIE, setPref, type Theme } from "@/lib/prefs";
 import { effectiveView, useAccessMatrix, useApiHealth, useMe, type View } from "@/lib/session";
 import { Drawer } from "./Drawer";
 import { EmptyState } from "./EmptyState";
+import { GettingStarted, useOnboarding } from "./GettingStarted";
 import { RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
 import { NavRail } from "./NavRail";
 import { ViewContext } from "./ViewContext";
@@ -30,14 +31,44 @@ function ApiStatus() {
   );
 }
 
+/** While previewing another role: say so, and offer the way back (actions are off). */
+function PreviewBanner({ view }: { view: View }) {
+  const t = useTranslations();
+  const router = useRouter();
+  const back = () => {
+    setPref(VIEW_AS_COOKIE, view.ownRole);
+    router.refresh();
+  };
+  return (
+    <div
+      role="status"
+      className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-panel border border-accent px-4 py-2 text-sm"
+    >
+      <span>
+        {t("preview.banner", { role: t(`roles.${view.role}`) })}{" "}
+        <span className="text-muted">{t("preview.note")}</span>
+      </span>
+      <button
+        type="button"
+        onClick={back}
+        className="cursor-pointer rounded-control border border-line-strong bg-transparent px-2 py-1 text-sm text-accent"
+      >
+        {t("preview.back", { role: t(`roles.${view.ownRole}`) })}
+      </button>
+    </div>
+  );
+}
+
 export function Shell({
   children,
   theme,
   viewAs,
+  guide: storedGuide,
 }: {
   children: ReactNode;
   theme: Theme;
   viewAs: string | undefined;
+  guide: string | undefined;
 }) {
   const t = useTranslations();
   const session = useMe();
@@ -49,6 +80,17 @@ export function Shell({
     session.status === "ready" ? effectiveView(session.me, matrix, viewAs) : null;
   const station = view?.role === "station";
   const router = useRouter();
+  const [guide, setGuide] = useState(storedGuide);
+  const onboarding = useOnboarding();
+  const showGuide =
+    view !== null &&
+    !station &&
+    guide !== "hidden" &&
+    (guide === "open" || onboarding.data?.complete === false);
+  const choose = (value: "hidden" | "open") => {
+    setPref(GUIDE_COOKIE, value);
+    setGuide(value);
+  };
   useEffect(() => {
     if (session.status === "signed-out") router.replace("/login");
   }, [session.status, router]);
@@ -86,9 +128,23 @@ export function Shell({
         </div>
       </header>
       <div className="flex min-h-0 flex-1">
-        {view && !station && <NavRail pages={view.pages} active={active} />}
+        {view && !station && (
+          <NavRail
+            pages={view.pages}
+            active={active}
+            onGuide={showGuide ? undefined : () => choose("open")}
+          />
+        )}
         <main id="content" tabIndex={-1} className="min-w-0 flex-1 p-5 outline-none">
-          {view ? <ViewContext value={view}>{body}</ViewContext> : body}
+          {view ? (
+            <ViewContext value={view}>
+              {view.preview && <PreviewBanner view={view} />}
+              {showGuide && <GettingStarted view={view} onHide={() => choose("hidden")} />}
+              {body}
+            </ViewContext>
+          ) : (
+            body
+          )}
         </main>
         {view && !station && <Drawer />}
       </div>

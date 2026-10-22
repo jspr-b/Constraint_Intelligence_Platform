@@ -58,6 +58,10 @@ export interface View {
   startPage: PageKey;
   decisions: Set<string>;
   preview: boolean;
+  /** The signed-in role (differs from ``role`` while previewing another role). */
+  ownRole: Role;
+  /** Who may take each decision, when the access matrix is readable; else empty. */
+  holders: Map<string, Role[]>;
 }
 
 /**
@@ -82,5 +86,12 @@ export function effectiveView(
     startPage: isPageKey(source.start_page) ? source.start_page : "main",
     decisions: new Set<string>(source.decisions),
     preview: chosen !== undefined && chosen.role !== me.role,
+    ownRole: me.role as Role,
+    holders: new Map(
+      [...new Set((matrix?.roles ?? []).flatMap((r) => r.decisions))].map((d) => [
+        d,
+        (matrix?.roles ?? []).filter((r) => r.decisions.includes(d)).map((r) => r.role as Role),
+      ]),
+    ),
   };
 }

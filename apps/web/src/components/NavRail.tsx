@@ -2,12 +2,23 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { Compass } from "lucide-react";
 import { MicroLabel } from "@cip/ui";
 import { GROUPS, type PageKey } from "@/lib/pages";
 
 /** Grouped menu (Diagnose, Plan, Operate, Prove, Setup) with only the pages the role may open. */
-export function NavRail({ pages, active }: { pages: Set<PageKey>; active: PageKey | null }) {
+export function NavRail({
+  pages,
+  active,
+  onGuide,
+}: {
+  pages: Set<PageKey>;
+  active: PageKey | null;
+  /** Reopen the getting-started guide; absent while it is shown. */
+  onGuide?: (() => void) | undefined;
+}) {
   const t = useTranslations("nav");
+  const tg = useTranslations("guide");
   return (
     <nav
       aria-label={t("label")}
@@ -44,6 +55,16 @@ export function NavRail({ pages, active }: { pages: Set<PageKey>; active: PageKe
           </div>
         );
       })}
+      {onGuide && (
+        <button
+          type="button"
+          onClick={onGuide}
+          className="mt-auto flex min-h-8 cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent px-3 text-left text-sm text-muted hover:bg-raised hover:text-text"
+        >
+          <Compass aria-hidden="true" size={16} strokeWidth={1.5} />
+          {tg("reopen")}
+        </button>
+      )}
     </nav>
   );
 }

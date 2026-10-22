@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
@@ -113,7 +114,7 @@ export function SetupPage() {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader page="setup" headline={t("headlineEmpty")} actions={addPlant || undefined} />
-        {!canEdit && <p className="m-0 text-sm text-muted">{t("readOnly")}</p>}
+        {!canEdit && <ReadOnlyNote decision="edit_setup_calendar" />}
       </div>
     );
   }
@@ -133,7 +134,7 @@ export function SetupPage() {
           </>
         }
       />
-      {!canEdit && <p className="m-0 text-sm text-muted">{t("readOnly")}</p>}
+      {!canEdit && <ReadOnlyNote decision="edit_setup_calendar" />}
       {s && (
         <Tabs>
           <TabList aria-label={t("label")} className="flex flex-wrap border-b border-line">

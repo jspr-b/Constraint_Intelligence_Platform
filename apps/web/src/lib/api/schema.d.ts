@@ -312,6 +312,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Onboarding
+         * @description Progress for ``plant_code``, or for the first plant this role may see.
+         */
+        get: operations["onboarding_onboarding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants": {
         parameters: {
             query?: never;
@@ -1106,6 +1126,23 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** OnboardingOut */
+        OnboardingOut: {
+            /** Can Set Up */
+            can_set_up: boolean;
+            /** Complete */
+            complete: boolean;
+            /** Next Step */
+            next_step: ("plant" | "upload" | "check" | "answer") | null;
+            /** Plant Code */
+            plant_code: string | null;
+            /** Plant Name */
+            plant_name: string | null;
+            /** Setup Contacts */
+            setup_contacts: string[];
+            /** Steps */
+            steps: components["schemas"]["StepOut"][];
+        };
         /** OperationOut */
         OperationOut: {
             /** Alternatives */
@@ -1334,6 +1371,26 @@ export interface components {
             name: string;
             /** Station Code */
             station_code: string;
+        };
+        /** StepOut */
+        StepOut: {
+            /** Detail */
+            detail?: string | null;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "plant" | "upload" | "check" | "answer";
+            /**
+             * Missing
+             * @default []
+             */
+            missing: string[];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "done" | "todo" | "later";
         };
         /** UserOut */
         UserOut: {
@@ -1976,6 +2033,41 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    onboarding_onboarding_get: {
+        parameters: {
+            query?: {
+                plant_code?: string | null;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -85,11 +85,12 @@ test("IT sees accounts and station logins, and invites a person", async ({ page 
   await expect(
     page.getByText("Who stood at which station, or how fast a person worked."),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Invite person" }).click();
-  const dialog = page.getByRole("dialog", { name: "Invite person" });
+  await page.getByRole("button", { name: "Add person" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add person" });
+  await expect(dialog.getByText(/No email is sent\. Tell them to sign in at http/)).toBeVisible();
   await dialog.getByLabel("Work email").fill("director@plant-a.example.test");
   await dialog.getByLabel("Role").selectOption({ label: "Plant director" });
-  await dialog.getByRole("button", { name: "Send invite" }).click();
+  await dialog.getByRole("button", { name: "Add person" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(
     page.getByRole("cell", { name: "director@plant-a.example.test", exact: true }),
@@ -125,7 +126,18 @@ test("other roles see the list but cannot manage logins", async ({ page }) => {
   await stubApi(page, { role: "planner" });
   await stubUsers(page);
   await page.goto("/users");
-  await expect(page.getByText("Only IT manages logins.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Invite person" })).toHaveCount(0);
+  await expect(page.getByText("Planner can see this but not manage logins.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add person" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Disable/ })).toHaveCount(0);
+});
+
+test("adding a station login with no plant says what to do first", async ({ page }) => {
+  await stubApi(page, { role: "it" });
+  await stubUsers(page);
+  await page.route("**/api/plants", (route) => route.fulfill({ json: [] }));
+  await page.goto("/users");
+  await page.getByRole("button", { name: "Add station login" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add station login" });
+  await expect(dialog.getByText(/No plant yet\. Add your plant first/)).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "Go to Plant setup" })).toBeVisible();
 });

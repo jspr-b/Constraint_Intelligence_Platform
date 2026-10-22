@@ -60,15 +60,28 @@
     "close": "Hide details"
   },
   "empty": {
-    "notBuilt": "Not built yet",
-    "builtBy": {
-      "foundation": "This page is built in the foundation, in a later sequence.",
-      "diagnose": "This page arrives with the Diagnose pillar.",
-      "plan": "This page arrives with the Plan pillar.",
-      "operate": "This page arrives with the Operate pillar.",
-      "prove": "This page arrives with the Prove pillar."
+    "notBuilt": "Coming soon",
+    "noNumbers": "No numbers are shown here until the engine has calculated them from your data.",
+    "today": "What you can do today:",
+    "todayLinks": {
+      "setup": "Finish getting started",
+      "data": "Check your data on Data quality"
     },
-    "noNumbers": "No numbers are shown until the engine produces them."
+    "pages": {
+      "run": "Where your diagnosis stands, from your data to the answer, step by step.",
+      "main": "The answer in one place: which machine limits your output, what it costs and how sure we are.",
+      "loss": "The hours and euros your bottleneck loses each week and month, and why.",
+      "machines": "How busy each machine really is: running, setup, down, waiting.",
+      "actions": "What to do about your bottleneck, with the euros it could gain and what it costs.",
+      "report": "A report for the plant director: the bottleneck, its cost, the evidence.",
+      "planner": "Which orders to release today, in which order, to keep the bottleneck busy.",
+      "buffer": "The orders waiting in front of your bottleneck, marked green, yellow or red.",
+      "plan": "Which machine will limit your output in the coming weeks.",
+      "flow": "Your plant from input to output, with the bottleneck highlighted.",
+      "shift": "One clear signal per shift: is the bottleneck running, waiting or down.",
+      "station": "The screen at a machine: tap start, done and stop.",
+      "value": "The gain we predicted against the gain you measured, for finance to sign off."
+    }
   },
   "shell": {
     "loading": "Loading…",
@@ -111,8 +124,8 @@
   },
   "users": {
     "headline": "{people, plural, one {# person} other {# people}} · {stations, plural, one {# station} other {# stations}}",
-    "invite": "Invite person",
-    "inviteSubmit": "Send invite",
+    "invite": "Add person",
+    "inviteSubmit": "Add person",
     "addStation": "Add station login",
     "addStationSubmit": "Add station login",
     "cancel": "Cancel",
@@ -128,7 +141,6 @@
     "accessLink": "Access, by the COO",
     "loading": "Loading…",
     "empty": "No accounts yet.",
-    "itOnly": "Only IT manages logins. You can see the list.",
     "col": {
       "account": "Account",
       "type": "Type",
@@ -142,7 +154,7 @@
     "enable": "Enable",
     "status": {
       "active": "Active",
-      "invited": "Invited",
+      "invited": "Added, not signed in yet",
       "disabled": "Disabled",
       "locked": "Locked"
     },
@@ -155,7 +167,13 @@
     "ssoOffNote": "During the pilot, personal accounts use email sign-in. Station logins always use a station PIN.",
     "neverStored": "What is never stored",
     "neverStoredBody": "Who stood at which station, or how fast a person worked.",
-    "neverStoredNote": "Station logins belong to the machine. Personal accounts exist only for people who plan, decide or administer."
+    "neverStoredNote": "Station logins belong to the machine. Personal accounts exist only for people who plan, decide or administer.",
+    "inviteHowSso": "No email is sent. Tell them to sign in at {url} with their company account. Their status turns Active on first sign-in.",
+    "inviteHowDev": "No email is sent. Tell them to sign in at {url} with this email. Their status turns Active on first sign-in.",
+    "noPlantForStation": "No plant yet. Add your plant first, then import your export; its machines appear here.",
+    "noMachines": "No machines yet for this plant. They come in with your first import.",
+    "openImport": "Go to Import",
+    "openSetup": "Go to Plant setup"
   },
   "access": {
     "label": "Access per role",
@@ -163,7 +181,6 @@
     "headlineRestricted": "{count, plural, one {# page permission} other {# page permissions}} restricted. The COO can change this at any time.",
     "presetAll": "Everyone sees everything",
     "presetMenus": "Role menus only",
-    "cooOnly": "Only the COO changes access. You can see the settings.",
     "startPage": "Start page:",
     "tabPages": "Pages",
     "tabData": "Data",
@@ -208,7 +225,7 @@
   "plant": {
     "label": "Plant",
     "none": "No plant yet",
-    "noneBody": "Add the plant, its stations and machines first.",
+    "noneBody": "Add your plant first. Its machines come in with your export.",
     "toSetup": "Go to plant setup"
   },
   "import": {
@@ -219,7 +236,6 @@
       "running": "Importing… this page updates by itself.",
       "failed": "The last import failed. See the reason below."
     },
-    "readOnly": "Your role can see imports but not upload or run them.",
     "steps": "Import steps",
     "stepUpload": "Upload files",
     "stepMap": "Map columns",
@@ -338,8 +354,7 @@
   "setup": {
     "label": "Plant setup",
     "headline": "{stations, plural, one {# station} other {# stations}} · {machines, plural, one {# machine} other {# machines}}. Measured times come from the last import; ERP values are for reference.",
-    "headlineEmpty": "No plant yet. Enter the plant, its stations and machines at kick-off.",
-    "readOnly": "Your role can see the setup but not change it.",
+    "headlineEmpty": "No plant yet. Add your plant: a name and a time zone. Its machines come in with your export.",
     "addPlant": "Add plant",
     "save": "Save",
     "cancel": "Cancel",
@@ -399,7 +414,6 @@
   },
   "calendar": {
     "headline": "Shifts, breaks and maintenance per machine, in plant local time ({tz}).",
-    "readOnly": "Your role can see the calendar but not change it.",
     "previousDay": "Previous day",
     "nextDay": "Next day",
     "day": "Day",
@@ -548,5 +562,76 @@
       "none": "None"
     },
     "weeksLabel": "Weeks of history"
+  },
+  "guide": {
+    "title": "Getting started",
+    "progress": "{done} of {total} done",
+    "allDone": "All set",
+    "hide": "Hide",
+    "reopen": "Getting started",
+    "waitingFor": "Waiting for your IT / ERP owner ({who}).",
+    "waitingForIt": "Waiting for your IT / ERP owner.",
+    "state": {
+      "done": "done",
+      "next": "next step",
+      "todo": "to do",
+      "later": "coming later"
+    },
+    "plant": {
+      "title": "Add your plant",
+      "todo": "Name your plant and its time zone; machines come in with your export.",
+      "done": "{plant} is set up.",
+      "go": "Add plant"
+    },
+    "upload": {
+      "title": "Upload your exports",
+      "todo": "Upload the 5 exports and 1 sheet from your ERP or MES.",
+      "uploaded": "Files uploaded. Run the import to read them in.",
+      "running": "The import is running. This page updates by itself.",
+      "failed": "The last import failed. Open Import to see why.",
+      "done": "Your exports are imported.",
+      "go": "Upload files",
+      "goRun": "Run the import",
+      "goFailed": "See why"
+    },
+    "check": {
+      "title": "Check your data",
+      "todo": "After the import, see what is in your data and what is missing.",
+      "missing": "Still missing: {items}. Open Data quality to see how to add it.",
+      "done": "Your data covers what a diagnosis needs.",
+      "go": "Open Data quality",
+      "confirm": "Enough to start. Please confirm on Data quality: {items}."
+    },
+    "answer": {
+      "title": "See your bottleneck",
+      "todo": "See which machine limits your output and what it costs.",
+      "later": "Which machine limits your output and what it costs. This arrives with the Diagnose engine.",
+      "done": "Your bottleneck is found.",
+      "go": "See the answer"
+    },
+    "items": {
+      "orders": "orders",
+      "routings": "routings",
+      "products": "products with prices",
+      "events": "start and finish bookings",
+      "calendar": "shifts and holidays"
+    }
+  },
+  "readOnly": {
+    "preview": "Changes are switched off while you preview another role. Switch back to your own view to make changes.",
+    "notAllowed": "{role} can see this but not {action}.",
+    "whoCan": "{roles} can.",
+    "askCoo": "Ask your COO, who decides who may do what.",
+    "actions": {
+      "import_run_diagnostic": "upload or run imports",
+      "edit_setup_calendar": "change it",
+      "manage_logins": "manage logins",
+      "change_access": "change access"
+    }
+  },
+  "preview": {
+    "banner": "You are previewing what {role} sees.",
+    "note": "Changes are switched off in a preview.",
+    "back": "Back to my own view ({role})"
   }
 }

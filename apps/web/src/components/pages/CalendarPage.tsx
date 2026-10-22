@@ -8,6 +8,7 @@ import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
@@ -96,7 +97,7 @@ export function CalendarPage() {
         headline={c ? t("headline", { tz: c.timezone_iana }) : undefined}
         actions={<PlantPicker {...picker} />}
       />
-      {!canEdit && <p className="m-0 text-sm text-muted">{t("readOnly")}</p>}
+      {!canEdit && <ReadOnlyNote decision="edit_setup_calendar" />}
       {c && shown && (
         <>
           <div className="flex flex-wrap items-end gap-2">

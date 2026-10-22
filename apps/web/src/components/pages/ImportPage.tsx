@@ -10,6 +10,7 @@ import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Field } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
@@ -114,6 +115,39 @@ export function ImportPage() {
   const runBlocked = usable.length === 0 ? t("runNoFiles") : null;
   const n = (value: number) => value.toLocaleString(locale);
 
+  /** Run the import, with its state; on the Upload and the Map columns step. */
+  const runBar = latest && (
+    <>
+      {canRun && latest.status !== "running" && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="primary"
+            isDisabled={runBlocked !== null}
+            onPress={() => run.mutate(latest.import_id)}
+          >
+            {latest.status === "done" ? t("runAgain") : t("run")}
+          </Button>
+          <span className="text-xs text-muted">
+            {runBlocked ??
+              (missing.length > 0
+                ? t("runWithGaps", { count: missing.length })
+                : t("runExplain", { files: usable.length }))}
+          </span>
+        </div>
+      )}
+      {latest.status === "running" && (
+        <p role="status" className="m-0 text-sm">
+          {t("running")}
+        </p>
+      )}
+      {latest.status === "failed" && (
+        <p role="alert" className="m-0 text-sm text-bad">
+          {t("failed", { reason: latest.error ?? "" })}
+        </p>
+      )}
+    </>
+  );
+
   const fileStatus = (f: FileCheck) => {
     if (!f.readable) return { glyph: "✕", text: t(`problem.${f.problem ?? "not_text"}`) };
     if (!f.recognised_as) return { glyph: "▲", text: t("notRecognised") };
@@ -146,7 +180,7 @@ export function ImportPage() {
         </ol>
         <p className="m-0 mt-2 text-muted">{t("howPrivacy")}</p>
       </details>
-      {!canRun && <p className="m-0 text-sm text-muted">{t("readOnly")}</p>}
+      {!canRun && <ReadOnlyNote decision="import_run_diagnostic" />}
       <Tabs>
         <TabList aria-label={t("steps")} className="flex border-b border-line">
           <Tab id="upload" className={TAB}>
@@ -351,33 +385,7 @@ export function ImportPage() {
                     })}
                   </p>
                 )}
-                {canRun && latest.status !== "running" && (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      variant="primary"
-                      isDisabled={runBlocked !== null}
-                      onPress={() => run.mutate(latest.import_id)}
-                    >
-                      {latest.status === "done" ? t("runAgain") : t("run")}
-                    </Button>
-                    <span className="text-xs text-muted">
-                      {runBlocked ??
-                        (missing.length > 0
-                          ? t("runWithGaps", { count: missing.length })
-                          : t("runExplain", { files: usable.length }))}
-                    </span>
-                  </div>
-                )}
-                {latest.status === "running" && (
-                  <p role="status" className="m-0 text-sm">
-                    {t("running")}
-                  </p>
-                )}
-                {latest.status === "failed" && (
-                  <p role="alert" className="m-0 text-sm text-bad">
-                    {t("failed", { reason: latest.error ?? "" })}
-                  </p>
-                )}
+                {runBar}
               </div>
             )}
           </Panel>
@@ -446,6 +454,7 @@ export function ImportPage() {
                 </Panel>
               ))
           )}
+          {runBar}
         </TabPanel>
         <TabPanel id="check" className="flex flex-col gap-4 pt-4 outline-none">
           {latest?.status !== "done" || !report ? (

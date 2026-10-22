@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { GROUPS, ROLES, type Role } from "@/lib/pages";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { useView } from "../ViewContext";
 
 type Matrix = components["schemas"]["AccessOut"];
@@ -103,7 +104,7 @@ export function AccessPage() {
           ) : undefined
         }
       />
-      {!canChange && <p className="m-0 text-sm text-muted">{t("cooOnly")}</p>}
+      {!canChange && <ReadOnlyNote decision="change_access" />}
       <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
         {ROLES.map((role) => (
           <li

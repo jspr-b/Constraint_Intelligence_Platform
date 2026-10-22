@@ -17,7 +17,7 @@ export default async function ShiftTv() {
       </div>
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <p className="m-0 font-display text-3xl font-bold text-faint">{t("empty.notBuilt")}</p>
-        <p className="m-0 text-base text-muted">{t("empty.builtBy.operate")}</p>
+        <p className="m-0 text-base text-muted">{t("empty.pages.shift")}</p>
       </div>
     </main>
   );

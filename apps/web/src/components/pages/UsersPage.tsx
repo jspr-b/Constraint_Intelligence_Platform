@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { ROLES } from "@/lib/pages";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { useView } from "../ViewContext";
 
 const STATUS_GLYPH: Record<string, string> = {
@@ -121,6 +122,7 @@ export function UsersPage() {
                   return true;
                 }}
               >
+                <SignInHint sso={provider.data === "oidc"} />
                 <Field label={t("email")}>
                   {(id) => <input id={id} name="email" type="email" required className={FIELD} />}
                 </Field>
@@ -198,6 +200,18 @@ export function UsersPage() {
                     </select>
                   )}
                 </Field>
+                {plants.data?.length === 0 ? (
+                  <p className="m-0 text-sm text-muted">
+                    {t("noPlantForStation")} <Link href="/setup">{t("openSetup")}</Link>
+                  </p>
+                ) : (
+                  plant &&
+                  machines.data?.length === 0 && (
+                    <p className="m-0 text-sm text-muted">
+                      {t("noMachines")} <Link href="/import">{t("openImport")}</Link>
+                    </p>
+                  )
+                )}
                 <Field label={t("pin")}>
                   {(id) => (
                     <input
@@ -217,7 +231,7 @@ export function UsersPage() {
           ) : undefined
         }
       />
-      {!canManage && <p className="m-0 text-sm text-muted">{t("itOnly")}</p>}
+      {(!canManage || view?.preview) && <ReadOnlyNote decision="manage_logins" />}
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <Panel
           label={t("accounts")}
@@ -300,5 +314,15 @@ export function UsersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** How an added person signs in; rendered only inside the open dialog, so `window` exists. */
+function SignInHint({ sso }: { sso: boolean }) {
+  const t = useTranslations("users");
+  return (
+    <p className="m-0 text-sm text-muted">
+      {t(sso ? "inviteHowSso" : "inviteHowDev", { url: `${window.location.origin}/login` })}
+    </p>
   );
 }

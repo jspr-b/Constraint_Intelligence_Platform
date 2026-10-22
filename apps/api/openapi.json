@@ -1293,6 +1293,82 @@
         "title": "OidcLoginIn",
         "type": "object"
       },
+      "OnboardingOut": {
+        "properties": {
+          "can_set_up": {
+            "title": "Can Set Up",
+            "type": "boolean"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "enum": [
+                  "plant",
+                  "upload",
+                  "check",
+                  "answer"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step"
+          },
+          "plant_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Code"
+          },
+          "plant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Name"
+          },
+          "setup_contacts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Setup Contacts",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plant_code",
+          "plant_name",
+          "steps",
+          "next_step",
+          "complete",
+          "can_set_up",
+          "setup_contacts"
+        ],
+        "title": "OnboardingOut",
+        "type": "object"
+      },
       "OperationOut": {
         "properties": {
           "alternatives": {
@@ -1952,6 +2028,54 @@
           "machines"
         ],
         "title": "StationOut",
+        "type": "object"
+      },
+      "StepOut": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "key": {
+            "enum": [
+              "plant",
+              "upload",
+              "check",
+              "answer"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "missing": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "done",
+              "todo",
+              "later"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "state"
+        ],
+        "title": "StepOut",
         "type": "object"
       },
       "UserOut": {
@@ -3243,6 +3367,104 @@
           }
         },
         "summary": "Meta"
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "description": "Progress for ``plant_code``, or for the first plant this role may see.",
+        "operationId": "onboarding_onboarding_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "plant_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plant Code"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Onboarding",
+        "tags": [
+          "getting started"
+        ]
       }
     },
     "/plants": {

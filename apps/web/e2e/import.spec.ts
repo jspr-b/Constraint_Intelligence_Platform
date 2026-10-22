@@ -38,3 +38,9 @@ test("results per file show rejected rows with reason and lines", async ({ page 
   await expect(row).toContainText("unknown: 1 (lines 4)");
   await expect(row).toContainText("events 9");
 });
+
+test("the import can be run from the Map columns step too", async ({ page }) => {
+  await page.goto("/import");
+  await page.getByRole("tab", { name: /Map columns/ }).click();
+  await expect(page.getByRole("button", { name: "Run import again" })).toBeVisible();
+});

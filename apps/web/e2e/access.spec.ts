@@ -108,7 +108,7 @@ test("other roles see access read-only", async ({ page }) => {
   await stubApi(page, { role: "planner" });
   await stubAccess(page);
   await page.goto("/access");
-  await expect(page.getByText("Only the COO changes access.")).toBeVisible();
+  await expect(page.getByText("Planner can see this but not change access.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Role menus only" })).toHaveCount(0);
   await expect(
     page.getByRole("checkbox", { name: "Planner may open Value report" }),

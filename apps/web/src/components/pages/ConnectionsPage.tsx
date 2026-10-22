@@ -7,6 +7,7 @@ import { Button, Panel } from "@cip/ui";
 import { api } from "@/lib/api/client";
 import { ROLES } from "@/lib/pages";
 import { PageHeader } from "../PageHeader";
+import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
@@ -110,6 +111,7 @@ export function ConnectionsPage() {
           </>
         }
       />
+      {!canRun && <ReadOnlyNote decision="import_run_diagnostic" />}
       <Panel label={t("sourcesLabel")} status={<span>{t("writeBackOff")}</span>}>
         <table className="w-full border-collapse text-sm">
           <thead>
