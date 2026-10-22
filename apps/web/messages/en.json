@@ -352,7 +352,13 @@
       "store": "Saving your data failed. Nothing was changed. Run the import again."
     },
     "failedUnknown": "Run the import again. If it stops again, contact support with the details below.",
-    "uploadFailedUnknown": "Upload failed. Check your connection and try again."
+    "uploadFailedUnknown": "Upload failed. Check your connection and try again.",
+    "facts": {
+      "calculating": "Calculating your numbers from this import… This takes about a minute and the page updates by itself.",
+      "ready": "Your numbers are calculated for {start} to {end}.",
+      "next": "Next: check your data",
+      "failed": "Your data is imported, but we could not calculate your numbers from it. Run the import again. If that fails too, send IT the technical details below."
+    }
   },
   "setup": {
     "label": "Plant setup",
@@ -592,7 +598,9 @@
       "done": "Your exports are imported.",
       "go": "Upload files",
       "goRun": "Run the import",
-      "goFailed": "See why"
+      "goFailed": "See why",
+      "calculating": "Your exports are imported. Calculating your numbers… this updates by itself.",
+      "numbers_failed": "Your exports are imported, but the numbers could not be calculated. Open Import and run it again."
     },
     "check": {
       "title": "Check your data",

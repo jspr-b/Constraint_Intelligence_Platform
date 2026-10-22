@@ -625,6 +625,186 @@
         "title": "DevLoginIn",
         "type": "object"
       },
+      "FactOut": {
+        "properties": {
+          "family": {
+            "enum": [
+              "state",
+              "utilisation",
+              "setup_share",
+              "oee",
+              "effective_capacity",
+              "queue",
+              "wip",
+              "task_time"
+            ],
+            "title": "Family",
+            "type": "string"
+          },
+          "figure": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "measure": {
+            "title": "Measure",
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "period_kind": {
+            "enum": [
+              "all",
+              "month",
+              "week"
+            ],
+            "title": "Period Kind",
+            "type": "string"
+          },
+          "resource_code": {
+            "title": "Resource Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "resource_code",
+          "measure",
+          "operation",
+          "period_kind",
+          "figure"
+        ],
+        "title": "FactOut",
+        "type": "object"
+      },
+      "FactRunOut": {
+        "description": "Where the plant's numbers are after an import.",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "period_end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End At"
+          },
+          "period_start_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start At"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "calculating",
+              "ready",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "started_at",
+          "finished_at",
+          "period_start_at",
+          "period_end_at",
+          "error"
+        ],
+        "title": "FactRunOut",
+        "type": "object"
+      },
+      "FactsOut": {
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "plant_code",
+          "run",
+          "import_id",
+          "facts"
+        ],
+        "title": "FactsOut",
+        "type": "object"
+      },
       "FigureOut": {
         "description": "A number with its unit, formula, inputs, data period and confidence.",
         "properties": {
@@ -944,6 +1124,16 @@
             },
             "title": "Expected Files",
             "type": "array"
+          },
+          "facts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "failed_step": {
             "anyOf": [
@@ -1525,6 +1715,36 @@
           "allowed"
         ],
         "title": "PageIn",
+        "type": "object"
+      },
+      "PeriodOut": {
+        "properties": {
+          "period_end_at": {
+            "format": "date-time",
+            "title": "Period End At",
+            "type": "string"
+          },
+          "period_kind": {
+            "enum": [
+              "all",
+              "month",
+              "week"
+            ],
+            "title": "Period Kind",
+            "type": "string"
+          },
+          "period_start_at": {
+            "format": "date-time",
+            "title": "Period Start At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_kind",
+          "period_start_at",
+          "period_end_at"
+        ],
+        "title": "PeriodOut",
         "type": "object"
       },
       "PinIn": {
@@ -4362,6 +4582,269 @@
         "summary": "Data Quality",
         "tags": [
           "data quality"
+        ]
+      }
+    },
+    "/plants/{plant_code}/facts": {
+      "get": {
+        "description": "Measured facts of the plant's latest calculation, each a Figure with its provenance.\n\nFilter by ``family`` (repeatable), ``resource_code`` and period: ``period_kind`` ``all``\n(the whole data period, default), ``month`` or ``week``; ``period_start_at`` picks one month\nor week (see ``/facts/periods``), otherwise every period of that kind is returned.",
+        "operationId": "read_facts_plants__plant_code__facts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "family",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "state",
+                      "utilisation",
+                      "setup_share",
+                      "oee",
+                      "effective_capacity",
+                      "queue",
+                      "wip",
+                      "task_time"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_kind",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "month",
+                "week"
+              ],
+              "title": "Period Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_start_at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period Start At"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Facts",
+        "tags": [
+          "facts"
+        ]
+      }
+    },
+    "/plants/{plant_code}/facts/periods": {
+      "get": {
+        "description": "The periods the plant's facts cover: the whole data period, each month and each week.",
+        "operationId": "read_periods_plants__plant_code__facts_periods_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PeriodOut"
+                  },
+                  "title": "Response Read Periods Plants  Plant Code  Facts Periods Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Periods",
+        "tags": [
+          "facts"
         ]
       }
     },

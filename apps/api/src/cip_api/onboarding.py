@@ -24,7 +24,8 @@ class StepOut(BaseModel):
     key: StepKey
     state: StepState
     detail: str | None = None
-    """Why a step is not done yet (``uploaded``, ``running``, ``failed``, ``missing``), or for a
+    """Why a step is not done yet (``uploaded``, ``running``, ``failed``, ``calculating``,
+    ``numbers_failed``, ``missing``), or for a
     done ``check``, ``confirm``: items a person should confirm."""
     missing: list[str] = []
     """For ``check``: the minimum-set items missing, or to confirm (keys such as ``orders``)."""
@@ -46,8 +47,9 @@ class OnboardingOut(BaseModel):
 def _latest_import(ctx: Ctx, plant_code: str) -> Any:
     return ctx.db.execute(
         text(
-            "SELECT status, report FROM imports WHERE plant_code = :p "
-            "ORDER BY created_at DESC LIMIT 1"
+            "SELECT i.status, i.report, f.status AS facts_status FROM imports i "
+            "LEFT JOIN fact_runs f ON f.import_id = i.import_id "
+            "WHERE i.plant_code = :p ORDER BY i.created_at DESC LIMIT 1"
         ),
         {"p": plant_code},
     ).first()
@@ -57,7 +59,12 @@ def _upload_step(latest: Any) -> StepOut:
     if latest is None:
         return StepOut(key="upload", state="todo")
     if latest.status == "done":
-        return StepOut(key="upload", state="done")
+        # The import is stored; the step is done once its numbers are calculated.
+        if latest.facts_status == "ready":
+            return StepOut(key="upload", state="done")
+        if latest.facts_status == "calculating":
+            return StepOut(key="upload", state="todo", detail="calculating")
+        return StepOut(key="upload", state="todo", detail="numbers_failed")
     return StepOut(key="upload", state="todo", detail=latest.status)
 
 

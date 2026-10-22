@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from cip_api.onboarding import _check_step
+from cip_api.onboarding import _check_step, _upload_step
 from cip_api.settings import Settings
 from cip_api_testkit import World, make_client
 
@@ -105,3 +105,19 @@ def test_check_step_is_done_when_enough_is_there_and_names_what_to_confirm(
 ) -> None:
     step = _check_step(_report(*statuses))
     assert (step.state, step.detail, step.missing) == (state, detail, items)
+
+
+@pytest.mark.parametrize(
+    ("facts_status", "state", "detail"),
+    [
+        ("ready", "done", None),
+        ("calculating", "todo", "calculating"),
+        ("failed", "todo", "numbers_failed"),
+        (None, "todo", "numbers_failed"),
+    ],
+)
+def test_upload_step_waits_for_the_numbers(
+    facts_status: str | None, state: str, detail: str | None
+) -> None:
+    step = _upload_step(SimpleNamespace(status="done", facts_status=facts_status))
+    assert (step.state, step.detail) == (state, detail)

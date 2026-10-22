@@ -313,4 +313,57 @@ class Import(Base):
     error: Mapped[str | None] = mapped_column(Text)
 
 
+class FactRun(Base):
+    """One facts calculation for one import: calculating, ready or failed (one per import)."""
+
+    __tablename__ = "fact_runs"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    import_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    plant_code: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="calculating")
+    """calculating, ready or failed."""
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    period_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    period_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)
+    """Technical cause when failed (``step:ExceptionType``); never shown as the main message."""
+
+
+class Fact(Base):
+    """One measured number from the engine, with its full provenance (ADR-0003).
+
+    ``family`` groups facts: ``state`` (machine state minutes), ``task_time``, ``setup_share``,
+    ``effective_capacity``, ``oee``, ``queue`` and ``wip``. ``subject_code`` is the resource
+    (or station) it is about, ``measure`` names the number with its unit suffix
+    (``running_min``, ``availability_pct``). ``period_kind`` is ``all``, ``month`` or ``week``.
+    A missing number has ``value`` NULL and its reason in ``missing``.
+    """
+
+    __tablename__ = "facts"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
+    plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    import_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    family: Mapped[str] = mapped_column(String(32), nullable=False)
+    subject_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    measure: Mapped[str] = mapped_column(String(64), nullable=False)
+    operation: Mapped[str | None] = mapped_column(String(100))
+    """For task times: the operation measured on the machine."""
+    period_kind: Mapped[str] = mapped_column(String(8), nullable=False)
+    period_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    period_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    value: Mapped[float | None] = mapped_column(Double)
+    unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    formula_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    formula_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    confidence: Mapped[str] = mapped_column(String(16), nullable=False)
+    inputs: Mapped[str] = mapped_column(Text, nullable=False, server_default="{}")
+    """JSON: the Figure's inputs, nested Figures included."""
+    missing: Mapped[str | None] = mapped_column(Text)
+    """JSON: {missing, reason, confidence_impact} when the value could not be calculated."""
+
+
 TENANT_TABLES = [t for t in Base.metadata.sorted_tables if t.name != "tenants"]

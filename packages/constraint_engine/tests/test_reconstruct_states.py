@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from constraint_engine.io.plant_loader import load_plant
-from constraint_engine.reconstruct.states import STATES, machine_states, period_windows
+from constraint_engine.reconstruct.states import STATES, UNKNOWN, machine_states, period_windows
 
 DATA = Path(__file__).resolve().parents[3] / "data" / "synthetic"
 TRUTH_KEY = {
@@ -38,7 +38,7 @@ def test_states_match_generator_truth(states_a, state: str) -> None:  # type: ig
 def test_every_shift_minute_is_one_state(states_a) -> None:  # type: ignore[no-untyped-def]
     for ms in states_a.values():
         m = ms.minutes()
-        assert sum(m[s] for s in STATES) == pytest.approx(m["shift"], abs=0.5)
+        assert sum(m[s] for s in (*STATES, UNKNOWN)) == pytest.approx(m["shift"], abs=0.5)
 
 
 def test_paint_line_is_busy_and_welders_are_blocked(states_a) -> None:  # type: ignore[no-untyped-def]

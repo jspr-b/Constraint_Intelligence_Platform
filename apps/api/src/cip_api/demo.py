@@ -110,10 +110,15 @@ def load_plant(client: httpx.Client, plant: DemoPlant, timeout_s: float = 180) -
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         state = _check(client.get(f"/imports/{import_id}"), "checking the import").json()
-        if state["status"] == "done":
+        facts = state.get("facts") or {}
+        if state["status"] == "done" and facts.get("status") == "ready":
             return str(import_id)
         if state["status"] == "failed":
             raise DemoError(f"the {plant.plant_code} import failed: {state.get('error')}")
+        if facts.get("status") == "failed":
+            raise DemoError(
+                f"the {plant.plant_code} numbers could not be calculated: {facts.get('error')}"
+            )
         time.sleep(1)
     raise DemoError(f"the {plant.plant_code} import did not finish in {timeout_s:.0f} s")
 

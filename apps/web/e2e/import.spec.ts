@@ -44,3 +44,48 @@ test("the import can be run from the Map columns step too", async ({ page }) => 
   await page.getByRole("tab", { name: /Map columns/ }).click();
   await expect(page.getByRole("button", { name: "Run import again" })).toBeVisible();
 });
+
+test("after an import the page says when the numbers are calculated", async ({ page }) => {
+  await page.goto("/import");
+  const ready = page.getByRole("status").filter({ hasText: "Your numbers are calculated for" });
+  await expect(ready).toContainText("2026");
+  await page.getByRole("link", { name: "Next: check your data" }).click();
+  await expect(page).toHaveURL(/\/data$/);
+});
+
+test("while the numbers are calculated the page says so and run waits", async ({ page }) => {
+  await stubPages(page, {
+    latestImport: {
+      facts: {
+        status: "calculating",
+        started_at: "2026-10-13T07:16:00Z",
+        finished_at: null,
+        period_start_at: null,
+        period_end_at: null,
+        error: null,
+      },
+    },
+  });
+  await page.goto("/import");
+  await expect(page.getByText(/Calculating your numbers from this import/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run import again" })).toHaveCount(0);
+});
+
+test("a failed calculation says what to do and keeps the details for IT", async ({ page }) => {
+  await stubPages(page, {
+    latestImport: {
+      facts: {
+        status: "failed",
+        started_at: "2026-10-13T07:16:00Z",
+        finished_at: "2026-10-13T07:17:00Z",
+        period_start_at: null,
+        period_end_at: null,
+        error: "facts:ValueError",
+      },
+    },
+  });
+  await page.goto("/import");
+  const alert = page.getByRole("alert").filter({ hasText: "could not calculate your numbers" });
+  await expect(alert).toContainText("Run the import again");
+  await expect(alert.getByText("facts:ValueError")).toBeHidden();
+});

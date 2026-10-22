@@ -48,7 +48,11 @@ export function useOnboarding() {
   return useQuery({
     queryKey: ["onboarding"],
     queryFn: async () => (await api.GET("/onboarding")).data ?? null,
-    refetchInterval: 15_000,
+    // Faster while an import or its calculation is under way, so the guide moves on by itself.
+    refetchInterval: (q) =>
+      q.state.data?.steps.some((s) => s.detail === "running" || s.detail === "calculating")
+        ? 3_000
+        : 15_000,
   });
 }
 
@@ -89,6 +93,7 @@ export function GettingStarted({ view, onHide }: { view: View; onHide: () => voi
   const goLabel = (s: Step): string => {
     if (s.key === "upload" && s.detail === "uploaded") return "upload.goRun";
     if (s.key === "upload" && s.detail === "failed") return "upload.goFailed";
+    if (s.key === "upload" && s.detail === "numbers_failed") return "upload.goFailed";
     return `${s.key}.go`;
   };
 

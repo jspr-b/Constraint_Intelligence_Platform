@@ -67,7 +67,10 @@ export function ImportPage() {
           params: { path: { plant_code: plant ?? "" } },
         })
       ).data ?? [],
-    refetchInterval: (q) => (q.state.data?.[0]?.status === "running" ? 2000 : false),
+    refetchInterval: (q) => {
+      const last = q.state.data?.[0];
+      return last?.status === "running" || last?.facts?.status === "calculating" ? 2000 : false;
+    },
   });
   const latest: ImportOut | undefined = imports.data?.[0];
   const refresh = () => queries.invalidateQueries({ queryKey: ["imports", plant] });
@@ -127,7 +130,7 @@ export function ImportPage() {
   /** Run the import, with its state; on the Upload and the Map columns step. */
   const runBar = latest && (
     <>
-      {canRun && latest.status !== "running" && (
+      {canRun && latest.status !== "running" && latest.facts?.status !== "calculating" && (
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="primary"
@@ -155,6 +158,7 @@ export function ImportPage() {
         </p>
       )}
       {latest.status === "failed" && <ImportFailed latest={latest} />}
+      {latest.status === "done" && latest.facts && <FactsState facts={latest.facts} />}
     </>
   );
 
@@ -656,6 +660,41 @@ export function ImportPage() {
         </TabPanel>
       </Tabs>
     </div>
+  );
+}
+
+/** The numbers calculated from a finished import: calculating, ready (with period) or failed. */
+function FactsState({ facts }: { facts: NonNullable<ImportOut["facts"]> }) {
+  const t = useTranslations("import.facts");
+  const locale = useLocale();
+  const day = (iso: string | null | undefined) =>
+    iso ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(iso)) : "";
+  if (facts.status === "calculating") {
+    return (
+      <p role="status" className="m-0 text-sm">
+        {t("calculating")}
+      </p>
+    );
+  }
+  if (facts.status === "failed") {
+    return (
+      <div role="alert" className="flex flex-col gap-1 text-sm">
+        <p className="m-0 text-bad">{t("failed")}</p>
+        {facts.error && <TechnicalDetails lines={[facts.error]} />}
+      </div>
+    );
+  }
+  return (
+    <p role="status" className="m-0 flex flex-wrap gap-x-3 text-sm">
+      {/* Dates, not figures: nothing to explain. */}
+      <span data-raw>
+        <span aria-hidden="true" className="text-ok">
+          ●{" "}
+        </span>
+        {t("ready", { start: day(facts.period_start_at), end: day(facts.period_end_at) })}
+      </span>
+      <Link href="/data">{t("next")}</Link>
+    </p>
   );
 }
 

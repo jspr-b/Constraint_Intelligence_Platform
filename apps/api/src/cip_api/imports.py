@@ -23,6 +23,7 @@ from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit, tenant_conn
 from cip_api.db.plant_store import replace_plant_data
 from cip_api.errors import ApiProblem
+from cip_api.facts import FactRunOut, fact_run, queue_facts, start_facts
 from cip_api.jobs import enqueue
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
@@ -131,6 +132,8 @@ class ImportOut(BaseModel):
     """Technical reason, ``<step>:<ExceptionType>``; for IT, folded away on the page."""
     failed_step: FailedStep | None = None
     """Where a failed import stopped: read, load, check or store. The page explains each."""
+    facts: FactRunOut | None = None
+    """The numbers calculated from this import: calculating, ready or failed."""
 
 
 def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
@@ -250,7 +253,7 @@ def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
     return out
 
 
-def _out(settings: Settings, tenant: uuid.UUID, row: Any) -> ImportOut:
+def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> ImportOut:
     folder = import_dir(settings, tenant, row.plant_code, row.import_id) / "source"
     mapping = load_mapping(GENERIC_MAPPING)
     report = json.loads(row.report) if row.report else None
@@ -269,6 +272,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any) -> ImportOut:
         minimum_set=[MinimumOut(**m) for m in (report or {}).get("minimum_set", [])],
         error=row.error,
         failed_step=_failed_step(row.error),
+        facts=fact_run(db, row.import_id),
     )
 
 
@@ -339,7 +343,7 @@ async def upload(
         f"import:{import_id}",
         f"{plant_code}: {len(stored)} files",
     )
-    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id))
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
 
 
 @router.get("/plants/{plant_code}/imports", response_model=list[ImportOut])
@@ -353,7 +357,7 @@ def list_imports(
         ),
         {"p": plant_code},
     )
-    return [_out(settings, ctx.principal.tenant_id, r) for r in rows]
+    return [_out(settings, ctx.principal.tenant_id, r, ctx.db) for r in rows]
 
 
 @router.get("/imports/{import_id}", response_model=ImportOut)
@@ -362,7 +366,7 @@ def get_import(
 ) -> ImportOut:
     row = _row(ctx.db, import_id)
     ctx.check_plant(row.plant_code)
-    return _out(settings, ctx.principal.tenant_id, row)
+    return _out(settings, ctx.principal.tenant_id, row, ctx.db)
 
 
 @router.post("/imports/{import_id}/run", response_model=ImportOut, status_code=202)
@@ -376,7 +380,11 @@ def run(
     row = _row(ctx.db, import_id)
     ctx.check_plant(row.plant_code)
     busy = ctx.db.execute(
-        text("SELECT 1 FROM imports WHERE plant_code = :p AND status = 'running'"),
+        text(
+            "SELECT 1 FROM imports WHERE plant_code = :p AND status = 'running' UNION ALL "
+            "SELECT 1 FROM fact_runs WHERE plant_code = :p AND status = 'calculating' "
+            "AND started_at > now() - interval '15 minutes'"
+        ),
         {"p": row.plant_code},
     ).first()
     if busy:
@@ -399,7 +407,7 @@ def run(
         background.add_task(_run_quietly, settings, tenant, import_id)
     else:
         enqueue("run_import", str(tenant), str(import_id))
-    return _out(settings, tenant, _row(ctx.db, import_id))
+    return _out(settings, tenant, _row(ctx.db, import_id), ctx.db)
 
 
 def quality_dict(q: QualityReport, plant: LoadedPlant) -> dict[str, Any]:
@@ -512,6 +520,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 f"import:{import_id}",
                 f"{sum(stored.values())} rows stored",
             )
+            start_facts(conn, tenant, row.plant_code, import_id)
     except Exception as exc:  # recorded for the page; values from the files never appear here
         with tenant_conn(settings, tenant) as conn:
             conn.execute(
@@ -519,3 +528,4 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 {"e": f"{step}:{type(exc).__name__}", "i": import_id},
             )
         raise
+    queue_facts(settings, tenant, import_id)

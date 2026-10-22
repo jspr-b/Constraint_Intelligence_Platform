@@ -21,6 +21,7 @@ from sqlalchemy import (
     Integer,
     String,
     Table,
+    Uuid,
     create_engine,
     text,
 )
@@ -42,6 +43,8 @@ def sample_row(table: Table, tenant: uuid.UUID) -> dict[str, Any]:
             row[col.name] = tenant
         elif col.autoincrement is True and col.primary_key:
             continue
+        elif isinstance(col.type, Uuid) and col.server_default is None:
+            row[col.name] = uuid.UUID(int=1)
         elif isinstance(col.type, String):
             row[col.name] = "X1"
         elif isinstance(col.type, Integer | BigInteger):

@@ -59,7 +59,8 @@ def test_loaded_imports_plants_a_b_and_c_through_the_api(demo: World, tmp_path: 
     for folder in DEMO_PLANTS:
         plant = demo_plant(folder)
         import_id = load_plant(client, plant)
-        assert client.get(f"/imports/{import_id}").json()["status"] == "done"
+        state = client.get(f"/imports/{import_id}").json()
+        assert state["status"] == "done" and state["facts"]["status"] == "ready"
     codes = {p["plant_code"] for p in client.get("/plants").json()}
     assert {"PLANT-A", "PLANT-B", "PLANT-C"} <= codes
     reset_tenant(demo.owner, TEST_DEMO)

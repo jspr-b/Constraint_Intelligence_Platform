@@ -73,3 +73,29 @@ test("a placeholder page says what it will show and what to do today", async ({ 
   await expect(page.getByText(/hours and euros your bottleneck loses/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Finish getting started" })).toBeVisible();
 });
+
+test("the guide says when the numbers are being calculated or failed", async ({ page }) => {
+  await stubApi(page, { role: "it" });
+  let detail = "calculating";
+  await page.route("**/api/onboarding*", (route) =>
+    route.fulfill({
+      json: {
+        plant_code: "PLANT-A",
+        plant_name: "Plant A (synthetic)",
+        steps: steps("todo", "todo").map((s) => (s.key === "upload" ? { ...s, detail } : s)),
+        next_step: "upload",
+        complete: false,
+        can_set_up: true,
+        setup_contacts: [],
+      },
+    }),
+  );
+  await page.goto("/conn");
+  const guide = page.getByRole("region", { name: "Getting started" });
+  await expect(guide.getByText(/Calculating your numbers/)).toBeVisible();
+  detail = "numbers_failed";
+  await page.reload();
+  await expect(guide.getByText(/numbers could not be calculated/)).toBeVisible();
+  await guide.getByRole("link", { name: "See why" }).click();
+  await expect(page).toHaveURL(/\/import$/);
+});

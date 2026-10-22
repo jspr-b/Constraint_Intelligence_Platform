@@ -459,6 +459,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Facts
+         * @description Measured facts of the plant's latest calculation, each a Figure with its provenance.
+         *
+         *     Filter by ``family`` (repeatable), ``resource_code`` and period: ``period_kind`` ``all``
+         *     (the whole data period, default), ``month`` or ``week``; ``period_start_at`` picks one month
+         *     or week (see ``/facts/periods``), otherwise every period of that kind is returned.
+         */
+        get: operations["read_facts_plants__plant_code__facts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/facts/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Periods
+         * @description The periods the plant's facts cover: the whole data period, each month and each week.
+         */
+        get: operations["read_periods_plants__plant_code__facts_periods_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/imports": {
         parameters: {
             query?: never;
@@ -896,6 +940,60 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** FactOut */
+        FactOut: {
+            /**
+             * Family
+             * @enum {string}
+             */
+            family: "state" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time";
+            figure: components["schemas"]["FigureOut"];
+            /** Measure */
+            measure: string;
+            /** Operation */
+            operation: string | null;
+            /**
+             * Period Kind
+             * @enum {string}
+             */
+            period_kind: "all" | "month" | "week";
+            /** Resource Code */
+            resource_code: string;
+        };
+        /**
+         * FactRunOut
+         * @description Where the plant's numbers are after an import.
+         */
+        FactRunOut: {
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Period End At */
+            period_end_at: string | null;
+            /** Period Start At */
+            period_start_at: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "calculating" | "ready" | "failed";
+        };
+        /** FactsOut */
+        FactsOut: {
+            /** Facts */
+            facts: components["schemas"]["FactOut"][];
+            /** Import Id */
+            import_id: string | null;
+            /** Plant Code */
+            plant_code: string;
+            run: components["schemas"]["FactRunOut"] | null;
+        };
         /**
          * FigureOut
          * @description A number with its unit, formula, inputs, data period and confidence.
@@ -1000,6 +1098,7 @@ export interface components {
             error: string | null;
             /** Expected Files */
             expected_files: string[];
+            facts?: components["schemas"]["FactRunOut"] | null;
             /** Failed Step */
             failed_step?: ("read" | "load" | "check" | "store") | null;
             /** Files */
@@ -1188,6 +1287,24 @@ export interface components {
             /** Page */
             page: string;
             role: components["schemas"]["Role"];
+        };
+        /** PeriodOut */
+        PeriodOut: {
+            /**
+             * Period End At
+             * Format: date-time
+             */
+            period_end_at: string;
+            /**
+             * Period Kind
+             * @enum {string}
+             */
+            period_kind: "all" | "month" | "week";
+            /**
+             * Period Start At
+             * Format: date-time
+             */
+            period_start_at: string;
         };
         /** PinIn */
         PinIn: {
@@ -2395,6 +2512,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataQualityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_facts_plants__plant_code__facts_get: {
+        parameters: {
+            query?: {
+                family?: ("state" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time")[] | null;
+                resource_code?: string | null;
+                period_kind?: "all" | "month" | "week";
+                period_start_at?: string | null;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_periods_plants__plant_code__facts_periods_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodOut"][];
                 };
             };
             /** @description Validation Error */
