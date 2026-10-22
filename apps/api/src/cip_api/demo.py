@@ -52,26 +52,29 @@ def demo_plant(folder: str, root: Path = SYNTHETIC) -> DemoPlant:
     )
 
 
-def reset_tenant(owner: Engine) -> None:
-    """Delete the demo tenant (cascade) and create it again with one IT account."""
+def reset_tenant(owner: Engine, tenant: uuid.UUID = DEMO_TENANT) -> None:
+    """Delete the demo tenant (cascade) and create it again with one IT account.
+
+    Tests pass their own ``tenant`` so they never touch the live demo.
+    """
     with owner.begin() as conn:
-        conn.execute(text("DELETE FROM tenants WHERE id = :t"), {"t": DEMO_TENANT})
+        conn.execute(text("DELETE FROM tenants WHERE id = :t"), {"t": tenant})
         conn.execute(
             text("INSERT INTO tenants (id, name) VALUES (:t, :n)"),
-            {"t": DEMO_TENANT, "n": DEMO_TENANT_NAME},
+            {"t": tenant, "n": DEMO_TENANT_NAME},
         )
         conn.execute(
             text(
                 "INSERT INTO users (tenant_id, email, role, status) VALUES (:t, :e, 'it', 'active')"
             ),
-            {"t": DEMO_TENANT, "e": DEMO_EMAIL},
+            {"t": tenant, "e": DEMO_EMAIL},
         )
         conn.execute(
             text(
                 "INSERT INTO audit_log (tenant_id, actor, action, target) "
                 "VALUES (:t, 'system:demo_reset', 'user_invited', :e)"
             ),
-            {"t": DEMO_TENANT, "e": DEMO_EMAIL},
+            {"t": tenant, "e": DEMO_EMAIL},
         )
 
 

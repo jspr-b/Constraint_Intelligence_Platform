@@ -35,14 +35,6 @@ test("theme toggle switches to dark and survives a reload", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Dark" })).toHaveAttribute("aria-pressed", "true");
 });
 
-test("locale switch renders the shell in Dutch", async ({ page }) => {
-  await page.goto("/main");
-  await page.getByRole("button", { name: "nl" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Overzicht" })).toBeVisible();
-  await expect(page.locator("html")).toHaveAttribute("lang", "nl");
-  await expect(page.getByRole("navigation", { name: "Hoofdmenu" })).toBeVisible();
-});
-
 test("an unknown page shows not found", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expect(page.getByText("Page not found")).toBeVisible();

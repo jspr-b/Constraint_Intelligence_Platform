@@ -87,16 +87,6 @@ test("a failed company sign-in comes back with a message", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: /Company sign-in failed/ })).toBeVisible();
 });
 
-test("the login page works in Dutch", async ({ page }) => {
-  await stubSignIn(page, "dev");
-  await page.goto("/login");
-  await page.getByRole("button", { name: "nl" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Inloggen bij Plant A (synthetic)" }),
-  ).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Persoonlijk" })).toBeVisible();
-});
-
 test("signed out, the shell sends you to the login page", async ({ page }) => {
   await stubSignIn(page, "dev");
   await page.route("**/api/auth/me", (route) => route.fulfill({ status: 401, json: {} }));

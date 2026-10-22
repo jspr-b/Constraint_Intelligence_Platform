@@ -49,7 +49,6 @@
     "theme": "Theme",
     "white": "White",
     "dark": "Dark",
-    "language": "Language",
     "apiOk": "API OK",
     "apiDown": "API unreachable",
     "apiChecking": "API …"

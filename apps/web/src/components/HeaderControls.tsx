@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Button,
@@ -14,7 +14,6 @@ import {
   Header,
   MenuSection,
 } from "react-aria-components";
-import { LOCALES, LOCALE_COOKIE } from "@/i18n/locales";
 import { api } from "@/lib/api/client";
 import { THEME_COOKIE, VIEW_AS_COOKIE, applyTheme, setPref, type Theme } from "@/lib/prefs";
 import { ROLES, type Role } from "@/lib/pages";
@@ -47,35 +46,6 @@ export function ThemeToggle({ initial }: { initial: Theme }) {
           onClick={() => choose(option)}
         >
           {t(option)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function LocaleSwitch() {
-  const t = useTranslations("header");
-  const locale = useLocale();
-  const router = useRouter();
-  return (
-    <div
-      role="group"
-      aria-label={t("language")}
-      className="flex rounded-control border border-line-strong"
-    >
-      {LOCALES.map((option) => (
-        <button
-          key={option}
-          type="button"
-          lang={option}
-          className={`${SEGMENT} font-mono uppercase`}
-          aria-pressed={locale === option}
-          onClick={() => {
-            setPref(LOCALE_COOKIE, option);
-            router.refresh();
-          }}
-        >
-          {option}
         </button>
       ))}
     </div>

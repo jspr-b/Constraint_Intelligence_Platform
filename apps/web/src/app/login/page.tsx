@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/EmptyState";
-import { LocaleSwitch, ThemeToggle } from "@/components/HeaderControls";
+import { ThemeToggle } from "@/components/HeaderControls";
 import { LoginForm } from "@/components/LoginForm";
 import { THEME_COOKIE, isTheme } from "@/lib/prefs";
 import { signInTenant } from "@/lib/tenant";
@@ -27,7 +27,6 @@ export default async function Login({
             {t("app.name")}
           </span>
           <div className="flex gap-2">
-            <LocaleSwitch />
             <ThemeToggle initial={isTheme(stored) ? stored : "white"} />
           </div>
         </div>

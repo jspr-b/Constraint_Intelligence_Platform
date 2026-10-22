@@ -2,7 +2,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import en from "../../messages/en.json";
-import nl from "../../messages/nl.json";
 import { GROUPS, PAGE_KEYS, ROLES } from "../lib/pages";
 
 function keys(value: unknown, prefix = ""): string[] {
@@ -19,12 +18,8 @@ function files(dir: string): string[] {
 }
 
 describe("messages", () => {
-  it("en and nl have identical keys", () => {
-    expect(keys(nl).sort()).toEqual(keys(en).sort());
-  });
-
   it("no message is empty", () => {
-    for (const messages of [en, nl]) {
+    for (const messages of [en]) {
       for (const key of keys(messages)) {
         const value = key
           .split(".")

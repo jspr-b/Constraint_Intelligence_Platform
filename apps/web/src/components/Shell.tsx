@@ -10,7 +10,7 @@ import type { Theme } from "@/lib/prefs";
 import { effectiveView, useAccessMatrix, useApiHealth, useMe, type View } from "@/lib/session";
 import { Drawer } from "./Drawer";
 import { EmptyState } from "./EmptyState";
-import { LocaleSwitch, RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
+import { RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
 import { NavRail } from "./NavRail";
 import { ViewContext } from "./ViewContext";
 
@@ -81,7 +81,6 @@ export function Shell({
         </div>
         <div className="flex flex-wrap items-center gap-4">
           {view && matrix && <RoleSwitch role={view.role} matrix={matrix} />}
-          <LocaleSwitch />
           <ThemeToggle initial={theme} />
           {view && <SignOut />}
         </div>

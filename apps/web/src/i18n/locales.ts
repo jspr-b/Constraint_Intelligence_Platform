@@ -1,8 +1,3 @@
-export const LOCALES = ["en", "nl"] as const;
-export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "en";
-export const LOCALE_COOKIE = "NEXT_LOCALE";
-
-export function isLocale(value: string | undefined): value is Locale {
-  return value !== undefined && (LOCALES as readonly string[]).includes(value);
-}
+/** The app is English only (CLAUDE.md). All labels stay in messages/en.json, so another
+ * language can be added later by adding a message file and a switch. */
+export const LOCALE = "en";
