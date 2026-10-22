@@ -126,6 +126,12 @@ Build order: ingestion → data model → event reconstruction → detection →
 - **Euros must be traceable.** Every euro figure links back to its inputs and formula.
 - **Read-only by default.** The platform does not change ERP/MES data unless write-back is explicitly enabled.
 - Plant data is confidential: tenant isolation per customer, encryption at rest and in transit.
+- **Done means a client can do it.** A feature, task or festival step is only done when a real user, signed in with the role it is meant for, does it themselves in the browser from start to finish on the running stack, and every page on the way loads and tells them what to do next. Passing tests, calling the API directly, scripts or seed data do not count. Before saying something works, click through it as that client on freshly built images (all of them: `docker compose build migrate worker web`, the api image is built by `migrate`) and say what you clicked and what you saw.
+- **No dead ends.** Every page tells the client what to do next. An empty, blocked or role-restricted state says why and links to the action that fixes it (e.g. "Your role cannot upload. Ask IT, or switch role"). A page that leaves a client stuck is not done.
+- **No silent errors.** A client never sees a blank "This page couldn't load". Every error says in plain words what happened and what to do next. A crash on any page fails the step it belongs to.
+- **Plain words in the app.** A plant director understands every screen without training. Terms such as constraint, OEE, buffer or throughput get a one-line explanation where they appear. No internal codes, formula ids or developer terms in client-facing text unless the client asks for detail.
+- **Every number explained.** Not only euros: every number on screen can be clicked to show its inputs, formula, period and confidence (the provenance envelope). A number that cannot be explained is not shown.
+- **Demo always works.** From a fresh start (freshly built images, empty database), the Plant A demo works end to end: sign in, add the plant, upload the export, and see the answer. It is clicked through at the end of every festival; a broken demo blocks the festival from completing.
 
 ## MVP scope
 
@@ -153,7 +159,7 @@ Out (later):
 - Currency stored as integer cents in EUR.
 - Every calculation function is pure and unit-tested with small synthetic plants.
 - Keep detection, forecast and decision logic in a standalone library, independent of the UI, so it can be open-sourced later.
-- UI language: English and Dutch from the start; all labels in translation files.
+- UI language: English only. Keep all labels in the English message file (no hard-coded strings) so another language can be added later without a rewrite. Plant exports may still have Dutch (or other) column and file names; mappings read them, the UI never shows them untranslated.
 
 ## Recommendation catalogue (v1)
 
@@ -468,7 +474,7 @@ Rules: the constraint colour is used for nothing else. Status colours always app
 
 - Terse and operational: "PNT-01 idle 42 min during lunch", "Buffer red: 3 orders at risk", "Constraint shifts to WLD-02 in wk 50".
 - € and hours before percentages.
-- English and Dutch, same tone in both.
+- English only.
 
 ### Accessibility
 
