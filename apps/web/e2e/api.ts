@@ -113,6 +113,38 @@ const BLOCKED_MISSING = {
   confidence_impact: "medium",
 };
 
+/** The stored detection: PNT-01 for the whole period, no machine binding in a month. */
+export function stubDetection(kind: string): Record<string, unknown> {
+  const market = kind !== "all";
+  const method = (m: string, code: string | null, value: number, unit: string, id: string) => ({
+    method: m,
+    resource_code: market ? null : code,
+    top_code: "PNT-01",
+    evidence: FIG(value, unit, id),
+  });
+  return {
+    period_kind: kind,
+    period_start_at: "2026-07-20T04:00:00Z",
+    period_end_at: "2026-10-09T20:00:00Z",
+    resource_code: market ? null : "PNT-01",
+    kind: market ? "market" : "internal",
+    confidence: market ? "medium" : "high",
+    agreement: {
+      ...FIG(market ? 0 : 100, "pct", "constraint_agreement_pct_v1"),
+      inputs: { utilisation: "PNT-01", queue: "PNT-01", answer: "PNT-01" },
+    },
+    reasons: market
+      ? [{ code: "no_machine_binding", values: { top: "PNT-01", busy_pct: 71.2 } }]
+      : [{ code: "methods_agree", values: { count: 4, total: 4, machine: "PNT-01" } }],
+    methods: [
+      method("utilisation", "PNT-01", 99.9, "pct", "constraint_by_utilisation_v1"),
+      method("queue", "PNT-01", 5.2, "orders", "constraint_by_queue_v1"),
+      method("active_period", "PNT-01", 96.1, "pct", "constraint_by_active_period_v1"),
+      method("starved_blocked", "PNT-01", 0.4, "pct", "constraint_by_starved_blocked_v1"),
+    ],
+  };
+}
+
 /** Measured facts for two machines (Machines page), filtered like the API does. */
 export function stubFacts(url: URL): Record<string, unknown>[] {
   const families = url.searchParams.getAll("family");
@@ -278,6 +310,18 @@ export async function stubPages(
       },
     }),
   );
+  await page.route(/\/api\/plants\/PLANT-A\/detection(\?.*)?$/, (route) => {
+    const kind = new URL(route.request().url()).searchParams.get("period_kind") ?? "all";
+    route.fulfill({
+      json: {
+        plant_code: "PLANT-A",
+        run: null,
+        import_id: "i1",
+        detections:
+          overrides.factsStatus && overrides.factsStatus !== "ready" ? [] : [stubDetection(kind)],
+      },
+    });
+  });
   await page.route("**/api/plants/PLANT-A/resources", (route) =>
     route.fulfill({
       json: [

@@ -7,7 +7,7 @@ test("machines show how busy each one is, sorted, and every figure opens its pan
   await stubApi(page, { role: "planner" });
   await stubPages(page);
   await page.goto("/machines");
-  await expect(page.getByText(/is your busiest machine/)).toContainText("Paint line (PNT-01)");
+  await expect(page.getByText(/is your bottleneck:/)).toContainText("Paint line (PNT-01)");
   const rows = page.getByRole("table").first().getByRole("row");
   await expect(rows.nth(1)).toContainText("PNT-01");
   await expect(rows.nth(1)).toContainText("99.9%");
@@ -51,4 +51,33 @@ test("before the numbers are ready the page says why and where to go", async ({ 
   await stubPages(page, { factsStatus: "calculating" });
   await page.goto("/machines");
   await expect(page.getByText(/Calculating your numbers from the latest import/)).toBeVisible();
+});
+
+test("the bottleneck is named with its checks, confidence and reasons", async ({ page }) => {
+  await stubApi(page, { role: "planner" });
+  await stubPages(page);
+  await page.goto("/machines");
+  const banner = page.getByRole("region", { name: "Your bottleneck" });
+  await expect(banner).toContainText("Paint line (PNT-01)");
+  await expect(banner).toContainText("4 of 4 checks point at Paint line (PNT-01).");
+  await expect(banner).toContainText("high");
+  const rows = page.getByRole("table").last().getByRole("row");
+  await expect(rows.nth(1).locator("[data-constraint]")).toContainText("PNT-01");
+
+  await banner.getByRole("button", { name: /100%/ }).click();
+  await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
+    "Checks that point at the answer",
+  );
+  await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
+    "Busy time check points at",
+  );
+  await page.keyboard.press("Escape");
+  await banner.getByText("How we found it: 4 checks").click();
+  await expect(banner.getByRole("row")).toHaveCount(5);
+  await expect(banner).toContainText("The busiest machine.");
+
+  await page.getByRole("combobox", { name: "Period" }).selectOption({ label: "August 2026" });
+  await expect(banner).toContainText("No machine limits your output in this period");
+  await expect(banner).toContainText("busy 71% of its available time");
+  await expect(page.locator("[data-constraint]")).toHaveCount(0);
 });

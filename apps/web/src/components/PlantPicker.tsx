@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { api } from "@/lib/api/client";
+import { useDetails } from "./Details";
 import { Field } from "./FormDialog";
 import { EmptyState } from "./EmptyState";
 
@@ -19,8 +20,14 @@ export function usePlant(): {
     queryKey: ["plants"],
     queryFn: async () => (await api.GET("/plants")).data ?? [],
   });
-  const [chosen, setPlant] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const details = useDetails();
   const plant = chosen ?? query.data?.[0]?.plant_code ?? null;
+  // A number from the previous plant must not stay open in the Details panel.
+  const setPlant = (code: string) => {
+    setChosen(code);
+    details.clear();
+  };
   return { plants: query.data, plant, setPlant };
 }
 

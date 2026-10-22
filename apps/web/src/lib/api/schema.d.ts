@@ -459,6 +459,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/detection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Detection
+         * @description The constraint per period from the plant's latest calculation, with every method.
+         */
+        get: operations["read_detection_plants__plant_code__detection_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/facts": {
         parameters: {
             query?: never;
@@ -930,6 +950,51 @@ export interface components {
             decision: components["schemas"]["Decision"];
             role: components["schemas"]["Role"];
         };
+        /** DetectionOut */
+        DetectionOut: {
+            agreement: components["schemas"]["FigureOut"];
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "high" | "medium" | "low" | "none";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "internal" | "market" | "material";
+            /** Methods */
+            methods: components["schemas"]["MethodOut"][];
+            /**
+             * Period End At
+             * Format: date-time
+             */
+            period_end_at: string;
+            /**
+             * Period Kind
+             * @enum {string}
+             */
+            period_kind: "all" | "month" | "week";
+            /**
+             * Period Start At
+             * Format: date-time
+             */
+            period_start_at: string;
+            /** Reasons */
+            reasons: components["schemas"]["ReasonOut"][];
+            /** Resource Code */
+            resource_code: string | null;
+        };
+        /** DetectionsOut */
+        DetectionsOut: {
+            /** Detections */
+            detections: components["schemas"]["DetectionOut"][];
+            /** Import Id */
+            import_id: string | null;
+            /** Plant Code */
+            plant_code: string;
+            run: components["schemas"]["FactRunOut"] | null;
+        };
         /** DevLoginIn */
         DevLoginIn: {
             /** Email */
@@ -1184,6 +1249,19 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** MethodOut */
+        MethodOut: {
+            evidence: components["schemas"]["FigureOut"];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "utilisation" | "queue" | "active_period" | "starved_blocked";
+            /** Resource Code */
+            resource_code: string | null;
+            /** Top Code */
+            top_code: string | null;
+        };
         /** MinimumOut */
         MinimumOut: {
             /** Key */
@@ -1369,6 +1447,15 @@ export interface components {
             throughput_per_unit: components["schemas"]["FigureOut"];
             /** Truly Variable Cost Eur Cents */
             truly_variable_cost_eur_cents: number;
+        };
+        /** ReasonOut */
+        ReasonOut: {
+            /** Code */
+            code: string;
+            /** Values */
+            values: {
+                [key: string]: string | number;
+            };
         };
         /** ResourceIn */
         ResourceIn: {
@@ -2514,6 +2601,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataQualityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_detection_plants__plant_code__detection_get: {
+        parameters: {
+            query?: {
+                period_kind?: "all" | "month" | "week";
+                period_start_at?: string | null;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionsOut"];
                 };
             };
             /** @description Validation Error */

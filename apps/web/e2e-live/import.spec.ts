@@ -43,7 +43,7 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
 
   await page.getByRole("tab", { name: /Upload files/ }).click();
   await page.getByRole("button", { name: "Run import" }).click();
-  await expect(page.getByText("DONE")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText("DONE", { exact: true })).toBeVisible({ timeout: 90_000 });
 
   await page.getByRole("tab", { name: /data checklist/i }).click();
   const results = page.getByRole("region", { name: "Results per file" });
@@ -77,13 +77,17 @@ test("plant setup shows engine numbers from the import and takes kick-off entrie
 
   await page.getByRole("tab", { name: "Operations" }).click();
   const measured = page.getByRole("button", { name: /min\/unit/ }).first();
-  await measured.focus();
-  await expect(page.getByRole("tooltip")).toContainText("task_time_median_v1");
+  await measured.click();
+  await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
+    "task_time_median_v1",
+  );
 
   await page.getByRole("tab", { name: "Products" }).click();
-  const throughput = page.getByRole("button", { name: /€/ }).first();
-  await throughput.focus();
-  await expect(page.getByRole("tooltip")).toContainText("throughput_per_unit_v1");
+  const throughput = page.getByRole("button", { name: /Throughput \/unit calculated/ }).first();
+  await throughput.click();
+  await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
+    "throughput_per_unit_v1",
+  );
 
   await page.getByRole("tab", { name: "Stations and machines" }).click();
   await page.getByRole("button", { name: "Add station" }).click();
@@ -166,7 +170,7 @@ test("connections: IT start page shows the last import and runs it again", async
     "Not connected (later)",
   );
   await expect(page.getByRole("region", { name: "Data protection" })).toContainText(
-    "row-level security",
+    "Separate from every other company",
   );
   await page.getByRole("button", { name: "Run import now" }).click();
   await expect(upload).toContainText("Running");

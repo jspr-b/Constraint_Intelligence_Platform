@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
-import { isMissing, MicroLabel, Panel, type FigureLike } from "@cip/ui";
+import { ConstraintMarker, isMissing, MicroLabel, Panel, type FigureLike } from "@cip/ui";
 import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
+import { ConstraintBanner, useDetection } from "../ConstraintBanner";
 import { useDetails } from "../Details";
 import { EmptyState } from "../EmptyState";
 import { Figure, HowCalculated } from "../Figure";
@@ -88,6 +89,17 @@ function useFacts(
   });
 }
 
+function MachineName({ name, code }: { name: string; code: string }) {
+  return (
+    <span className="px-1">
+      <span className="font-medium">{name}</span>{" "}
+      <span className="font-mono text-xs text-muted" data-raw>
+        {code}
+      </span>
+    </span>
+  );
+}
+
 /** A figure with a confidence mark when it is less than high. */
 function Cell({ fact, label }: { fact: Fact | undefined; label: string }) {
   const t = useTranslations("figure");
@@ -149,6 +161,14 @@ export function MachinesPage() {
     family: ["utilisation", "state_share", "oee", "effective_capacity"],
     ...periodQuery,
   });
+  const detection = useDetection(
+    plant,
+    chosen && chosen.period_kind !== "day"
+      ? { period_kind: chosen.period_kind, period_start_at: chosen.period_start_at }
+      : { period_kind: "all" },
+  );
+  const found = detection.data?.detections[0];
+  const bottleneck = found?.resource_code ?? null;
 
   const date = (iso: string) =>
     new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(iso));
@@ -191,7 +211,11 @@ export function MachinesPage() {
     <PageHeader
       page="machines"
       headline={
-        busiest && run?.status === "ready" ? (
+        run?.status !== "ready" ? undefined : found ? (
+          <span data-raw>
+            {bottleneck ? t("headlineConstraint", { name: label(bottleneck) }) : t("headlineNone")}
+          </span>
+        ) : busiest ? (
           <span data-raw>{t("headline", { name: label(busiest) })}</span>
         ) : undefined
       }
@@ -285,6 +309,9 @@ export function MachinesPage() {
       {header}
       <p className="m-0 max-w-3xl text-sm">{t.rich("intro", termTags)}</p>
       {state}
+      {found && run?.status === "ready" && (
+        <ConstraintBanner detection={found} label={label} periodName={periodName(chosen)} />
+      )}
       {rows.length > 0 && run?.status === "ready" && (
         <Panel label={t("tableLabel", { period: periodName(chosen) })}>
           <div className="overflow-x-auto">
@@ -308,11 +335,14 @@ export function MachinesPage() {
                     key={code}
                     className={`border-b border-line ${open === code ? "bg-raised" : ""}`}
                   >
-                    <td className={TD}>
-                      <span className="font-medium">{names.get(code) ?? code}</span>{" "}
-                      <span className="font-mono text-xs text-muted" data-raw>
-                        {code}
-                      </span>
+                    <td className={`${TD} ${code === bottleneck ? "pt-6" : ""}`}>
+                      {code === bottleneck ? (
+                        <ConstraintMarker tag={t("bottleneckTag")}>
+                          <MachineName name={names.get(code) ?? code} code={code} />
+                        </ConstraintMarker>
+                      ) : (
+                        <MachineName name={names.get(code) ?? code} code={code} />
+                      )}
                     </td>
                     {COLUMNS.map(([key, , measure]) => (
                       <td key={key} className={`${TD} whitespace-nowrap`}>

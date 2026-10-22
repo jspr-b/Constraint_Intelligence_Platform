@@ -15,7 +15,7 @@ from cip_api.settings import get_settings
 
 pytestmark = pytest.mark.db
 API = Path(__file__).resolve().parents[1]
-TABLES = {"facts", "fact_runs"}
+TABLES = {"facts", "fact_runs", "detections"}
 
 
 def test_facts_upgrade_and_downgrade() -> None:
@@ -39,6 +39,6 @@ def test_facts_upgrade_and_downgrade() -> None:
                 {"t": list(TABLES)},
             ).all()
         )
-    assert rls == {"facts": True, "fact_runs": True}
+    assert rls == {"facts": True, "fact_runs": True, "detections": True}
     columns = {c["name"] for c in inspect(owner).get_columns("facts")}
     assert {"operation", "reason_code"} <= columns

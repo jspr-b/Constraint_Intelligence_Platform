@@ -48,7 +48,7 @@ def empty_tenant(world: World) -> Iterator[TestClient]:
 def test_a_new_client_starts_by_adding_a_plant(empty_tenant: TestClient) -> None:
     body = empty_tenant.get("/onboarding").json()
     assert body["plant_code"] is None
-    assert _steps(body) == {"plant": "todo", "upload": "todo", "check": "todo", "answer": "later"}
+    assert _steps(body) == {"plant": "todo", "upload": "todo", "check": "todo", "answer": "todo"}
     assert body["next_step"] == "plant" and body["complete"] is False
     assert body["can_set_up"] is True
     assert body["setup_contacts"] == ["it@new.example.test"]
@@ -76,7 +76,7 @@ def test_after_an_import_the_available_steps_are_done(world: World, tmp_path: Pa
     }
     client.post(f"/imports/{created['import_id']}/run")
     done = client.get("/onboarding", params={"plant_code": "PLANT-1"}).json()
-    assert _steps(done) == {"plant": "done", "upload": "done", "check": "done", "answer": "later"}
+    assert _steps(done) == {"plant": "done", "upload": "done", "check": "done", "answer": "done"}
     assert done["complete"] is True and done["next_step"] is None
 
 

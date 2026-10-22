@@ -606,6 +606,134 @@
         "title": "DecisionIn",
         "type": "object"
       },
+      "DetectionOut": {
+        "properties": {
+          "agreement": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "confidence": {
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "none"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "internal",
+              "market",
+              "material"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "methods": {
+            "items": {
+              "$ref": "#/components/schemas/MethodOut"
+            },
+            "title": "Methods",
+            "type": "array"
+          },
+          "period_end_at": {
+            "format": "date-time",
+            "title": "Period End At",
+            "type": "string"
+          },
+          "period_kind": {
+            "enum": [
+              "all",
+              "month",
+              "week"
+            ],
+            "title": "Period Kind",
+            "type": "string"
+          },
+          "period_start_at": {
+            "format": "date-time",
+            "title": "Period Start At",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/ReasonOut"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "resource_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Code"
+          }
+        },
+        "required": [
+          "period_kind",
+          "period_start_at",
+          "period_end_at",
+          "resource_code",
+          "kind",
+          "confidence",
+          "agreement",
+          "reasons",
+          "methods"
+        ],
+        "title": "DetectionOut",
+        "type": "object"
+      },
+      "DetectionsOut": {
+        "properties": {
+          "detections": {
+            "items": {
+              "$ref": "#/components/schemas/DetectionOut"
+            },
+            "title": "Detections",
+            "type": "array"
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "plant_code",
+          "run",
+          "import_id",
+          "detections"
+        ],
+        "title": "DetectionsOut",
+        "type": "object"
+      },
       "DevLoginIn": {
         "properties": {
           "email": {
@@ -1411,6 +1539,53 @@
         "title": "MeOut",
         "type": "object"
       },
+      "MethodOut": {
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "method": {
+            "enum": [
+              "utilisation",
+              "queue",
+              "active_period",
+              "starved_blocked"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "resource_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Code"
+          },
+          "top_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Code"
+          }
+        },
+        "required": [
+          "method",
+          "resource_code",
+          "top_code",
+          "evidence"
+        ],
+        "title": "MethodOut",
+        "type": "object"
+      },
       "MinimumOut": {
         "properties": {
           "key": {
@@ -1932,6 +2107,37 @@
           "throughput_per_unit"
         ],
         "title": "ProductOut",
+        "type": "object"
+      },
+      "ReasonOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "code",
+          "values"
+        ],
+        "title": "ReasonOut",
         "type": "object"
       },
       "ResourceIn": {
@@ -4597,6 +4803,129 @@
         "summary": "Data Quality",
         "tags": [
           "data quality"
+        ]
+      }
+    },
+    "/plants/{plant_code}/detection": {
+      "get": {
+        "description": "The constraint per period from the plant's latest calculation, with every method.",
+        "operationId": "read_detection_plants__plant_code__detection_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_kind",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "month",
+                "week"
+              ],
+              "title": "Period Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_start_at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period Start At"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Detection",
+        "tags": [
+          "detection"
         ]
       }
     },

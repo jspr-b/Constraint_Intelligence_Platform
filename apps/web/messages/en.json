@@ -818,7 +818,15 @@
       "queue_time_median_min": "Typical wait: half of the orders waited less than this in front of the machine, half waited longer.",
       "queue_time_p90_min": "Long waits: 9 in 10 orders waited less than this in front of the machine.",
       "wip_average_units": "Average number of orders waiting in front of the machine, weighted by how long they waited.",
-      "wip_max_units": "The most orders waiting in front of the machine at one moment."
+      "wip_max_units": "The most orders waiting in front of the machine at one moment.",
+      "constraint_by_utilisation": "The highest busy share among all machines. A machine limits output when it is busy 85% of its available time or more.",
+      "constraint_by_queue": "The highest average number of orders waiting in front of a machine. A machine limits output when at least 1 order waits there on average.",
+      "active_period_share_pct": "Share of the working time in which this machine was the one working longest without a pause (running, setup or a breakdown) × 100.",
+      "constraint_by_active_period": "The highest share of time a machine was the one working longest without a pause. It limits output at 75% or more.",
+      "idle_share_pct": "Waiting share = time starved (waiting for work) + time blocked (cannot pass work on), as a share of shift time.",
+      "constraint_by_starved_blocked": "The lowest waiting share among all machines. A machine limits output when it waits 10% of its shift time or less.",
+      "constraint_agreement_pct": "Checks that point at the answer ÷ checks run (4) × 100.",
+      "material_late_share_pct": "Released orders whose material arrived after release ÷ all released orders with a material date × 100."
     },
     "units": {
       "score": "points out of 100",
@@ -861,7 +869,15 @@
       "setup": "Plant setup",
       "calendar": "Capacity calendar",
       "access": "Access"
-    }
+    },
+    "inputNames": {
+      "utilisation": "Busy time check points at",
+      "queue": "Waiting orders check points at",
+      "active_period": "Longest working stretch check points at",
+      "starved_blocked": "Waiting for work check points at",
+      "answer": "Answer"
+    },
+    "noMachine": "no machine"
   },
   "machines": {
     "headline": "{name} is your busiest machine. Busy share per machine below; click any number to see how it is worked out.",
@@ -932,6 +948,53 @@
     "missingLabel": "Missing data",
     "missingNone": "Nothing is missing for this machine.",
     "missingItem": "{what}: {reason}. Effect on confidence: {impact}.",
-    "confidenceNote": "Numbers marked with ◆ have lower confidence; open them to see why."
+    "confidenceNote": "Numbers marked with ◆ have lower confidence; open them to see why.",
+    "headlineConstraint": "{name} is your bottleneck: it limits the output of the whole plant. Busy share per machine below; click any number to see how it is worked out.",
+    "headlineNone": "No machine limits your output in this period. Busy share per machine below; click any number to see how it is worked out.",
+    "bottleneckTag": "BOTTLENECK"
+  },
+  "detection": {
+    "label": "Your bottleneck",
+    "heading": "Bottleneck · {period}",
+    "tag": "BOTTLENECK",
+    "internal": "limits your output. An hour lost here is an hour of output lost for the whole plant: this is the <bottleneck>bottleneck</bottleneck>.",
+    "market": "No machine limits your output in this period. Every machine has spare time, so the limit is demand: more orders, not more capacity, would raise output.",
+    "material": "No machine limits your output in this period. Late material holds work back: orders wait for parts, not for machines.",
+    "agreement": "Checks that agree",
+    "confidence": "<confidence>Confidence</confidence>:",
+    "howFound": "How we found it: 4 checks",
+    "howFoundHelp": "We never rely on one check. Each one looks at your data differently; the more of them point at the same machine, the surer the answer. Click a number to see how it is worked out.",
+    "colMethod": "Check",
+    "colPoints": "Points at",
+    "colEvidence": "Its number",
+    "noneBinding": "No machine (closest: {top})",
+    "methodHelp": {
+      "utilisation": "The busiest machine. It limits output when it is busy 85% of its available time or more.",
+      "queue": "The machine with most orders waiting in front of it. It limits output when at least 1 order waits on average.",
+      "active_period": "The machine that is most often the one working longest without a pause. It limits output when that is so 75% of the time or more.",
+      "starved_blocked": "The machine that is least often waiting for work or unable to pass work on. It limits output when that is 10% of its shift time or less."
+    },
+    "reason": {
+      "agree": "{count} of {total} checks point at {machine}.",
+      "differs": "The {method} check points at {machine} instead.",
+      "differsNone": "The {method} check finds no machine that limits output (closest: {top}).",
+      "market": "The busiest machine, {machine}, is busy {busy}% of its available time: below the 85% at which it would limit output.",
+      "material": "For {share}% of released orders the material arrived after the work was released.",
+      "weak": "Confidence is lowered to {level} because some of the numbers behind the checks are less certain. Open them to see why.",
+      "dataGap": "Confidence is lowered to medium because important data is missing. See Data quality for what to add.",
+      "other": "See how it is worked out below.",
+      "level": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low",
+        "none": "none"
+      },
+      "method": {
+        "utilisation": "busy time",
+        "queue": "waiting orders",
+        "active_period": "longest working stretch",
+        "starved_blocked": "waiting for work"
+      }
+    }
   }
 }

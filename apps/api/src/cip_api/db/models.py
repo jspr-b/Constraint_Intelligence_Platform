@@ -368,4 +368,25 @@ class Fact(Base):
     """JSON: {missing, reason, confidence_impact} when the value could not be calculated."""
 
 
+class DetectionRow(Base):
+    """The constraint found for one period of an import, with every method's output (JSON)."""
+
+    __tablename__ = "detections"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
+    plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    import_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    period_kind: Mapped[str] = mapped_column(String(8), nullable=False)
+    period_start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resource_code: Mapped[str | None] = mapped_column(String(16))
+    """The constraint, or NULL when no machine limits output (market or material)."""
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    confidence: Mapped[str] = mapped_column(String(16), nullable=False)
+    agreement: Mapped[str] = mapped_column(Text, nullable=False)
+    """JSON Figure: share of methods that point at the answer."""
+    reasons: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")
+    methods: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")
+
+
 TENANT_TABLES = [t for t in Base.metadata.sorted_tables if t.name != "tenants"]

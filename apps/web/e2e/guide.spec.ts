@@ -5,7 +5,7 @@ const steps = (upload: string, check: string) => [
   { key: "plant", state: "done", detail: null, missing: [] },
   { key: "upload", state: upload, detail: null, missing: [] },
   { key: "check", state: check, detail: null, missing: [] },
-  { key: "answer", state: "later", detail: null, missing: [] },
+  { key: "answer", state: check, detail: null, missing: [] },
 ];
 
 async function stubOnboarding(page: Page, canSetUp: boolean, complete = false): Promise<void> {
@@ -30,7 +30,7 @@ test("a new client sees the next step and a link to do it", async ({ page }) => 
   await page.goto("/conn");
   const guide = page.getByRole("region", { name: "Getting started" });
   await expect(guide).toBeVisible();
-  await expect(guide.getByText("1 of 3 done")).toBeVisible();
+  await expect(guide.getByText("1 of 4 done")).toBeVisible();
   await guide.getByRole("link", { name: /upload/i }).click();
   await expect(page).toHaveURL(/\/import$/);
 });

@@ -114,13 +114,15 @@ INSERT = text(
 
 def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
     """The job: reconstruct the import's data and replace the plant's facts. Returns the count."""
+    from cip_api.detection import store_detections  # detection.py reads this module
     from cip_api.imports import import_dir  # imports.py queues this job
 
     try:
         with tenant_conn(settings, tenant) as conn:
-            plant_code = conn.execute(
-                text("SELECT plant_code FROM imports WHERE import_id = :i"), {"i": import_id}
-            ).scalar_one()
+            plant_code, report = conn.execute(
+                text("SELECT plant_code, report FROM imports WHERE import_id = :i"),
+                {"i": import_id},
+            ).one()
         plant = load_plant(import_dir(settings, tenant, plant_code, import_id) / "standard")
         facts = measured_facts(plant)
         whole = next((f.figure for f in facts if f.period_kind == "all"), None)
@@ -129,6 +131,7 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
             conn.execute(text("DELETE FROM facts WHERE plant_code = :p"), {"p": plant_code})
             if rows:
                 conn.execute(INSERT, rows)
+            store_detections(conn, tenant, plant_code, import_id, plant, facts, report)
             conn.execute(
                 text(
                     "UPDATE fact_runs SET status = 'ready', finished_at = :now, error = NULL, "

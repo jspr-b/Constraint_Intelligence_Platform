@@ -92,7 +92,8 @@ export function HowCalculated({ figure, label }: { figure: FigureLike; label: st
     details.show(<HowCalculated figure={input} label={inputLabel} />);
 
   const rows: ReactNode[] = Object.entries(figure.inputs).map(([key, value]) => {
-    const [plain, unit] = inputName(key);
+    const [raw, unit] = inputName(key);
+    const plain = t.has(`inputNames.${key}`) ? t(`inputNames.${key}`) : raw;
     const shownLabel = unit ? `${plain} (${unit})` : plain;
     if (isFigure(value)) {
       return (
@@ -122,7 +123,10 @@ export function HowCalculated({ figure, label }: { figure: FigureLike; label: st
     const source = INPUT_SOURCE[key];
     return (
       <li key={key}>
-        {shownLabel}: <span className="font-mono">{inputValue(key, value, locale)}</span>
+        {shownLabel}:{" "}
+        <span className="font-mono">
+          {value === "none" ? t("noMachine") : inputValue(key, value, locale)}
+        </span>
         {source && (
           <>
             {" · "}

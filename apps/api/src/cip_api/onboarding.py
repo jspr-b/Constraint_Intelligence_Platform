@@ -84,21 +84,29 @@ def _check_step(latest: Any) -> StepOut:
     return StepOut(key="check", state="done")
 
 
+def _answer_step(ctx: Ctx, plant_code: str) -> StepOut:
+    """Done once the facts job has saved the plant's constraint for its whole period."""
+    found = ctx.db.execute(
+        text("SELECT 1 FROM detections WHERE plant_code = :p AND period_kind = 'all'"),
+        {"p": plant_code},
+    ).first()
+    return StepOut(key="answer", state="done" if found else "todo")
+
+
 def onboarding_steps(ctx: Ctx, plant_code: str | None) -> list[StepOut]:
     if plant_code is None:
         return [
             StepOut(key="plant", state="todo"),
             StepOut(key="upload", state="todo"),
             StepOut(key="check", state="todo"),
-            StepOut(key="answer", state="later"),
+            StepOut(key="answer", state="todo"),
         ]
     latest = _latest_import(ctx, plant_code)
     return [
         StepOut(key="plant", state="done"),
         _upload_step(latest),
         _check_step(latest),
-        # The answer (bottleneck and its cost) arrives with constraint detection.
-        StepOut(key="answer", state="later"),
+        _answer_step(ctx, plant_code),
     ]
 
 

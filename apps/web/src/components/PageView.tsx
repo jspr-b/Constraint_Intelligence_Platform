@@ -34,7 +34,7 @@ const NEXT_PAGE: Record<string, string> = {
   plant: "/setup",
   upload: "/import",
   check: "/data",
-  answer: "/data",
+  answer: "/machines",
 };
 
 export function PageView({ page }: { page: PageKey }) {

@@ -38,8 +38,10 @@ test("import plant_a with known defects, then Data quality shows the score and t
   await page.waitForLoadState("networkidle");
   const score = page.getByRole("region", { name: "Data quality score" });
   await expect(score).toContainText("45");
-  await score.getByRole("button").focus();
-  await expect(page.getByRole("tooltip")).toContainText("data_quality_score_v1");
+  await score.getByRole("button").click();
+  await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(
+    "data_quality_score_v1",
+  );
   await expect(page.getByRole("region", { name: "Rows imported" })).toContainText(
     `${known.unknown_machine_code_rows} rejected`,
   );
