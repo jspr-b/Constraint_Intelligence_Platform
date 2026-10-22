@@ -40,3 +40,5 @@ def test_facts_upgrade_and_downgrade() -> None:
             ).all()
         )
     assert rls == {"facts": True, "fact_runs": True}
+    columns = {c["name"] for c in inspect(owner).get_columns("facts")}
+    assert {"operation", "reason_code"} <= columns

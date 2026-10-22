@@ -107,10 +107,105 @@ const FIG = (value: number, unit: string, formula_id: string) => ({
   confidence: "high",
 });
 
+const BLOCKED_MISSING = {
+  missing: "blocked time",
+  reason: "no move/scan events: blocked time cannot be told apart from starved",
+  confidence_impact: "medium",
+};
+
+/** Measured facts for two machines (Machines page), filtered like the API does. */
+export function stubFacts(url: URL): Record<string, unknown>[] {
+  const families = url.searchParams.getAll("family");
+  const kind = url.searchParams.get("period_kind") ?? "all";
+  const only = url.searchParams.get("resource_code");
+  const fact = (
+    family: string,
+    code: string,
+    measure: string,
+    value: number | typeof BLOCKED_MISSING,
+    unit: string,
+    formula: string,
+    extra: Record<string, unknown> = {},
+  ) => ({
+    family,
+    resource_code: code,
+    measure,
+    operation: null,
+    reason_code: null,
+    period_kind: kind,
+    figure: {
+      ...FIG(0, unit, formula),
+      value,
+      confidence: typeof value === "number" ? "high" : "none",
+      period_start_at: "2026-07-20T04:00:00Z",
+      period_end_at: "2026-10-09T20:00:00Z",
+    },
+    ...extra,
+  });
+  const out: Record<string, unknown>[] = [];
+  const machines: [string, number, number | typeof BLOCKED_MISSING][] = [
+    ["PNT-01", 99.88, 0],
+    ["WLD-02", 26.37, BLOCKED_MISSING],
+  ];
+  for (const [code, busy, blocked] of machines) {
+    if (only && only !== code) continue;
+    if (kind === "day") {
+      for (const day of ["2026-07-20", "2026-07-21"]) {
+        for (const [state, minutes] of [
+          ["shift", 960],
+          ["running", 700],
+          ["setup", 100],
+          ["down", 20],
+          ["starved", 40],
+          ["break", 100],
+        ] as const) {
+          const f = fact("state", code, `${state}_min`, minutes, "min", "machine_state_min_v1");
+          f.figure.period_start_at = `${day}T04:00:00Z`;
+          out.push(f);
+        }
+      }
+      continue;
+    }
+    const all: Record<string, unknown>[] = [
+      fact("utilisation", code, "utilisation_pct", busy, "pct", "utilisation_pct_v1"),
+      fact("state_share", code, "running_pct", busy - 12, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "setup_pct", 10.7, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "down_pct", 1.4, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "starved_pct", 0.1, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "blocked_pct", blocked, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "break_pct", 9.4, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "maintenance_pct", 1.9, "pct", "state_share_pct_v1"),
+      fact("state_share", code, "unknown_pct", 0, "pct", "state_share_pct_v1"),
+      fact("oee", code, "oee_ratio", 0.7253, "ratio", "oee_v1"),
+      fact(
+        "effective_capacity",
+        code,
+        "effective_capacity_h",
+        838.5,
+        "h",
+        "effective_capacity_h_v1",
+      ),
+      fact("state", code, "setup_min", 6164, "min", "machine_state_min_v1"),
+      fact("setup_share", code, "setup_share_pct", 12.27, "pct", "setup_share_pct_v1"),
+      fact("task_time", code, "median_min_per_unit", 9.41, "min_per_unit", "task_time_median_v1", {
+        operation: "Paint",
+      }),
+      fact("task_time", code, "p90_min_per_unit", 17.47, "min_per_unit", "task_time_p90_v1", {
+        operation: "Paint",
+      }),
+      fact("down_reason", code, "down_min", 359, "min", "down_reason_min_v1", {
+        reason_code: "MECH",
+      }),
+    ];
+    out.push(...all.filter((f) => families.length === 0 || families.includes(f.family as string)));
+  }
+  return out;
+}
+
 /** Synthetic page data for the built foundation pages (accessibility checks see full tables). */
 export async function stubPages(
   page: Page,
-  overrides: { latestImport?: Record<string, unknown> } = {},
+  overrides: { latestImport?: Record<string, unknown>; factsStatus?: string } = {},
 ): Promise<void> {
   const plant = {
     plant_code: "PLANT-A",
@@ -144,6 +239,42 @@ export async function stubPages(
             status: "active",
           },
         ],
+      },
+    }),
+  );
+  await page.route(/\/api\/plants\/PLANT-A\/facts\/periods$/, (route) =>
+    route.fulfill({
+      json: [
+        {
+          period_kind: "all",
+          period_start_at: "2026-07-20T04:00:00Z",
+          period_end_at: "2026-10-09T20:00:00Z",
+        },
+        {
+          period_kind: "month",
+          period_start_at: "2026-08-01T00:00:00Z",
+          period_end_at: "2026-09-01T00:00:00Z",
+        },
+      ],
+    }),
+  );
+  await page.route(/\/api\/plants\/PLANT-A\/facts(\?.*)?$/, (route) =>
+    route.fulfill({
+      json: {
+        plant_code: "PLANT-A",
+        run: {
+          status: overrides.factsStatus ?? "ready",
+          started_at: "2026-10-13T07:16:00Z",
+          finished_at: "2026-10-13T07:17:00Z",
+          period_start_at: "2026-07-20T04:00:00Z",
+          period_end_at: "2026-10-09T20:00:00Z",
+          error: null,
+        },
+        import_id: "i1",
+        facts:
+          overrides.factsStatus && overrides.factsStatus !== "ready"
+            ? []
+            : stubFacts(new URL(route.request().url())),
       },
     }),
   );

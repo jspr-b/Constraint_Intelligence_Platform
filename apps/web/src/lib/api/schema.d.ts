@@ -946,7 +946,7 @@ export interface components {
              * Family
              * @enum {string}
              */
-            family: "state" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time";
+            family: "state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time";
             figure: components["schemas"]["FigureOut"];
             /** Measure */
             measure: string;
@@ -956,7 +956,9 @@ export interface components {
              * Period Kind
              * @enum {string}
              */
-            period_kind: "all" | "month" | "week";
+            period_kind: "all" | "month" | "week" | "day";
+            /** Reason Code */
+            reason_code?: string | null;
             /** Resource Code */
             resource_code: string;
         };
@@ -1299,7 +1301,7 @@ export interface components {
              * Period Kind
              * @enum {string}
              */
-            period_kind: "all" | "month" | "week";
+            period_kind: "all" | "month" | "week" | "day";
             /**
              * Period Start At
              * Format: date-time
@@ -2528,9 +2530,9 @@ export interface operations {
     read_facts_plants__plant_code__facts_get: {
         parameters: {
             query?: {
-                family?: ("state" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time")[] | null;
+                family?: ("state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time")[] | null;
                 resource_code?: string | null;
-                period_kind?: "all" | "month" | "week";
+                period_kind?: "all" | "month" | "week" | "day";
                 period_start_at?: string | null;
             };
             header?: {

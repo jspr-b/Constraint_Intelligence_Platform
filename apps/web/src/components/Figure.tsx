@@ -220,7 +220,7 @@ export function Figure({
         size === "kpi"
           ? "font-display text-2xl font-bold leading-none"
           : "font-mono text-[length:inherit]"
-      } ${missing ? "text-faint" : "text-text"}`}
+      } ${missing ? "text-muted" : "text-text"}`}
     >
       {text}
     </button>

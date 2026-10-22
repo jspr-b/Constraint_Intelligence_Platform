@@ -57,6 +57,30 @@ def _paired_stops(plant: LoadedPlant) -> dict[str, list[Interval]]:
     return stops
 
 
+def stops_by_reason(plant: LoadedPlant) -> dict[str, dict[str, list[Interval]]]:
+    """Unplanned stops per machine and down reason code (``unknown`` when none is given),
+    within planned production time. Planned maintenance (``PM``) is not a stop."""
+    times = machine_time(plant)
+    open_at: dict[str, tuple[float, str]] = {}
+    raw: dict[str, dict[str, list[Interval]]] = defaultdict(lambda: defaultdict(list))
+    for e in sorted(plant.events, key=lambda e: e.at):
+        if e.resource_code is None or e.down_reason_code == "PM":
+            continue
+        if e.event_type is EventType.DOWN_START:
+            open_at[e.resource_code] = (to_min(e.at), e.down_reason_code or "unknown")
+        elif e.event_type is EventType.DOWN_END and e.resource_code in open_at:
+            start, reason = open_at.pop(e.resource_code)
+            raw[e.resource_code][reason].append((start, to_min(e.at)))
+    return {
+        code: {
+            reason: intersect(normalise(iv), times[code].production)
+            for reason, iv in reasons.items()
+        }
+        for code, reasons in raw.items()
+        if code in times
+    }
+
+
 def machine_time(plant: LoadedPlant) -> dict[str, MachineTime]:
     out = {r.resource_code: MachineTime() for r in plant.resources}
     for w in plant.calendar:

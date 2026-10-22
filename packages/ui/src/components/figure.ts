@@ -40,6 +40,14 @@ export function formatFigure(figure: FigureLike, locale = "en"): string {
   if (unit === "weeks")
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} wk`;
   if (unit === "score") return new Intl.NumberFormat(locale).format(value);
+  if (unit === "ratio")
+    return new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(
+      value,
+    );
+  if (unit === "min")
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value)} min`;
+  if (unit === "orders")
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} orders`;
   if (unit === "pct")
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)}%`;
   return `${new Intl.NumberFormat(locale).format(value)} ${unit}`;

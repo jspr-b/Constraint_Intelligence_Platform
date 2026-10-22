@@ -5,6 +5,8 @@ the whole data period (``all``), a local-time month or an ISO week. Families:
 
 - ``state``: minutes per machine state (shift, break, maintenance, down, running, setup,
   blocked, starved, and unknown: time lost events cannot explain)
+- ``state_share``: each state's share of shift time, in %
+- ``down_reason``: unplanned stop minutes per down reason (whole period only)
 - ``utilisation``: (running + setup) ÷ available time, in %; unknown time is left out of both
   and lowers confidence, so a few lost events do not change the answer
 - ``setup_share``: setup ÷ (running + setup), in %
@@ -13,6 +15,8 @@ the whole data period (``all``), a local-time month or an ISO week. Families:
 - ``queue``: median and P90 time orders wait in front of the machine
 - ``wip``: average and highest number of orders waiting in front of the machine
 - ``task_time``: median and P90 work minutes per unit per operation (whole period only)
+
+Days (``period_kind`` ``day``) carry only ``state`` facts: the machine's timeline.
 """
 
 from collections.abc import Iterator
@@ -24,7 +28,7 @@ import polars as pl
 
 from constraint_engine.figure import Confidence, Figure, Missing
 from constraint_engine.formulas.registry import Calc, Resolved, formula
-from constraint_engine.intervals import Interval
+from constraint_engine.intervals import Interval, total
 from constraint_engine.io.plant_loader import LoadedPlant
 from constraint_engine.reconstruct.capacity import machine_oee
 from constraint_engine.reconstruct.durations import pair_operations, task_times
@@ -37,7 +41,7 @@ from constraint_engine.reconstruct.states import (
     machine_states,
     period_windows,
 )
-from constraint_engine.reconstruct.timeline import from_min
+from constraint_engine.reconstruct.timeline import from_min, stops_by_reason
 
 PeriodKind = str
 """``all``, ``month`` or ``week``."""
@@ -54,6 +58,8 @@ class Fact:
     figure: Figure
     operation: str | None = None
     """For task times: the operation measured on the machine."""
+    reason_code: str | None = None
+    """For down reasons: the plant's own down reason code (``unknown`` when none was given)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,6 +158,49 @@ def _unknown_cap(states: dict[str, Figure]) -> Confidence:
     return (
         Confidence.MEDIUM if isinstance(unknown, int | float) and unknown > 0 else Confidence.HIGH
     )
+
+
+@formula(
+    "state_share_pct",
+    1,
+    "share of shift time = minutes in this state ÷ shift minutes × 100",
+    unit="pct",
+)
+def state_share(state_fig: Figure, shift_fig: Figure, period: Period) -> Calc:
+    def compute(i: Resolved) -> float | Missing:
+        shift = float(i["shift_min"])
+        if shift <= 0:
+            return Missing("shift time", "the machine had no shift in the period")
+        return round(100 * float(i["state_min"]) / shift, 2)
+
+    return _with_period(
+        Calc(inputs={"state_min": state_fig, "shift_min": shift_fig}, compute=compute), period
+    )
+
+
+@formula(
+    "down_reason_min",
+    1,
+    "minutes of unplanned stops with this down reason, within planned production time",
+    unit="min",
+)
+def down_reason_min(
+    resource_code: str, reason_code: str, minutes: float, stops: int, period: Period
+) -> Calc:
+    def compute(i: Resolved) -> float:
+        return round(minutes, 3)
+
+    return _with_period(
+        Calc(
+            inputs={"resource_code": resource_code, "reason_code": reason_code, "stops": stops},
+            compute=compute,
+            confidence_cap=Confidence.LOW if reason_code == "unknown" else Confidence.HIGH,
+        ),
+        period,
+    )
+
+
+SHARED_STATES = ("running", "setup", "down", "starved", "blocked", "break", "maintenance", UNKNOWN)
 
 
 @formula("setup_share_pct", 1, "setup share = setup ÷ (running + setup) × 100", unit="pct")
@@ -298,7 +347,7 @@ def wip_max(resource_code: str, peak: int, has_scans: bool, period: Period) -> C
 
 
 def periods(plant: LoadedPlant, states: dict[str, MachineStates]) -> list[Period]:
-    """The whole data period, then each local-time month and ISO week in it."""
+    """The whole data period, then each local-time month, ISO week and day in it."""
     starts = [s for ms in states.values() for s, _ in ms.shift[:1]]
     if not starts:
         return []
@@ -307,7 +356,7 @@ def periods(plant: LoadedPlant, states: dict[str, MachineStates]) -> list[Period
         return []
     tz = "UTC" if isinstance(plant.plant, Missing) else plant.plant.timezone_iana
     out = [Period("all", window)]
-    for kind, freq in (("month", "M"), ("week", "W")):
+    for kind, freq in (("month", "M"), ("week", "W"), ("day", "D")):
         for w in period_windows(from_min(window[0]), from_min(window[1]), tz, freq).values():
             clipped = (max(w[0], window[0]), min(w[1], window[1]))
             if clipped[1] > clipped[0]:
@@ -321,6 +370,16 @@ def _machine_facts(code: str, ms: MachineStates, period: Period, flow: Flow) -> 
     for state in ("shift", *STATES, UNKNOWN):
         figs[state] = state_min(code, state, minutes[state], period, ms.blocked_missing)
         yield Fact("state", code, f"{state}_min", period.kind, figs[state])
+    if period.kind == "day":
+        return
+    for state in SHARED_STATES:
+        yield Fact(
+            "state_share",
+            code,
+            f"{state}_pct",
+            period.kind,
+            state_share(figs[state], figs["shift"], period),
+        )
     yield Fact("utilisation", code, "utilisation_pct", period.kind, utilisation(figs, period))
     yield Fact("setup_share", code, "setup_share_pct", period.kind, setup_share(figs, period))
 
@@ -377,6 +436,8 @@ def measured_facts(plant: LoadedPlant) -> list[Fact]:
     for period in spans:
         for code in sorted(states):
             out.extend(_machine_facts(code, states[code], period, flow))
+        if period.kind == "day":
+            continue
         for code, m in sorted(machine_oee(plant, period.window, ops).items()):
             for measure, fig in (
                 ("availability_ratio", m.availability),
@@ -397,6 +458,20 @@ def measured_facts(plant: LoadedPlant) -> list[Fact]:
     if not spans:
         return out
     whole = spans[0]
+    for code, reasons in sorted(stops_by_reason(plant).items()):
+        for reason, iv in sorted(reasons.items()):
+            inside = [(max(a, whole.window[0]), min(b, whole.window[1])) for a, b in iv]
+            inside = [w for w in inside if w[1] > w[0]]
+            out.append(
+                Fact(
+                    "down_reason",
+                    code,
+                    "down_min",
+                    "all",
+                    down_reason_min(code, reason, total(inside), len(inside), whole),
+                    reason_code=reason,
+                )
+            )
     for t in task_times(ops, per_product=False):
         out.append(
             Fact(

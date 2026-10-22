@@ -89,6 +89,7 @@ def fact_row(tenant: uuid.UUID, plant_code: str, import_id: uuid.UUID, f: Fact) 
         "subject": f.subject_code,
         "measure": f.measure,
         "operation": f.operation,
+        "reason": f.reason_code,
         "kind": f.period_kind,
         "start": f.figure.period_start_at,
         "end": f.figure.period_end_at,
@@ -104,9 +105,9 @@ def fact_row(tenant: uuid.UUID, plant_code: str, import_id: uuid.UUID, f: Fact) 
 
 INSERT = text(
     "INSERT INTO facts (tenant_id, plant_code, import_id, family, subject_code, measure, "
-    "operation, period_kind, period_start_at, period_end_at, value, unit, formula_id, "
+    "operation, reason_code, period_kind, period_start_at, period_end_at, value, unit, formula_id, "
     "formula_version, confidence, inputs, missing) VALUES (:t, :p, :i, :family, :subject, "
-    ":measure, :operation, :kind, :start, :end, :value, :unit, :formula, :version, "
+    ":measure, :operation, :reason, :kind, :start, :end, :value, :unit, :formula, :version, "
     ":confidence, :inputs, :missing)"
 )
 
@@ -158,6 +159,8 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
 router = APIRouter(tags=["facts"])
 Family = Literal[
     "state",
+    "state_share",
+    "down_reason",
     "utilisation",
     "setup_share",
     "oee",
@@ -166,7 +169,7 @@ Family = Literal[
     "wip",
     "task_time",
 ]
-PeriodKind = Literal["all", "month", "week"]
+PeriodKind = Literal["all", "month", "week", "day"]
 
 
 class FactOut(BaseModel):
@@ -176,6 +179,8 @@ class FactOut(BaseModel):
     """The number's name with its unit, e.g. ``running_min`` or ``utilisation_pct``."""
     operation: str | None
     """For task times: the operation measured on the machine."""
+    reason_code: str | None = None
+    """For down reasons: the plant's own down reason code (``unknown`` when none was given)."""
     period_kind: PeriodKind
     figure: FigureOut
 
@@ -256,7 +261,7 @@ def read_facts(
         params["s"] = period_start_at
     rows = ctx.db.execute(
         text(
-            "SELECT import_id, family, subject_code, measure, operation, period_kind, "
+            "SELECT import_id, family, subject_code, measure, operation, reason_code, period_kind, "
             "period_start_at, period_end_at, value, unit, formula_id, confidence, inputs, missing "
             f"FROM facts WHERE {' AND '.join(where)} "
             "ORDER BY subject_code, family, measure, operation, period_start_at"
@@ -273,6 +278,7 @@ def read_facts(
                 resource_code=r.subject_code,
                 measure=r.measure,
                 operation=r.operation,
+                reason_code=r.reason_code,
                 period_kind=r.period_kind,
                 figure=_figure(r),
             )

@@ -9,6 +9,7 @@ import { CalendarPage } from "./pages/CalendarPage";
 import { ConnectionsPage } from "./pages/ConnectionsPage";
 import { DataQualityPage } from "./pages/DataQualityPage";
 import { ImportPage } from "./pages/ImportPage";
+import { MachinesPage } from "./pages/MachinesPage";
 import { SetupPage } from "./pages/SetupPage";
 import { UsersPage } from "./pages/UsersPage";
 import { EmptyState } from "./EmptyState";
@@ -24,6 +25,7 @@ const BUILT: Partial<Record<PageKey, ComponentType>> = {
   conn: ConnectionsPage,
   data: DataQualityPage,
   import: ImportPage,
+  machines: MachinesPage,
   setup: SetupPage,
   users: UsersPage,
 };

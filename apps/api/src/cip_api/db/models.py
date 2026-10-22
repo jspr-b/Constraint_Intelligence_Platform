@@ -352,6 +352,8 @@ class Fact(Base):
     measure: Mapped[str] = mapped_column(String(64), nullable=False)
     operation: Mapped[str | None] = mapped_column(String(100))
     """For task times: the operation measured on the machine."""
+    reason_code: Mapped[str | None] = mapped_column(String(32))
+    """For down reasons: the plant's own down reason code."""
     period_kind: Mapped[str] = mapped_column(String(8), nullable=False)
     period_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     period_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

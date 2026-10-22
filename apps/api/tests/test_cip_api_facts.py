@@ -172,3 +172,17 @@ def test_before_any_import_there_are_no_facts(it: TestClient) -> None:
     body = it.get("/plants/PLANT-1/facts").json()
     assert body == {"plant_code": "PLANT-1", "run": None, "import_id": None, "facts": []}
     assert it.get("/plants/NO-SUCH/facts").json()["code"] == "plant_not_found"
+
+
+def test_downtime_by_reason_and_the_day_timeline(world: World, it: TestClient) -> None:
+    _import(it)
+    reasons = it.get(
+        "/plants/PLANT-1/facts", params={"family": "down_reason", "resource_code": "PNT-01"}
+    ).json()["facts"]
+    assert {f["reason_code"] for f in reasons} >= {"MECH"}
+    assert all(f["figure"]["formula_id"] == "down_reason_min_v1" for f in reasons)
+    days = it.get(
+        "/plants/PLANT-1/facts",
+        params={"family": "state", "resource_code": "PNT-01", "period_kind": "day"},
+    ).json()["facts"]
+    assert len({f["figure"]["period_start_at"] for f in days}) >= 60

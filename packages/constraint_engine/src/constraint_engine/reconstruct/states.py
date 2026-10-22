@@ -172,7 +172,8 @@ def _states(
 
 
 def period_windows(start: datetime, end: datetime, tz: str, freq: str) -> dict[str, Interval]:
-    """Local-time weeks (``W``, ISO) or months (``M``) between start and end, as minute windows."""
+    """Local-time days (``D``), weeks (``W``, ISO) or months (``M``) between start and end, as
+    minute windows."""
     from datetime import timedelta
     from zoneinfo import ZoneInfo
 
@@ -180,11 +181,14 @@ def period_windows(start: datetime, end: datetime, tz: str, freq: str) -> dict[s
     local = start.astimezone(zone).replace(hour=0, minute=0, second=0, microsecond=0)
     if freq == "W":
         local -= timedelta(days=local.weekday())
-    else:
+    elif freq == "M":
         local = local.replace(day=1)
     out: dict[str, Interval] = {}
     while local < end:
-        if freq == "W":
+        if freq == "D":
+            nxt = local + timedelta(days=1)
+            label = local.date().isoformat()
+        elif freq == "W":
             nxt = local + timedelta(days=7)
             iso = local.isocalendar()
             label = f"{iso.year}-W{iso.week:02d}"

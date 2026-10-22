@@ -42,7 +42,7 @@ def test_utilisation_matches_the_known_answers(plant: str) -> None:
 
 
 def test_every_shift_minute_is_one_state(facts_a: list[Fact]) -> None:
-    for period_kind in ("all", "month", "week"):
+    for period_kind in ("all", "month", "week", "day"):
         sums: dict[tuple[str, datetime | None], float] = {}
         shift: dict[tuple[str, datetime | None], float] = {}
         for f in facts_a:
@@ -68,6 +68,8 @@ def test_every_fact_has_a_period_and_a_registered_formula(facts_a: list[Fact]) -
     families = {f.family for f in facts_a}
     assert families == {
         "state",
+        "state_share",
+        "down_reason",
         "utilisation",
         "setup_share",
         "oee",
@@ -81,3 +83,34 @@ def test_every_fact_has_a_period_and_a_registered_formula(facts_a: list[Fact]) -
 def test_the_same_plant_gives_the_same_facts(facts_a: list[Fact]) -> None:
     again = measured_facts(load_plant(DATA / "plant_a"))
     assert [f.figure.to_dict() for f in again] == [f.figure.to_dict() for f in facts_a]
+
+
+def test_down_minutes_by_reason_add_up_to_the_down_state(facts_a: list[Fact]) -> None:
+    down = {
+        f.subject_code: float(f.figure.value)  # type: ignore[arg-type]
+        for f in facts_a
+        if f.measure == "down_min" and f.family == "state" and f.period_kind == "all"
+    }
+    by_reason: dict[str, float] = {}
+    for f in facts_a:
+        if f.family == "down_reason":
+            assert f.reason_code
+            by_reason[f.subject_code] = by_reason.get(f.subject_code, 0.0) + float(f.figure.value)  # type: ignore[arg-type]
+    assert by_reason
+    for code, minutes in by_reason.items():
+        assert minutes == pytest.approx(down[code], abs=0.5), code
+
+
+def test_state_shares_of_the_shift_add_up_to_100(facts_a: list[Fact]) -> None:
+    shares: dict[str, float] = {}
+    for f in facts_a:
+        if f.family == "state_share" and f.period_kind == "all":
+            shares[f.subject_code] = shares.get(f.subject_code, 0.0) + float(f.figure.value)  # type: ignore[arg-type]
+    assert len(shares) == 6
+    for code, total in shares.items():
+        assert total == pytest.approx(100, abs=0.1), code
+
+
+def test_days_carry_only_the_state_timeline(facts_a: list[Fact]) -> None:
+    days = [f for f in facts_a if f.period_kind == "day"]
+    assert days and {f.family for f in days} == {"state"}

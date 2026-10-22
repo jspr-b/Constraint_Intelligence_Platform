@@ -630,6 +630,8 @@
           "family": {
             "enum": [
               "state",
+              "state_share",
+              "down_reason",
               "utilisation",
               "setup_share",
               "oee",
@@ -663,10 +665,22 @@
             "enum": [
               "all",
               "month",
-              "week"
+              "week",
+              "day"
             ],
             "title": "Period Kind",
             "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
           },
           "resource_code": {
             "title": "Resource Code",
@@ -1728,7 +1742,8 @@
             "enum": [
               "all",
               "month",
-              "week"
+              "week",
+              "day"
             ],
             "title": "Period Kind",
             "type": "string"
@@ -4609,6 +4624,8 @@
                   "items": {
                     "enum": [
                       "state",
+                      "state_share",
+                      "down_reason",
                       "utilisation",
                       "setup_share",
                       "oee",
@@ -4653,7 +4670,8 @@
               "enum": [
                 "all",
                 "month",
-                "week"
+                "week",
+                "day"
               ],
               "title": "Period Kind",
               "type": "string"
