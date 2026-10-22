@@ -7,6 +7,7 @@ import { Button, Panel } from "@cip/ui";
 import { api, ensureOk, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
+import { Count } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
@@ -40,6 +41,7 @@ function shiftDay(day: string, by: number): string {
 /** Capacity calendar page (mockup F6), in plant local time. */
 export function CalendarPage() {
   const t = useTranslations("calendar");
+  const tf = useTranslations("figure");
   const locale = useLocale();
   const view = useView();
   const queries = useQueryClient();
@@ -485,11 +487,19 @@ export function CalendarPage() {
                       key={`${o.resource_code}/${o.iso_year}/${o.iso_week}`}
                       className="border-t border-line"
                     >
-                      <td className="px-3 py-2 font-mono text-xs">
+                      <td data-raw="" className="px-3 py-2 font-mono text-xs">
                         {o.iso_year}-W{String(o.iso_week).padStart(2, "0")}
                       </td>
                       <td className="px-3 py-2 font-mono text-xs">{o.resource_code}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{o.overtime_h} h</td>
+                      <td className="px-3 py-2 text-xs">
+                        <Count
+                          kind="given"
+                          value={o.overtime_h}
+                          label={`${o.resource_code} · ${o.iso_year}-W${o.iso_week}`}
+                          format={(h) => `${h} h`}
+                          source={{ what: tf("src.overtime") }}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

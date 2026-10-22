@@ -2,14 +2,26 @@
 
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { MicroLabel } from "@cip/ui";
+import { useDetails } from "./Details";
 import { Glossary } from "./Term";
 
-/** Right detail drawer. Pages put item details here; until then it shows an empty state. */
+/** Right Details drawer: what a page put there (e.g. how a number is made), else the glossary. */
 export function Drawer() {
   const t = useTranslations("drawer");
-  const [open, setOpen] = useState(true);
+  const details = useDetails();
+  const { open, setOpen } = details;
+  const body = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const { clear, content } = details;
+  // A new page starts on the glossary again.
+  useEffect(() => clear(), [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Showing details opens the drawer and moves focus there, so keyboard and screen readers follow.
+  useEffect(() => {
+    if (content) requestAnimationFrame(() => body.current?.focus());
+  }, [content]);
   const Icon = open ? PanelRightClose : PanelRightOpen;
   return (
     <aside
@@ -29,8 +41,8 @@ export function Drawer() {
         </button>
       </div>
       {open && (
-        <div className="overflow-y-auto">
-          <Glossary />
+        <div ref={body} tabIndex={-1} className="overflow-y-auto outline-none">
+          {content ?? <Glossary />}
         </div>
       )}
     </aside>

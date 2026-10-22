@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button, Panel } from "@cip/ui";
 import { api, ensureOk } from "@/lib/api/client";
 import { ROLES } from "@/lib/pages";
+import { Count } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
@@ -25,6 +26,7 @@ const GLYPH: Record<string, string> = {
 /** Connections page (mockup F7, IT start page): sources, access and data protection facts. */
 export function ConnectionsPage() {
   const t = useTranslations("connections");
+  const tf = useTranslations("figure");
   const tr = useTranslations("roles");
   const locale = useLocale();
   const view = useView();
@@ -144,8 +146,20 @@ export function ConnectionsPage() {
               <td className={`${TD} font-mono text-xs`}>
                 {latest ? when(latest.created_at) : "—"}
               </td>
-              <td className={`${TD} font-mono text-xs`}>
-                {rows === null ? "—" : rows.toLocaleString(locale)}
+              <td className={`${TD} text-xs`}>
+                {rows === null || !latest ? (
+                  "—"
+                ) : (
+                  <Count
+                    value={rows}
+                    label={t("rows")}
+                    source={{
+                      what: tf("src.importAll", { date: when(latest.created_at) }),
+                      href: "/data",
+                      page: tf("pages.data"),
+                    }}
+                  />
+                )}
               </td>
               <td className={TD}>
                 <span aria-hidden="true">{GLYPH[status]}</span> {t(`importStatus.${status}`)}

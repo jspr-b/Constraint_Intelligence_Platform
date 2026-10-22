@@ -9,6 +9,7 @@ import { LiveDot } from "@cip/ui";
 import { isPageKey, type PageKey } from "@/lib/pages";
 import { GUIDE_COOKIE, VIEW_AS_COOKIE, setPref, type Theme } from "@/lib/prefs";
 import { effectiveView, useAccessMatrix, useApiHealth, useMe, type View } from "@/lib/session";
+import { DetailsProvider } from "./Details";
 import { Drawer } from "./Drawer";
 import { EmptyState } from "./EmptyState";
 import { GettingStarted, useOnboarding } from "./GettingStarted";
@@ -141,28 +142,30 @@ export function Shell({
           {view && <SignOut />}
         </div>
       </header>
-      <div className="flex min-h-0 flex-1">
-        {view && !station && (
-          <NavRail
-            pages={view.pages}
-            active={active}
-            onGuide={showGuide ? undefined : () => choose("open")}
-          />
-        )}
-        <main id="content" tabIndex={-1} className="min-w-0 flex-1 p-5 outline-none">
-          {view ? (
-            <ViewContext value={view}>
-              <Problems />
-              {view.preview && <PreviewBanner view={view} />}
-              {showGuide && <GettingStarted view={view} onHide={() => choose("hidden")} />}
-              {body}
-            </ViewContext>
-          ) : (
-            body
+      <DetailsProvider>
+        <div className="flex min-h-0 flex-1">
+          {view && !station && (
+            <NavRail
+              pages={view.pages}
+              active={active}
+              onGuide={showGuide ? undefined : () => choose("open")}
+            />
           )}
-        </main>
-        {view && !station && <Drawer />}
-      </div>
+          <main id="content" tabIndex={-1} className="min-w-0 flex-1 p-5 outline-none">
+            {view ? (
+              <ViewContext value={view}>
+                <Problems />
+                {view.preview && <PreviewBanner view={view} />}
+                {showGuide && <GettingStarted view={view} onHide={() => choose("hidden")} />}
+                {body}
+              </ViewContext>
+            ) : (
+              body
+            )}
+          </main>
+          {view && !station && <Drawer />}
+        </div>
+      </DetailsProvider>
     </div>
   );
 }

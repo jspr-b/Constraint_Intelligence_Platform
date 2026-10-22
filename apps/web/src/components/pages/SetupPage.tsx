@@ -4,10 +4,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
-import { FigureValue, Panel } from "@cip/ui";
+import { Panel } from "@cip/ui";
 import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
+import { Count, Figure } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
@@ -35,7 +36,7 @@ function cents(raw: FormDataEntryValue | null): number | null {
 /** Plant setup page (mockup F5). Items 1-3 of the input list are entered here at kick-off. */
 export function SetupPage() {
   const t = useTranslations("setup");
-  const locale = useLocale();
+  const tf = useTranslations("figure");
   const view = useView();
   const queries = useQueryClient();
   const picker = usePlant();
@@ -53,10 +54,6 @@ export function SetupPage() {
       ).data ?? null,
   });
   const s: Setup | null | undefined = setup.data;
-  const money = (value: number | null | undefined) =>
-    value === null || value === undefined
-      ? "—"
-      : new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(value / 100);
 
   /** Run a save; on success show the server's setup, otherwise a translated error. */
   const save = async (
@@ -294,7 +291,15 @@ export function SetupPage() {
                                   <span className="font-mono text-xs">{m.resource_code}</span>{" "}
                                   {m.name}
                                   {m.parallel_units > 1 && (
-                                    <span className="text-muted"> ×{m.parallel_units}</span>
+                                    <span className="text-muted">
+                                      {" ×"}
+                                      <Count
+                                        kind="given"
+                                        value={m.parallel_units}
+                                        label={`${m.resource_code} · ${tf("units.parallel")}`}
+                                        source={{ what: tf("src.setupUnits") }}
+                                      />
+                                    </span>
                                   )}
                                 </span>
                               ))}
@@ -349,13 +354,25 @@ export function SetupPage() {
                         <td className={TD}>{o.operation}</td>
                         <td className={TD}>
                           {o.measured_min_per_unit ? (
-                            <FigureValue figure={o.measured_min_per_unit} locale={locale} />
+                            <Figure
+                              figure={o.measured_min_per_unit}
+                              label={`${o.resource_code} · ${o.operation}`}
+                            />
                           ) : (
                             <span className="text-muted">{t("notMeasured")}</span>
                           )}
                         </td>
-                        <td className={`${TD} font-mono text-xs text-muted`}>
-                          {o.erp_min_per_unit ?? "—"}
+                        <td className={`${TD} text-xs text-muted`}>
+                          {o.erp_min_per_unit === null || o.erp_min_per_unit === undefined ? (
+                            "—"
+                          ) : (
+                            <Count
+                              kind="given"
+                              value={o.erp_min_per_unit}
+                              label={`${o.resource_code} · ${o.operation} · ${t("erp")}`}
+                              source={{ what: tf("src.setupErp") }}
+                            />
+                          )}
                         </td>
                         <td className={`${TD} font-mono text-xs`}>
                           {o.alternatives.join(", ") || "—"}
@@ -401,14 +418,25 @@ export function SetupPage() {
                           <span className="font-mono text-xs">{p.sku}</span> {p.name}
                         </td>
                         <td className={TD}>{p.family}</td>
-                        <td className={`${TD} font-mono text-xs`}>
-                          {money(p.sales_price_eur_cents)}
+                        <td className={`${TD} text-xs`}>
+                          <Given
+                            cents={p.sales_price_eur_cents}
+                            label={`${p.sku} · ${t("price")}`}
+                            what={tf("src.setupPrice")}
+                          />
                         </td>
-                        <td className={`${TD} font-mono text-xs`}>
-                          {money(p.truly_variable_cost_eur_cents)}
+                        <td className={`${TD} text-xs`}>
+                          <Given
+                            cents={p.truly_variable_cost_eur_cents}
+                            label={`${p.sku} · ${t("variableCost")}`}
+                            what={tf("src.setupPrice")}
+                          />
                         </td>
                         <td className={TD}>
-                          <FigureValue figure={p.throughput_per_unit} locale={locale} />
+                          <Figure
+                            figure={p.throughput_per_unit}
+                            label={`${p.sku} · ${t("throughput")}`}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -504,7 +532,15 @@ export function SetupPage() {
                         <td className={`${TD} font-mono text-xs`}>{c.resource_code}</td>
                         <td className={TD}>{c.from_setup_family}</td>
                         <td className={TD}>{c.to_setup_family}</td>
-                        <td className={`${TD} font-mono text-xs`}>{c.changeover_min}</td>
+                        <td className={`${TD} text-xs`}>
+                          <Count
+                            kind="given"
+                            value={c.changeover_min}
+                            label={`${c.resource_code} · ${c.from_setup_family} → ${c.to_setup_family}`}
+                            format={(v) => `${v} min`}
+                            source={{ what: tf("src.setupChangeover") }}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -542,11 +578,19 @@ export function SetupPage() {
                       return (
                         <tr key={m.resource_code} className="border-t border-line">
                           <td className={`${TD} font-mono text-xs`}>{m.resource_code}</td>
-                          <td className={`${TD} font-mono text-xs`}>
-                            {money(c?.overtime_eur_cents_per_h)}
+                          <td className={`${TD} text-xs`}>
+                            <Given
+                              cents={c?.overtime_eur_cents_per_h}
+                              label={`${m.resource_code} · ${t("overtimePerH")}`}
+                              what={tf("src.setupCosts")}
+                            />
                           </td>
-                          <td className={`${TD} font-mono text-xs`}>
-                            {money(c?.extra_shift_eur_cents)}
+                          <td className={`${TD} text-xs`}>
+                            <Given
+                              cents={c?.extra_shift_eur_cents}
+                              label={`${m.resource_code} · ${t("extraShift")}`}
+                              what={tf("src.setupCosts")}
+                            />
                           </td>
                           {canEdit && (
                             <td className="px-3 py-1">
@@ -608,5 +652,30 @@ export function SetupPage() {
         </Tabs>
       )}
     </div>
+  );
+}
+
+/** A euro amount from the client's own data (price, cost): opens where it comes from. */
+function Given({
+  cents,
+  label,
+  what,
+}: {
+  cents: number | null | undefined;
+  label: string;
+  what: string;
+}) {
+  const locale = useLocale();
+  if (cents === null || cents === undefined) return <>—</>;
+  return (
+    <Count
+      kind="given"
+      value={cents}
+      label={label}
+      source={{ what }}
+      format={(v) =>
+        new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(v / 100)
+      }
+    />
   );
 }

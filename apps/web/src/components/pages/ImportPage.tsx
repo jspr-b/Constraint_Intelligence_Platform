@@ -10,6 +10,7 @@ import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Field } from "../FormDialog";
 import { conversionLabel, fieldLabel } from "@/lib/model";
+import { Count } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { TechnicalDetails } from "../Problems";
 import { ReadOnlyNote } from "../ReadOnlyNote";
@@ -47,6 +48,7 @@ function reasonKind(reason: string): string {
 export function ImportPage() {
   const t = useTranslations("import");
   const tm = useTranslations("model");
+  const tf = useTranslations("figure");
   const locale = useLocale();
   const view = useView();
   const queries = useQueryClient();
@@ -300,11 +302,27 @@ export function ImportPage() {
                             <td className={TD}>
                               {f.recognised_as ? t(`source.${f.recognised_as}`) : "—"}
                             </td>
-                            <td className={`${TD} font-mono text-xs`}>
-                              {f.readable ? n(f.rows) : "—"}
+                            <td className={`${TD} text-xs`}>
+                              {f.readable ? (
+                                <Count
+                                  value={f.rows}
+                                  label={`${f.name} · ${t("colRows")}`}
+                                  source={{ what: tf("src.upload", { file: f.name }) }}
+                                />
+                              ) : (
+                                "—"
+                              )}
                             </td>
-                            <td className={`${TD} font-mono text-xs`}>
-                              {f.readable ? n(f.columns) : "—"}
+                            <td className={`${TD} text-xs`}>
+                              {f.readable ? (
+                                <Count
+                                  value={f.columns}
+                                  label={`${f.name} · ${t("colColumns")}`}
+                                  source={{ what: tf("src.upload", { file: f.name }) }}
+                                />
+                              ) : (
+                                "—"
+                              )}
                               {f.personal_columns.length > 0 && (
                                 <span className="block text-muted">
                                   {t("personalDropped", { count: f.personal_columns.length })}
@@ -361,7 +379,7 @@ export function ImportPage() {
                                       ))}
                                     </tr>
                                   </thead>
-                                  <tbody>
+                                  <tbody data-raw="">
                                     {f.preview.map((row, i) => (
                                       <tr key={i} className="border-t border-line">
                                         {f.header.map((h) => (
@@ -431,7 +449,7 @@ export function ImportPage() {
                       {s.columns.map((c) => (
                         <tr key={c.name} className="border-t border-line">
                           <td className="px-3 py-2 font-mono text-xs">{c.name}</td>
-                          <td className="px-3 py-2 font-mono text-xs text-muted">
+                          <td data-raw="" className="px-3 py-2 font-mono text-xs text-muted">
                             {c.example ?? "—"}
                           </td>
                           <td className="px-3 py-2">
@@ -515,19 +533,39 @@ export function ImportPage() {
                       return (
                         <tr key={f.name} className="border-t border-line">
                           <td className={`${TD} font-mono text-xs`}>{f.name}</td>
-                          <td className={`${TD} font-mono text-xs`}>{source ? n(read) : "—"}</td>
+                          <td className={`${TD} text-xs`}>
+                            {source ? (
+                              <Count
+                                value={read}
+                                label={`${f.name} · ${t("colRead")}`}
+                                source={{ what: tf("src.importRead", { file: f.name }) }}
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
                           <td className={`${TD} text-xs`}>
                             {source
-                              ? f.feeds
-                                  .map(
-                                    (target) =>
-                                      `${target} ${n(report.rows_written?.[target] ?? 0)}`,
-                                  )
-                                  .join(" · ")
+                              ? f.feeds.map((target) => (
+                                  <span key={target} className="mr-2 inline-block">
+                                    {tm.has(`tables.${target}`) ? tm(`tables.${target}`) : target}{" "}
+                                    <Count
+                                      value={report.rows_written?.[target] ?? 0}
+                                      label={`${f.name} → ${target}`}
+                                      source={{
+                                        what: tf("src.importWritten", { file: f.name, target }),
+                                      }}
+                                    />
+                                  </span>
+                                ))
                               : "—"}
                           </td>
                           <td className={TD}>
-                            <span className="font-mono text-xs">{n(errors.length)}</span>
+                            <Count
+                              value={errors.length}
+                              label={`${f.name} · ${t("colRejected")}`}
+                              source={{ what: tf("src.importRejected", { file: f.name }) }}
+                            />
                             {[...reasons.entries()].map(([kind, lines]) => (
                               <span key={kind} className="block text-xs text-muted">
                                 {t("rejectReason", {
@@ -557,7 +595,7 @@ export function ImportPage() {
                     <li key={m.key} className="flex items-center justify-between gap-3 text-sm">
                       <span>
                         {t(`minimum.${m.key}`)}{" "}
-                        <span className="font-mono text-xs text-muted">
+                        <span data-raw="" className="font-mono text-xs text-muted">
                           #{m.numbers.join(", #")}
                         </span>
                       </span>
@@ -593,7 +631,9 @@ export function ImportPage() {
                   <tbody>
                     {checklist.map((c) => (
                       <tr key={c.number} className="border-t border-line">
-                        <td className={`${TD} font-mono text-xs`}>{c.number}</td>
+                        <td data-raw="" className={`${TD} font-mono text-xs`}>
+                          {c.number}
+                        </td>
                         <td className={TD}>{c.data}</td>
                         <td className={`${TD} text-muted`}>{c.need}</td>
                         <td className={TD}>

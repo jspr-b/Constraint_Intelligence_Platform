@@ -71,6 +71,7 @@ describe("messages", () => {
     const dev = /(_v\d\b|\bAPI\b|IANA|Keycloak|tenant|formula|code_table|UUID|JSON)/i;
     const offenders = keys(en)
       .filter((key) => !key.startsWith("problems.next"))
+      .filter((key) => key !== "figure.formulaId") // shown only under Technical details
       .filter((key) =>
         dev.test(
           String(

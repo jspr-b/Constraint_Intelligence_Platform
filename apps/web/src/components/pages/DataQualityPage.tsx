@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { KpiReadout, Panel } from "@cip/ui";
+import { MicroLabel, Panel } from "@cip/ui";
 import { api } from "@/lib/api/client";
 import { EmptyState } from "../EmptyState";
+import { Count, Figure } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { termTags } from "../terms";
@@ -41,10 +42,16 @@ export function DataQualityPage() {
       dateStyle: "medium",
       timeStyle: "short",
       hourCycle: "h23",
-      timeZone: "UTC",
     }).format(new Date(iso));
   const files = (q?.files ?? []).filter((f) => !onlyIssues || f.rejected > 0);
   const rejected = (q?.files ?? []).reduce((n, f) => n + f.rejected, 0);
+  const tf = useTranslations("figure");
+  const when = q?.imported_at ? date(q.imported_at) : "";
+  const fromImport = (file: string) => ({
+    what: tf("src.importFile", { file, date: when }),
+    href: "/import",
+    page: tf("pages.import"),
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,29 +73,25 @@ export function DataQualityPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Panel label={t("score")}>
-              <KpiReadout
-                label={t("scoreOf")}
-                figure={q.score}
-                locale={locale}
-                missingLabel={t("missing")}
-              />
+              <div className="flex flex-col gap-1">
+                <MicroLabel>{t("scoreOf")}</MicroLabel>
+                <Figure figure={q.score} label={t("score")} size="kpi" />
+              </div>
             </Panel>
             <Panel label={t("rowsImported")}>
-              <KpiReadout
-                label={t("rejected", { rejected })}
-                figure={q.rows}
-                locale={locale}
-                missingLabel={t("missing")}
-              />
+              <div className="flex flex-col gap-1">
+                <MicroLabel>{t("rejected", { rejected })}</MicroLabel>
+                <Figure figure={q.rows} label={t("rowsImported")} size="kpi" />
+              </div>
             </Panel>
             <Panel label={t("eventPeriod")}>
               {q.event_period_weeks ? (
-                <KpiReadout
-                  label={t("weeksLabel")}
-                  figure={q.event_period_weeks}
-                  locale={locale}
-                  missingLabel={t("missing")}
-                />
+                <>
+                  <div className="flex flex-col gap-1">
+                    <MicroLabel>{t("weeksLabel")}</MicroLabel>
+                    <Figure figure={q.event_period_weeks} label={t("eventPeriod")} size="kpi" />
+                  </div>
+                </>
               ) : (
                 <p className="m-0 text-sm text-muted">{t("missing")}</p>
               )}
@@ -99,10 +102,19 @@ export function DataQualityPage() {
               )}
             </Panel>
             <Panel label={t("files")}>
-              <p className="m-0 font-display text-2xl font-bold leading-none">
+              <Count
+                value={q.files_required - q.files_missing.length}
+                label={t("files")}
+                size="kpi"
+                source={{
+                  what: tf("src.filesRequired", { date: when }),
+                  href: "/import",
+                  page: tf("pages.import"),
+                }}
+              >
                 {q.files_required - q.files_missing.length}
                 <span className="text-base text-muted"> / {q.files_required}</span>
-              </p>
+              </Count>
               <p className="m-0 mt-1 text-xs text-muted">
                 {q.files_missing.length === 0
                   ? t("allFiles")
@@ -150,9 +162,19 @@ export function DataQualityPage() {
                   {files.map((f) => (
                     <tr key={f.file} className="border-t border-line">
                       <td className={`${TD} font-mono text-xs`}>{f.file}</td>
-                      <td className={`${TD} font-mono text-xs`}>{f.rows.toLocaleString(locale)}</td>
-                      <td className={`${TD} font-mono text-xs`}>
-                        {f.rejected.toLocaleString(locale)}
+                      <td className={`${TD} text-xs`}>
+                        <Count
+                          value={f.rows}
+                          label={`${f.file} · ${t("rows")}`}
+                          source={fromImport(f.file)}
+                        />
+                      </td>
+                      <td className={`${TD} text-xs`}>
+                        <Count
+                          value={f.rejected}
+                          label={`${f.file} · ${t("rejectedCol")}`}
+                          source={fromImport(f.file)}
+                        />
                       </td>
                       <td className={TD}>
                         <span aria-hidden="true">{f.rejected > 0 ? "▲" : "●"}</span>{" "}

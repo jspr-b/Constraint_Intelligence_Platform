@@ -524,7 +524,7 @@
     "erpValue": "Read-only: the platform never writes back"
   },
   "quality": {
-    "headline": "Import {at} UTC. {gaps, plural, =0 {No gaps found.} one {# gap lowers confidence.} other {# gaps lower confidence.}}",
+    "headline": "Imported {at}. {gaps, plural, =0 {No gaps found.} one {# gap lowers confidence.} other {# gaps lower confidence.}}",
     "noImportTitle": "No data yet",
     "noImport": "The quality report appears after the first import.",
     "toImport": "Go to Import",
@@ -765,6 +765,83 @@
         "name": "Confidence",
         "text": "How sure we are of a number: high, medium or low, based on how much data backs it."
       }
+    }
+  },
+  "figure": {
+    "open": "How is {label} calculated?",
+    "title": "How this is calculated",
+    "back": "Back to Words we use",
+    "formula": "How it is worked out",
+    "inputs": "Made from",
+    "period": "Data period",
+    "periodAll": "All data in the latest import",
+    "confidence": "<confidence>Confidence</confidence>",
+    "level": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "none": "None: a value is missing"
+    },
+    "missing": "Missing",
+    "missingInput": "{what} is missing: {reason}. Confidence becomes {impact}.",
+    "openInput": "Open {label}",
+    "seeSource": "see where it comes from",
+    "calculatedBy": "Calculated by the engine from your imported data. Nothing here is typed in by hand.",
+    "formulaId": "Formula id: {id}",
+    "formulas": {
+      "data_quality_score": "Start at 100. Take off twice the share of rejected rows (at most 30 points), then 15, 7 or 2 points for each high, medium or low gap. Never below 0.",
+      "record_count": "The number of rows that were read and accepted.",
+      "event_period_weeks": "Weeks between the first and the last machine event in your data.",
+      "oee_availability": "Share of the planned production time the machine was not stopped unplanned.",
+      "oee_performance": "How fast the machine ran compared with its ideal speed, while running.",
+      "oee_quality": "Share of the units that were good (not scrapped at this machine).",
+      "oee": "Availability × performance × quality.",
+      "effective_capacity_h": "Planned production hours, minus the share lost to unplanned stops.",
+      "task_time_median": "The middle value of the measured work minutes per unit over all finished operations.",
+      "task_time_p90": "The time 90% of the finished operations stayed under, in work minutes per unit.",
+      "throughput_per_unit": "Sales price minus truly variable cost (mostly material).",
+      "throughput_per_constraint_min": "Throughput per unit divided by the minutes the bottleneck needs per unit.",
+      "constraint_hours": "A euro amount shown as hours of bottleneck time: amount ÷ throughput per bottleneck hour."
+    },
+    "units": {
+      "score": "points out of 100",
+      "rows": "rows",
+      "weeks": "weeks",
+      "h": "hours",
+      "min_per_unit": "minutes per unit",
+      "eur_cents": "euros",
+      "eur_cents_per_min": "euros per bottleneck minute",
+      "ratio": "share",
+      "pct": "%",
+      "parallel": "units side by side"
+    },
+    "countTitle": "Where this number comes from",
+    "isCount": "A count, not a calculation.",
+    "countedFrom": "Counted from: {source}.",
+    "seeIt": "See it on {page}",
+    "isGiven": "Taken from your data as it is: not a calculation.",
+    "src": {
+      "importFile": "{file} in the import of {date}",
+      "importAll": "all files in the import of {date}",
+      "upload": "{file} in this upload (before import)",
+      "filesRequired": "the 8 standard files a diagnosis needs, checked in the import of {date}",
+      "setupErp": "your ERP export (routings), or typed in on Plant setup",
+      "setupPrice": "your ERP export (products), or typed in on Plant setup",
+      "setupChangeover": "your changeover sheet, or typed in on Plant setup",
+      "setupCosts": "your capacity-cost sheet, or typed in on Plant setup",
+      "setupUnits": "your ERP export (machines): how many identical units work side by side",
+      "overtime": "your overtime sheet, or typed in on this page",
+      "accessPages": "the access settings the COO set on this page",
+      "importRead": "{file}, read in this import",
+      "importWritten": "rows from {file} that passed the checks and were stored as {target}",
+      "importRejected": "rows from {file} that failed a check; the reasons are listed next to it"
+    },
+    "pages": {
+      "import": "Import",
+      "data": "Data quality",
+      "setup": "Plant setup",
+      "calendar": "Capacity calendar",
+      "access": "Access"
     }
   }
 }

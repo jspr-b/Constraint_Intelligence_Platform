@@ -8,6 +8,7 @@ import { Button, MicroLabel, Panel } from "@cip/ui";
 import { api, ensureOk } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { GROUPS, ROLES, type Role } from "@/lib/pages";
+import { Count } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { useView } from "../ViewContext";
@@ -24,6 +25,7 @@ const BOX = "size-4 accent-[var(--accent)] disabled:cursor-not-allowed";
 /** Access page (mockup F3): pages, data and decisions per role. Only the COO changes them. */
 export function AccessPage() {
   const t = useTranslations("access");
+  const tf = useTranslations("figure");
   const tn = useTranslations("nav");
   const tr = useTranslations("roles");
   const view = useView();
@@ -149,7 +151,13 @@ export function AccessPage() {
                     <th key={role} scope="col" className={TH}>
                       {tr(role)}
                       <span className="block font-mono normal-case tracking-normal">
-                        {byRole[role].pages.length}/{m.pages.length}
+                        <Count
+                          value={byRole[role].pages.length}
+                          label={tr(role)}
+                          source={{ what: tf("src.accessPages") }}
+                        >
+                          {byRole[role].pages.length}/{m.pages.length}
+                        </Count>
                       </span>
                     </th>
                   ))}

@@ -265,6 +265,35 @@ export async function stubPages(
       ],
     }),
   );
+  await page.route("**/api/plants/PLANT-A/data-quality", (route) =>
+    route.fulfill({
+      json: {
+        plant_code: "PLANT-A",
+        import_id: "i1",
+        imported_at: "2026-10-13T07:15:00Z",
+        score: FIG(94, "score", "data_quality_score_v1"),
+        rows: FIG(11684, "rows", "record_count_v1"),
+        files: [
+          { file: "events.csv", rows: 7084, rejected: 2, reasons: { bad_time: 2 }, examples: [] },
+        ],
+        files_required: 8,
+        files_missing: [],
+        gaps: [
+          {
+            code: "no_breakdowns",
+            description: "No breakdowns recorded for PCK-01",
+            confidence_impact: "low",
+            fix: "Confirm the machine had no stops, or add the maintenance log",
+            resource_code: "PCK-01",
+            count: 1,
+          },
+        ],
+        event_period_weeks: FIG(11.7, "weeks", "event_period_weeks_v1"),
+        event_period_start_at: "2026-07-20T04:00:00Z",
+        event_period_end_at: "2026-10-09T16:00:00Z",
+      },
+    }),
+  );
   await page.route("**/api/plants/PLANT-A/setup", (route) =>
     route.fulfill({
       json: {
