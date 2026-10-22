@@ -945,6 +945,23 @@
             "title": "Expected Files",
             "type": "array"
           },
+          "failed_step": {
+            "anyOf": [
+              {
+                "enum": [
+                  "read",
+                  "load",
+                  "check",
+                  "store"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Step"
+          },
           "files": {
             "items": {
               "$ref": "#/components/schemas/FileCheckOut"

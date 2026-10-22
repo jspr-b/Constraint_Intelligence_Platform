@@ -15,6 +15,7 @@ import { EmptyState } from "./EmptyState";
 import { useOnboarding } from "./GettingStarted";
 import { PageHeader } from "./PageHeader";
 import { useView } from "./ViewContext";
+import { termTags } from "./terms";
 
 /** Pages that are built; every other page shows an honest 'not built yet'. */
 const BUILT: Partial<Record<PageKey, ComponentType>> = {
@@ -65,7 +66,7 @@ export function PageView({ page }: { page: PageKey }) {
         }
       />
       <EmptyState title={t("empty.notBuilt")}>
-        <p className="m-0 text-text">{t(`empty.pages.${page}`)}</p>
+        <p className="m-0 text-text">{t.rich(`empty.pages.${page}`, termTags)}</p>
         <p className="m-0 mt-1">{t("empty.noNumbers")}</p>
         <p className="m-0 mt-3">
           {t("empty.today")}{" "}

@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from cip_api.auth.pins import hash_pin, valid_pin
 from cip_api.auth.roles import Decision, Role
 from cip_api.auth.sessions import audit, end_sessions
+from cip_api.errors import ApiProblem
 from cip_api.tenancy import Ctx, require
 
 router = APIRouter(tags=["users"])
@@ -125,7 +126,7 @@ def invite(body: InviteIn, ctx: Manage) -> UserOut:
                 },
             ).one()
     except IntegrityError as exc:
-        raise HTTPException(status.HTTP_409_CONFLICT, "an account with this email exists") from exc
+        raise ApiProblem("account_exists") from exc
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -139,7 +140,7 @@ def invite(body: InviteIn, ctx: Manage) -> UserOut:
 
 def _set_user_status(ctx: Ctx, user_id: uuid.UUID, new: str) -> UserOut:
     if new == "disabled" and ctx.principal.subject_id == str(user_id):
-        raise HTTPException(status.HTTP_409_CONFLICT, "you cannot disable your own account")
+        raise ApiProblem("cannot_disable_self")
     row = ctx.db.execute(
         text(
             "UPDATE users SET status = :s WHERE user_id = :u "
@@ -148,7 +149,7 @@ def _set_user_status(ctx: Ctx, user_id: uuid.UUID, new: str) -> UserOut:
         {"s": new, "u": user_id},
     ).first()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "user not found")
+        raise ApiProblem("user_not_found")
     if new == "disabled":
         end_sessions(ctx.db, "user", str(user_id))
     audit(
@@ -176,7 +177,7 @@ def _check_plant(ctx: Ctx, plant_code: str) -> None:
         text("SELECT 1 FROM plants WHERE plant_code = :p"), {"p": plant_code}
     ).first()
     if found is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "unknown plant")
+        raise ApiProblem("unknown_plant")
 
 
 @router.post("/station-logins", response_model=StationLoginOut, status_code=201)
@@ -186,7 +187,7 @@ def add_station_login(body: StationLoginIn, ctx: Manage) -> StationLoginOut:
         {"p": body.plant_code, "r": body.resource_code},
     ).first()
     if machine is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "unknown machine for this plant")
+        raise ApiProblem("unknown_machine")
     try:
         with ctx.db.begin_nested():
             row = ctx.db.execute(
@@ -203,7 +204,7 @@ def add_station_login(body: StationLoginIn, ctx: Manage) -> StationLoginOut:
                 },
             ).one()
     except IntegrityError as exc:
-        raise HTTPException(status.HTTP_409_CONFLICT, "this machine has a station login") from exc
+        raise ApiProblem("station_login_exists") from exc
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -226,7 +227,7 @@ def _update_station(
         {"id": login_id, **params},
     ).first()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "station login not found")
+        raise ApiProblem("station_login_not_found")
     if action == "station_login_disabled":
         end_sessions(ctx.db, "station", str(login_id))
     audit(ctx.db, ctx.principal.tenant_id, ctx.principal.actor, action, f"station:{login_id}")

@@ -8,12 +8,13 @@ from datetime import date, datetime, time, timedelta
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import text
 
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
+from cip_api.errors import ApiProblem
 from cip_api.tenancy import Ctx, require
 
 router = APIRouter(tags=["capacity calendar"])
@@ -106,7 +107,7 @@ def _plant(ctx: Ctx, plant_code: str) -> str:
         text("SELECT timezone_iana FROM plants WHERE plant_code = :p"), {"p": plant_code}
     ).scalar_one_or_none()
     if tz is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "plant not found")
+        raise ApiProblem("plant_not_found")
     return str(tz)
 
 
@@ -205,7 +206,7 @@ def _machine(ctx: Ctx, plant_code: str, resource_code: str) -> None:
         {"p": plant_code, "r": resource_code},
     ).first()
     if found is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "unknown machine")
+        raise ApiProblem("unknown_machine")
 
 
 def _log(ctx: Ctx, action: str, target: str, detail: str = "") -> None:
@@ -253,7 +254,7 @@ def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> 
         {"c": body.covered, "i": window_id, "p": plant_code},
     ).first()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "break not found")
+        raise ApiProblem("break_not_found")
     _log(
         ctx,
         "break_covered" if body.covered else "break_uncovered",
@@ -274,7 +275,7 @@ def delete_window(plant_code: str, window_id: int, ctx: Edit) -> None:
         {"i": window_id, "p": plant_code},
     ).first()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "window not found")
+        raise ApiProblem("window_not_found")
     _log(
         ctx,
         "calendar_window_deleted",

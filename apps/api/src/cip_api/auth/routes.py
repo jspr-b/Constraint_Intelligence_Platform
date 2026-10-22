@@ -24,6 +24,7 @@ from cip_api.auth.sessions import (
     tenant_conn,
     token_hash,
 )
+from cip_api.errors import ApiProblem
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import current_principal, tenant_db
 
@@ -105,7 +106,7 @@ def _sign_in_user(settings: Settings, tenant: uuid.UUID, email: str, response: R
             {"e": email.lower()},
         ).first()
         if user is None or user.status == "disabled":
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no active account for this email")
+            raise ApiProblem("no_active_account")
         if user.status == "invited":
             conn.execute(
                 text("UPDATE users SET status = 'active' WHERE user_id = :u"), {"u": user.user_id}
@@ -130,7 +131,7 @@ def oidc_login(body: OidcLoginIn, settings: SettingsDep, response: Response) -> 
     try:
         email = verify_id_token(settings, body.id_token)
     except OidcError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
+        raise ApiProblem("company_sign_in_failed") from exc
     _sign_in_user(settings, body.tenant_id, email, response)
 
 
@@ -146,10 +147,10 @@ def station_login(body: StationLoginIn, settings: SettingsDep, response: Respons
             {"p": body.plant_code, "r": body.resource_code},
         ).first()
         if login is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "station or PIN not recognised")
+            raise ApiProblem("station_not_recognised")
         target = f"station:{login.station_login_id}"
         if login.status != "active":
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "station login is off; ask IT")
+            raise ApiProblem("station_login_off")
         if verify_pin(body.pin, login.pin_hash):
             conn.execute(
                 text("UPDATE station_logins SET failed_attempts = 0 WHERE station_login_id = :s"),
@@ -180,7 +181,7 @@ def station_login(body: StationLoginIn, settings: SettingsDep, response: Respons
             audit(
                 conn, body.tenant_id, target, "station_login_locked", target, f"{failed} wrong PINs"
             )
-    raise HTTPException(status.HTTP_401_UNAUTHORIZED, "station or PIN not recognised")
+    raise ApiProblem("station_not_recognised")
 
 
 @router.post("/logout", status_code=204)

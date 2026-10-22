@@ -1,10 +1,10 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, ensureOk, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
@@ -81,13 +81,18 @@ export function CalendarPage() {
   const label = (w: Window) =>
     w.kind === "break" && w.covered ? t("kind.covered") : t(`kind.${w.kind as Kind}`);
 
-  const toggle = async (w: Window) => {
+  const change = useMutation({
+    mutationFn: (call: () => Promise<{ response: Response; error?: unknown }>) => ensureOk(call()),
+    onSettled: () => void refresh(),
+  });
+  const toggle = (w: Window) => {
     if (!plant) return;
-    await api.PATCH("/plants/{plant_code}/calendar/windows/{window_id}", {
-      params: { path: { plant_code: plant, window_id: w.id } },
-      body: { covered: !w.covered },
-    });
-    void refresh();
+    change.mutate(() =>
+      api.PATCH("/plants/{plant_code}/calendar/windows/{window_id}", {
+        params: { path: { plant_code: plant, window_id: w.id } },
+        body: { covered: !w.covered },
+      }),
+    );
   };
 
   return (
@@ -127,17 +132,21 @@ export function CalendarPage() {
                 error={error}
                 onSubmit={async (form) => {
                   const date = String(form.get("date") ?? shown);
-                  const { response } = await api.POST("/plants/{plant_code}/calendar/windows", {
-                    params: { path: { plant_code: c.plant_code } },
-                    body: {
-                      resource_code: String(form.get("machine") ?? ""),
-                      kind: String(form.get("kind")) as Kind,
-                      start_at: `${date}T${String(form.get("from"))}:00`,
-                      end_at: `${String(form.get("toDate") || date)}T${String(form.get("to"))}:00`,
-                      covered: false,
+                  const { response, error } = await api.POST(
+                    "/plants/{plant_code}/calendar/windows",
+                    {
+                      params: { path: { plant_code: c.plant_code } },
+                      body: {
+                        resource_code: String(form.get("machine") ?? ""),
+                        kind: String(form.get("kind")) as Kind,
+                        start_at: `${date}T${String(form.get("from"))}:00`,
+                        end_at: `${String(form.get("toDate") || date)}T${String(form.get("to"))}:00`,
+                        covered: false,
+                      },
                     },
-                  });
-                  if (!response.ok) return (setError(t("errorInput")), false);
+                  );
+                  if (!response.ok)
+                    return (setError(problemOf(error, response.status).message), false);
                   setError(null);
                   await refresh();
                   return true;
@@ -355,15 +364,13 @@ export function CalendarPage() {
                             aria-label={t("deleteWindow", {
                               what: `${label(e)} ${e.resource_code} ${when(e.start_at)}`,
                             })}
-                            onPress={async () => {
-                              await api.DELETE(
-                                "/plants/{plant_code}/calendar/windows/{window_id}",
-                                {
+                            onPress={() =>
+                              change.mutate(() =>
+                                api.DELETE("/plants/{plant_code}/calendar/windows/{window_id}", {
                                   params: { path: { plant_code: c.plant_code, window_id: e.id } },
-                                },
-                              );
-                              void refresh();
-                            }}
+                                }),
+                              )
+                            }
                           >
                             {t("delete")}
                           </Button>
@@ -385,7 +392,7 @@ export function CalendarPage() {
                   cancelLabel={t("cancel")}
                   error={error}
                   onSubmit={async (form) => {
-                    const { response } = await api.PUT("/plants/{plant_code}/overtime", {
+                    const { response, error } = await api.PUT("/plants/{plant_code}/overtime", {
                       params: { path: { plant_code: c.plant_code } },
                       body: {
                         resource_code: String(form.get("machine") ?? ""),
@@ -394,7 +401,8 @@ export function CalendarPage() {
                         overtime_h: Number(String(form.get("hours") ?? "").replace(",", ".")),
                       },
                     });
-                    if (!response.ok) return (setError(t("errorInput")), false);
+                    if (!response.ok)
+                      return (setError(problemOf(error, response.status).message), false);
                     setError(null);
                     await refresh();
                     return true;

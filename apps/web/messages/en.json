@@ -49,13 +49,12 @@
     "theme": "Theme",
     "white": "White",
     "dark": "Dark",
-    "apiOk": "API OK",
-    "apiDown": "API unreachable",
-    "apiChecking": "API …"
+    "apiOk": "Connected",
+    "apiDown": "Not connected",
+    "apiChecking": "Connecting…"
   },
   "drawer": {
     "label": "Details",
-    "empty": "Select an item to see its details.",
     "open": "Show details",
     "close": "Hide details"
   },
@@ -69,23 +68,23 @@
     },
     "pages": {
       "run": "Where your diagnosis stands, from your data to the answer, step by step.",
-      "main": "The answer in one place: which machine limits your output, what it costs and how sure we are.",
-      "loss": "The hours and euros your bottleneck loses each week and month, and why.",
-      "machines": "How busy each machine really is: running, setup, down, waiting.",
-      "actions": "What to do about your bottleneck, with the euros it could gain and what it costs.",
-      "report": "A report for the plant director: the bottleneck, its cost, the evidence.",
-      "planner": "Which orders to release today, in which order, to keep the bottleneck busy.",
-      "buffer": "The orders waiting in front of your bottleneck, marked green, yellow or red.",
-      "plan": "Which machine will limit your output in the coming weeks.",
-      "flow": "Your plant from input to output, with the bottleneck highlighted.",
-      "shift": "One clear signal per shift: is the bottleneck running, waiting or down.",
+      "main": "The answer in one place: which machine is your <bottleneck>bottleneck</bottleneck>, what it costs and how sure we are (<confidence>confidence</confidence>).",
+      "loss": "The hours and euros your <bottleneck>bottleneck</bottleneck> loses each week and month, and why.",
+      "machines": "How busy each machine really is: running, <setup>setup</setup>, down, <starved>starved</starved> or <blocked>blocked</blocked>.",
+      "actions": "What to do about your <bottleneck>bottleneck</bottleneck>, with the euros it could gain and what it costs.",
+      "report": "A report for the plant director: the <bottleneck>bottleneck</bottleneck>, its cost, the evidence.",
+      "planner": "Which orders to release today, in which order, to keep the <bottleneck>bottleneck</bottleneck> busy.",
+      "buffer": "The orders waiting in front of your <bottleneck>bottleneck</bottleneck> (the <buffer>buffer</buffer>), marked green, yellow or red.",
+      "plan": "Which machine will be your <bottleneck>bottleneck</bottleneck> in the coming weeks.",
+      "flow": "Your plant from input to output, with the <bottleneck>bottleneck</bottleneck> highlighted.",
+      "shift": "One clear signal per shift: is the <bottleneck>bottleneck</bottleneck> running, waiting or down.",
       "station": "The screen at a machine: tap start, done and stop.",
-      "value": "The gain we predicted against the gain you measured, for finance to sign off."
+      "value": "The gain in <throughput>throughput</throughput> we predicted against the gain you measured, for finance to sign off."
     }
   },
   "shell": {
     "loading": "Loading…",
-    "apiUnreachable": "Cannot reach the platform API. Check that it is running.",
+    "apiUnreachable": "We can't reach the server right now. Try again in a moment; if it lasts, contact your IT / ERP owner.",
     "signInRequired": "Sign in to continue.",
     "notAllowed": "Your role may not open this page. The COO decides access.",
     "stationOnly": "This screen belongs to a machine."
@@ -107,7 +106,7 @@
     "open": "Open station screen",
     "stationNote": "The station signs in, not a person. No personal data is stored.",
     "foot": "EU data residency · encrypted · read-only towards your ERP",
-    "noTenant": "This site has no plant configured. Ask IT to set CIP_TENANT_ID.",
+    "noTenant": "This site is not set up for a company yet. Ask your IT / ERP owner.",
     "failed": "Sign-in failed. Check the details and try again.",
     "locked": "This station login is off or locked. Ask IT.",
     "ssoFailed": "Company sign-in failed. Try again or ask IT.",
@@ -158,12 +157,10 @@
       "disabled": "Disabled",
       "locked": "Locked"
     },
-    "errorExists": "This account or station login already exists.",
-    "errorInput": "Check the details and try again.",
     "sso": "Single sign-on",
-    "ssoOn": "Keycloak · configured (company account, e.g. Microsoft)",
+    "ssoOn": "Company sign-in · on (for example Microsoft)",
     "ssoOnNote": "People sign in with their company account. Station logins always use a station PIN.",
-    "ssoOff": "Keycloak · not configured",
+    "ssoOff": "Company sign-in · not set up",
     "ssoOffNote": "During the pilot, personal accounts use email sign-in. Station logins always use a station PIN.",
     "neverStored": "What is never stored",
     "neverStoredBody": "Who stood at which station, or how fast a person worked.",
@@ -243,23 +240,21 @@
     "uploadLabel": "Upload",
     "chooseFiles": "CSV or Excel exports",
     "upload": "Upload files",
-    "uploadNote": "Upload all files of one export together. Files stay in your tenant; employee columns are never read.",
-    "tooLarge": "A file is too large.",
-    "uploadFailed": "Upload failed. Use .csv or .xlsx files with plain names.",
+    "uploadNote": "Upload all files of one export together. Files stay in your company's private space; employee columns are never read.",
     "filesLabel": "Files · standard layout",
     "noImport": "No import for this plant yet.",
     "colFile": "File",
     "colStatus": "Status",
     "run": "Run import",
     "runAgain": "Run import again",
-    "failed": "Import failed ({reason}). The data from before stays as it was.",
+    "failed": "The import stopped. The data from before stays as it was.",
     "status": {
       "uploaded": "UPLOADED",
       "running": "RUNNING",
       "done": "DONE",
       "failed": "FAILED"
     },
-    "mappingName": "Mapping {name}",
+    "mappingName": "Export format: {name}",
     "colColumn": "Column in your file",
     "colExample": "Example",
     "colMapsTo": "Maps to",
@@ -267,7 +262,7 @@
     "notImported": "Not imported",
     "unused": "Not used",
     "personalNote": "Personal data: dropped on import, never stored",
-    "missingColumns": "Columns the mapping needs but the file lacks: {columns}",
+    "missingColumns": "Columns we need but your file does not have: {columns}",
     "checkAfterRun": "The data checklist appears after the import has run.",
     "minimumLabel": "Minimum to start a diagnostic · 5 exports + 1 sheet",
     "minimum": {
@@ -349,7 +344,15 @@
       "capaciteitskosten": "Capacity costs",
       "omsteltijden": "Changeover times",
       "uitbesteding": "Outsourcing prices"
-    }
+    },
+    "failedStep": {
+      "read": "We could not read your files. Check that each export is the full file, saved as CSV or Excel, and upload it again.",
+      "load": "Your files were read, but some values do not fit (for example a date or number in an unusual format). Check the files marked on step 1, fix them in the export and upload again.",
+      "check": "Your data was loaded, but the data checks stopped. Run the import again; if it stops again, contact support with the details below.",
+      "store": "Saving your data failed. Nothing was changed. Run the import again."
+    },
+    "failedUnknown": "Run the import again. If it stops again, contact support with the details below.",
+    "uploadFailedUnknown": "Upload failed. Check your connection and try again."
   },
   "setup": {
     "label": "Plant setup",
@@ -358,11 +361,9 @@
     "addPlant": "Add plant",
     "save": "Save",
     "cancel": "Cancel",
-    "plantCode": "Plant code",
+    "plantCode": "Short plant code (for example PLANT-A)",
     "plantName": "Name",
-    "timezone": "Time zone (IANA)",
-    "errorConflict": "This already exists or is still in use.",
-    "errorInput": "Check the details and try again.",
+    "timezone": "Time zone (for example Europe/Amsterdam)",
     "tabStations": "Stations and machines",
     "tabOperations": "Operations",
     "tabProducts": "Products",
@@ -398,7 +399,7 @@
     "price": "Sales price /unit",
     "variableCost": "Truly variable cost",
     "throughput": "Throughput /unit",
-    "throughputNote": "Throughput = sales price − truly variable cost (formula throughput_per_unit_v1), not cost-accounting margin. Calculated by the engine, never typed in.",
+    "throughputNote": "<throughput>Throughput</throughput> = sales price − truly variable cost: the money each unit really brings in. It is not the cost-accounting margin. Calculated by the engine, never typed in.",
     "addChangeover": "Add changeover",
     "fromFamily": "From setup family",
     "toFamily": "To setup family",
@@ -420,7 +421,6 @@
     "addWindow": "Add to calendar",
     "save": "Save",
     "cancel": "Cancel",
-    "errorInput": "Check the details and try again.",
     "machine": "Machine",
     "kindLabel": "Kind",
     "date": "Date",
@@ -504,7 +504,7 @@
     "later": "Not connected (later)",
     "accessLabel": "Access",
     "sso": "Single sign-on",
-    "ssoOn": "Keycloak · configured",
+    "ssoOn": "Company sign-in · on",
     "ssoOff": "Not configured · pilot uses email sign-in",
     "personalLogins": "Personal logins",
     "stationLogins": "Station logins",
@@ -516,8 +516,8 @@
     "byDeployment": "Set by the deployment; not verified in this environment",
     "encryption": "Encryption",
     "encryptionOn": "At rest and in transit",
-    "isolation": "Tenant isolation",
-    "isolationValue": "Own tenant, row-level security on every table",
+    "isolation": "Your data kept apart",
+    "isolationValue": "Separate from every other company, enforced on every table",
     "floorData": "Personal data on the floor",
     "floorDataValue": "None: tasks and stations only; employee columns dropped on import",
     "erp": "Your ERP",
@@ -552,7 +552,7 @@
     "noGaps": "No gaps found.",
     "gap": "Gap",
     "machine": "Machine",
-    "impact": "Confidence impact",
+    "impact": "<confidence>Confidence</confidence> impact",
     "fix": "Fix",
     "allMachines": "All",
     "impactLevel": {
@@ -633,5 +633,138 @@
     "banner": "You are previewing what {role} sees.",
     "note": "Changes are switched off in a preview.",
     "back": "Back to my own view ({role})"
+  },
+  "problems": {
+    "apiDownTitle": "We can't reach the server right now.",
+    "apiDownBody": "Your data is safe. We try again every 10 seconds. If this lasts more than a few minutes, contact your IT / ERP owner.",
+    "tryNow": "Try now",
+    "partTitle": "Part of this page could not load.",
+    "partBody": "Try again. If it keeps failing, contact your IT / ERP owner and give them the details below.",
+    "tryAgain": "Try again",
+    "details": "Technical details",
+    "pageTitle": "This page ran into a problem.",
+    "pageBody": "Nothing was lost. Try again, or open another page from the menu. If it keeps happening, contact your IT / ERP owner and give them the details below.",
+    "home": "Go to my start page",
+    "reference": "Reference: {digest}",
+    "writeTitle": "Your change was not saved.",
+    "writeBody": "Nothing changed on the server. Check the change and try again. If it keeps failing, contact your IT / ERP owner and give them the details below.",
+    "dismiss": "Close",
+    "next": {
+      "sign_in_required": "Sign in",
+      "session_expired": "Sign in again",
+      "no_active_account": "Back to sign-in",
+      "plant_not_found": "Open Plant setup",
+      "unknown_plant": "Open Plant setup",
+      "unknown_machine": "Open Import",
+      "machine_has_station_login": "Open Users",
+      "import_running": "Open Import"
+    }
+  },
+  "model": {
+    "tables": {
+      "calendar": "Calendar",
+      "capacity_costs": "Capacity costs",
+      "changeovers": "Changeovers",
+      "events": "Machine events",
+      "orders": "Orders",
+      "outsourcing": "Outsourcing",
+      "overtime": "Overtime",
+      "products": "Products",
+      "resources": "Machines",
+      "routings": "Routings",
+      "stations": "Stations"
+    },
+    "fields": {
+      "alternative_resource_codes": "other machines that can do it",
+      "at": "time",
+      "changeover_min": "changeover time (min)",
+      "covered": "covered break",
+      "down_reason_code": "stop reason",
+      "due_at": "due date",
+      "end_at": "end",
+      "event_id": "event number",
+      "event_type": "event type",
+      "extra_shift_eur_cents": "extra shift cost (€)",
+      "family": "product group",
+      "from_setup_family": "from colour/setup group",
+      "iso_week": "week",
+      "iso_year": "year",
+      "kind": "kind",
+      "material_ready_at": "material ready",
+      "name": "name",
+      "operation": "operation",
+      "operation_seq": "step number",
+      "order_id": "order number",
+      "overtime_eur_cents_per_h": "overtime cost (€ per hour)",
+      "overtime_h": "overtime (hours)",
+      "parallel_units": "units side by side",
+      "price_eur_cents_per_unit": "price per unit (€)",
+      "quantity_units": "quantity",
+      "released_at": "released",
+      "resource_code": "machine code",
+      "sales_price_eur_cents": "sales price (€)",
+      "scrap_reason_code": "scrap reason",
+      "scrap_units": "scrap (units)",
+      "setup_family": "colour/setup group",
+      "shipped_at": "shipped",
+      "sku": "article number",
+      "standard_run_min_per_unit": "ERP run time per unit (min)",
+      "standard_setup_min": "ERP setup time (min)",
+      "start_at": "start",
+      "station_code": "station code",
+      "status": "status",
+      "to_setup_family": "to colour/setup group",
+      "truly_variable_cost_eur_cents": "truly variable cost (€)"
+    },
+    "conversions": {
+      "code_table": "your codes translated",
+      "eur_cents": "euros",
+      "datetime": "date and time",
+      "decimal": "number",
+      "int": "whole number",
+      "bool": "yes / no",
+      "list": "list"
+    }
+  },
+  "glossary": {
+    "title": "Words we use",
+    "terms": {
+      "bottleneck": {
+        "name": "Bottleneck",
+        "text": "The one machine or step that limits how much the whole plant can ship. Also called the constraint."
+      },
+      "throughput": {
+        "name": "Throughput",
+        "text": "Money a product really brings in: sales price minus truly variable cost (mostly material)."
+      },
+      "capacity": {
+        "name": "Effective capacity",
+        "text": "Hours a machine can really produce, after breaks, stops and setups are taken off."
+      },
+      "oee": {
+        "name": "OEE",
+        "text": "How much of the planned time a machine made good parts at full speed, in %. Lost to stops, slow running and scrap."
+      },
+      "setup": {
+        "name": "Setup",
+        "text": "Time to switch a machine from one product or colour to the next. Nothing is made meanwhile."
+      },
+      "starved": {
+        "name": "Starved",
+        "text": "The machine is ready but has no work: the step before it did not deliver."
+      },
+      "blocked": {
+        "name": "Blocked",
+        "text": "The machine has finished work but cannot pass it on: the step after it is full."
+      },
+      "buffer": {
+        "name": "Buffer",
+        "text": "Work waiting in front of the bottleneck, so it never runs out of work."
+      },
+      "confidence": {
+        "name": "Confidence",
+        "text": "How sure we are of a number: high, medium or low, based on how much data backs it."
+      }
+    }
   }
 }

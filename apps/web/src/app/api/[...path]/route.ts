@@ -37,7 +37,8 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
     }
     return new Response(upstream.body, { status: upstream.status, headers: out });
   } catch {
-    return Response.json({ detail: "API unreachable" }, { status: 502 });
+    const message = "We can't reach the server right now. Your data is safe; try again shortly.";
+    return Response.json({ code: "api_unreachable", message, detail: message }, { status: 502 });
   }
 }
 

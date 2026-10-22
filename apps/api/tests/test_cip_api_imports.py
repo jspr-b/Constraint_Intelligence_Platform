@@ -113,6 +113,8 @@ def test_a_broken_file_fails_the_import_with_a_reason(
     it.post(f"/imports/{body['import_id']}/run")
     done = it.get(f"/imports/{body['import_id']}").json()
     assert done["status"] == "failed" and done["error"]
+    assert done["failed_step"] == "read"
+    assert done["error"].startswith("read:")
 
 
 def test_outside_tests_the_run_is_queued_for_a_worker(

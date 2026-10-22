@@ -26,7 +26,7 @@ def test_missing_header_is_401() -> None:
 def test_header_is_refused_outside_dev() -> None:
     response = client_for("production").get("/plants/P/summary", headers={"X-Tenant-Id": str(A)})
     assert response.status_code == 401
-    assert response.json()["detail"] == "sign-in required"
+    assert response.json()["code"] == "sign_in_required"
 
 
 @pytest.fixture

@@ -14,6 +14,7 @@ import constraint_engine.formulas
 import constraint_engine.quality.report
 import constraint_engine.reconstruct.capacity
 import constraint_engine.reconstruct.durations  # noqa: F401  (registers task-time formulas)
+from cip_api import errors
 from cip_api.logging import configure_logging
 from cip_api.settings import Settings, get_settings
 from constraint_engine.formulas.registry import registry
@@ -42,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging()
     app = FastAPI(title="Constraint Intelligence API", version=settings.version)
+    errors.install(app)
 
     @app.middleware("http")
     async def access_log(

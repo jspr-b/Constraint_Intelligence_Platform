@@ -5,13 +5,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { FigureValue, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
+import { termTags } from "../terms";
 
 type Setup = components["schemas"]["SetupOut"];
 
@@ -58,10 +59,12 @@ export function SetupPage() {
       : new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(value / 100);
 
   /** Run a save; on success show the server's setup, otherwise a translated error. */
-  const save = async (call: () => Promise<{ data?: Setup; response: Response }>) => {
-    const { data, response } = await call();
+  const save = async (
+    call: () => Promise<{ data?: Setup; response: Response; error?: unknown }>,
+  ) => {
+    const { data, response, error: problem } = await call();
     if (!response.ok || !data) {
-      setError(response.status === 409 ? t("errorConflict") : t("errorInput"));
+      setError(problemOf(problem, response.status).message);
       return false;
     }
     setError(null);
@@ -412,7 +415,7 @@ export function SetupPage() {
                   </tbody>
                 </table>
               )}
-              <p className="m-0 mt-2 text-xs text-muted">{t("throughputNote")}</p>
+              <p className="m-0 mt-2 text-xs text-muted">{t.rich("throughputNote", termTags)}</p>
             </Panel>
           </TabPanel>
           <TabPanel id="families" className="flex flex-col gap-3 pt-4 outline-none">

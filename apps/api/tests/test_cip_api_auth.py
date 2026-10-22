@@ -52,9 +52,7 @@ def test_sign_out_ends_the_session(sign_in: SignIn) -> None:
     replay = make_client()
     replay.cookies.set(COOKIE, token)
     response = replay.get("/auth/me")
-    assert (
-        response.status_code == 401 and response.json()["detail"] == "session expired or signed out"
-    )
+    assert response.status_code == 401 and response.json()["code"] == "session_expired"
 
 
 def test_expired_session_is_refused(world: World, sign_in: SignIn) -> None:
@@ -131,7 +129,7 @@ def test_dev_login_and_header_do_not_exist_outside_dev(world: World) -> None:
     body = {"tenant_id": str(world.a), "email": world.email("coo")}
     assert client.post("/auth/dev-login", json=body).status_code == 404
     response = client.get("/auth/me", headers={"X-Tenant-Id": str(world.a)})
-    assert response.status_code == 401 and response.json()["detail"] == "sign-in required"
+    assert response.status_code == 401 and response.json()["code"] == "sign_in_required"
 
 
 def test_station_session_is_bound_to_the_machine(world: World, sign_in: SignIn) -> None:

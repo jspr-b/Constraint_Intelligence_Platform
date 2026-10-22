@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import en from "../../messages/en.json";
+import { TERMS } from "../lib/glossary";
 import { GROUPS, PAGE_KEYS, ROLES } from "../lib/pages";
 
 function keys(value: unknown, prefix = ""): string[] {
@@ -42,6 +43,41 @@ describe("messages", () => {
         ...readFileSync(file, "utf8").matchAll(/(?<![=-])>\s*([A-Za-z][A-Za-z ,.'!?-]{2,})\s*</g),
       ].map((m) => `${file.replace(root, "src")}: ${m[1]}`),
     );
+    expect(offenders).toEqual([]);
+  });
+
+  it("every glossary term has a name and a one-line explanation", () => {
+    for (const term of TERMS) {
+      expect(en.glossary.terms[term].name, term).toBeTruthy();
+      expect(en.glossary.terms[term].text.split(". ").length, term).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("tags in messages only name glossary terms", () => {
+    const known = new Set<string>(TERMS);
+    const unknown = keys(en).flatMap((key) => {
+      const value = String(
+        key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], en),
+      );
+      return [...value.matchAll(/<([a-z]+)>/g)]
+        .map((m) => m[1] ?? "")
+        .filter((tag) => !known.has(tag))
+        .map((tag) => `${key}: <${tag}>`);
+    });
+    expect(unknown).toEqual([]);
+  });
+
+  it("client text has no developer words", () => {
+    const dev = /(_v\d\b|\bAPI\b|IANA|Keycloak|tenant|formula|code_table|UUID|JSON)/i;
+    const offenders = keys(en)
+      .filter((key) => !key.startsWith("problems.next"))
+      .filter((key) =>
+        dev.test(
+          String(
+            key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], en),
+          ).replace(/\{[a-z]+\}/gi, ""), // placeholders are not shown
+        ),
+      );
     expect(offenders).toEqual([]);
   });
 });

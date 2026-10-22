@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, ensureOk, problemOf } from "@/lib/api/client";
 import { ROLES } from "@/lib/pages";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { PageHeader } from "../PageHeader";
@@ -56,19 +56,19 @@ export function UsersPage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [stationError, setStationError] = useState<string | null>(null);
   const refresh = () => queries.invalidateQueries({ queryKey: ["users"] });
-  const errorFor = (status: number) => (status === 409 ? t("errorExists") : t("errorInput"));
 
   const toggle = useMutation({
     mutationFn: async (target: { kind: "user" | "station"; id: string; enable: boolean }) => {
       const user = { params: { path: { user_id: target.id } } };
       const station = { params: { path: { login_id: target.id } } };
-      if (target.kind === "user" && target.enable) await api.POST("/users/{user_id}/enable", user);
+      if (target.kind === "user" && target.enable)
+        await ensureOk(api.POST("/users/{user_id}/enable", user));
       if (target.kind === "user" && !target.enable)
-        await api.POST("/users/{user_id}/disable", user);
+        await ensureOk(api.POST("/users/{user_id}/disable", user));
       if (target.kind === "station" && target.enable)
-        await api.POST("/station-logins/{login_id}/enable", station);
+        await ensureOk(api.POST("/station-logins/{login_id}/enable", station));
       if (target.kind === "station" && !target.enable)
-        await api.POST("/station-logins/{login_id}/disable", station);
+        await ensureOk(api.POST("/station-logins/{login_id}/disable", station));
     },
     onSuccess: refresh,
   });
@@ -109,14 +109,15 @@ export function UsersPage() {
                 error={inviteError}
                 onSubmit={async (form) => {
                   const plantCode = String(form.get("plant") ?? "");
-                  const { response } = await api.POST("/users", {
+                  const { response, error } = await api.POST("/users", {
                     body: {
                       email: String(form.get("email") ?? ""),
                       role: String(form.get("role")) as (typeof ROLES)[number],
                       plant_code: plantCode || null,
                     },
                   });
-                  if (!response.ok) return (setInviteError(errorFor(response.status)), false);
+                  if (!response.ok)
+                    return (setInviteError(problemOf(error, response.status).message), false);
                   setInviteError(null);
                   await refresh();
                   return true;
@@ -160,10 +161,11 @@ export function UsersPage() {
                   const [plant_code = "", resource_code = ""] = String(
                     form.get("machine") ?? "",
                   ).split("/");
-                  const { response } = await api.POST("/station-logins", {
+                  const { response, error } = await api.POST("/station-logins", {
                     body: { plant_code, resource_code, pin: String(form.get("pin") ?? "") },
                   });
-                  if (!response.ok) return (setStationError(errorFor(response.status)), false);
+                  if (!response.ok)
+                    return (setStationError(problemOf(error, response.status).message), false);
                   setStationError(null);
                   await refresh();
                   return true;

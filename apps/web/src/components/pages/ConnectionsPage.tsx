@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, ensureOk } from "@/lib/api/client";
 import { ROLES } from "@/lib/pages";
 import { PageHeader } from "../PageHeader";
 import { ReadOnlyNote } from "../ReadOnlyNote";
@@ -65,8 +65,8 @@ export function ConnectionsPage() {
   });
   const run = useMutation({
     mutationFn: async (id: string) =>
-      api.POST("/imports/{import_id}/run", { params: { path: { import_id: id } } }),
-    onSuccess: () => void queries.invalidateQueries({ queryKey: ["imports", plant] }),
+      ensureOk(api.POST("/imports/{import_id}/run", { params: { path: { import_id: id } } })),
+    onSettled: () => void queries.invalidateQueries({ queryKey: ["imports", plant] }),
   });
 
   const latest = imports.data?.[0];

@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { EmptyState } from "../EmptyState";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
+import { termTags } from "../terms";
 
 const TH =
   "px-3 py-2 text-left text-micro font-medium uppercase tracking-[var(--tracking-micro)] text-muted";
@@ -182,7 +183,7 @@ export function DataQualityPage() {
                       {t("machine")}
                     </th>
                     <th scope="col" className={TH}>
-                      {t("impact")}
+                      {t.rich("impact", termTags)}
                     </th>
                     <th scope="col" className={TH}>
                       {t("fix")}

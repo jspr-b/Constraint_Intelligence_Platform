@@ -22,6 +22,11 @@ export function useMe(): SessionState {
       return { data, status: response.status };
     },
     retry: false,
+    // While the server cannot be reached, keep checking so the page recovers by itself.
+    refetchInterval: (q) =>
+      q.state.status === "error" || (q.state.data?.status !== 401 && !q.state.data?.data)
+        ? 10_000
+        : false,
   });
   if (query.isPending) return { status: "loading" };
   if (query.isError || !query.data) return { status: "unreachable" };
@@ -45,7 +50,8 @@ export function useApiHealth(): "checking" | "ok" | "down" {
   const query = useQuery({
     queryKey: ["health"],
     queryFn: async () => (await api.GET("/health")).response.ok,
-    refetchInterval: 30_000,
+    // Check often while down, so the banner clears soon after the API is back.
+    refetchInterval: (q) => (q.state.data ? 30_000 : 10_000),
     retry: false,
   });
   if (query.isPending) return "checking";

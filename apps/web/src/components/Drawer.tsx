@@ -4,6 +4,7 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MicroLabel } from "@cip/ui";
+import { Glossary } from "./Term";
 
 /** Right detail drawer. Pages put item details here; until then it shows an empty state. */
 export function Drawer() {
@@ -27,7 +28,11 @@ export function Drawer() {
           <Icon aria-hidden="true" size={16} strokeWidth={1.5} />
         </button>
       </div>
-      {open && <p className="m-0 p-3 text-sm text-muted">{t("empty")}</p>}
+      {open && (
+        <div className="overflow-y-auto">
+          <Glossary />
+        </div>
+      )}
     </aside>
   );
 }

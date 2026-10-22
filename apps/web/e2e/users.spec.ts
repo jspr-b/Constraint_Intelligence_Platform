@@ -81,7 +81,7 @@ test("IT sees accounts and station logins, and invites a person", async ({ page 
     page.getByRole("cell", { name: "planner@plant-a.example.test", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("cell", { name: "PLANT-A / PNT-01", exact: true })).toBeVisible();
-  await expect(page.getByText("Keycloak · not configured")).toBeVisible();
+  await expect(page.getByText("Company sign-in · not set up")).toBeVisible();
   await expect(
     page.getByText("Who stood at which station, or how fast a person worked."),
   ).toBeVisible();

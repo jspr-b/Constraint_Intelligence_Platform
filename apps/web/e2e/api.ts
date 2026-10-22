@@ -108,7 +108,10 @@ const FIG = (value: number, unit: string, formula_id: string) => ({
 });
 
 /** Synthetic page data for the built foundation pages (accessibility checks see full tables). */
-export async function stubPages(page: Page): Promise<void> {
+export async function stubPages(
+  page: Page,
+  overrides: { latestImport?: Record<string, unknown> } = {},
+): Promise<void> {
   const plant = {
     plant_code: "PLANT-A",
     name: "Plant A (synthetic)",
@@ -256,6 +259,8 @@ export async function stubPages(page: Page): Promise<void> {
           },
           minimum_set: [{ key: "events", numbers: [12], status: "ok" }],
           error: null,
+          failed_step: null,
+          ...overrides.latestImport,
         },
       ],
     }),

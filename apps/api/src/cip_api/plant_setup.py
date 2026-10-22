@@ -11,12 +11,13 @@ import re
 from typing import Annotated, Any
 from zoneinfo import available_timezones
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import text
 
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
+from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut
 from cip_api.tenancy import Ctx, require
 from constraint_engine.figure import Missing
@@ -142,7 +143,7 @@ def _exists(ctx: Ctx, plant_code: str) -> None:
     ctx.check_plant(plant_code)
     found = ctx.db.execute(text("SELECT 1 FROM plants WHERE plant_code = :p"), {"p": plant_code})
     if found.first() is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "plant not found")
+        raise ApiProblem("plant_not_found")
 
 
 @router.post("/plants", response_model=SetupOut, status_code=201)
@@ -151,7 +152,7 @@ def create_plant(body: PlantIn, ctx: Edit) -> SetupOut:
         text("SELECT 1 FROM plants WHERE plant_code = :p"), {"p": body.plant_code}
     ).first()
     if taken:
-        raise HTTPException(status.HTTP_409_CONFLICT, "a plant with this code exists")
+        raise ApiProblem("plant_exists")
     ctx.db.execute(
         text(
             "INSERT INTO plants (tenant_id, plant_code, name, timezone_iana) "
@@ -349,7 +350,7 @@ def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edi
         {"p": plant_code, "s": body.station_code},
     ).first()
     if station is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "unknown station")
+        raise ApiProblem("unknown_station")
     ctx.db.execute(
         text(
             "INSERT INTO resources (tenant_id, plant_code, resource_code, name, kind, "
@@ -382,9 +383,7 @@ def delete_resource(plant_code: str, resource_code: str, ctx: Edit) -> SetupOut:
         {"p": plant_code, "r": resource_code},
     ).first()
     if login:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "this machine has a station login; IT removes it first"
-        )
+        raise ApiProblem("machine_has_station_login")
     ctx.db.execute(
         text("DELETE FROM resources WHERE plant_code = :p AND resource_code = :r"),
         {"p": plant_code, "r": resource_code},

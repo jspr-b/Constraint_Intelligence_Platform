@@ -1000,6 +1000,8 @@ export interface components {
             error: string | null;
             /** Expected Files */
             expected_files: string[];
+            /** Failed Step */
+            failed_step?: ("read" | "load" | "check" | "store") | null;
             /** Files */
             files: components["schemas"]["FileCheckOut"][];
             /**

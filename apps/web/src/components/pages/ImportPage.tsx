@@ -6,10 +6,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Button, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Field } from "../FormDialog";
+import { conversionLabel, fieldLabel } from "@/lib/model";
 import { PageHeader } from "../PageHeader";
+import { TechnicalDetails } from "../Problems";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
@@ -44,6 +46,7 @@ function reasonKind(reason: string): string {
 /** Import page (mockup F4): upload and check files, see how columns map, run, results. */
 export function ImportPage() {
   const t = useTranslations("import");
+  const tm = useTranslations("model");
   const locale = useLocale();
   const view = useView();
   const queries = useQueryClient();
@@ -77,7 +80,10 @@ export function ImportPage() {
         method: "POST",
         body: form,
       });
-      if (!response.ok) throw new Error(String(response.status));
+      if (!response.ok) {
+        const body: unknown = await response.json().catch(() => null);
+        throw new Error(problemOf(body, response.status).message);
+      }
     },
     onSuccess: () => {
       setError(null);
@@ -86,17 +92,18 @@ export function ImportPage() {
     },
     onError: (e) =>
       setError(
-        e.message === "none"
-          ? t("chooseFirst")
-          : e.message === "413"
-            ? t("tooLarge")
-            : t("uploadFailed"),
+        e.message === "none" ? t("chooseFirst") : e.message ? e.message : t("uploadFailedUnknown"),
       ),
   });
   const run = useMutation({
-    mutationFn: async (id: string) =>
-      api.POST("/imports/{import_id}/run", { params: { path: { import_id: id } } }),
+    mutationFn: async (id: string) => {
+      const { response, error } = await api.POST("/imports/{import_id}/run", {
+        params: { path: { import_id: id } },
+      });
+      if (!response.ok) throw new Error(problemOf(error, response.status).message);
+    },
     onSuccess: () => void refresh(),
+    onError: () => void refresh(),
   });
 
   const checks: FileCheck[] = latest?.files ?? [];
@@ -133,6 +140,11 @@ export function ImportPage() {
                 ? t("runWithGaps", { count: missing.length })
                 : t("runExplain", { files: usable.length }))}
           </span>
+          {run.error && (
+            <p role="alert" className="m-0 w-full text-sm text-bad">
+              {run.error.message}
+            </p>
+          )}
         </div>
       )}
       {latest.status === "running" && (
@@ -140,11 +152,7 @@ export function ImportPage() {
           {t("running")}
         </p>
       )}
-      {latest.status === "failed" && (
-        <p role="alert" className="m-0 text-sm text-bad">
-          {t("failed", { reason: latest.error ?? "" })}
-        </p>
-      )}
+      {latest.status === "failed" && <ImportFailed latest={latest} />}
     </>
   );
 
@@ -434,13 +442,17 @@ export function ImportPage() {
                             ) : c.status === "unused" ? (
                               <span className="text-muted">{t("unused")}</span>
                             ) : (
-                              <span className="font-mono text-xs">{c.fields.join(", ")}</span>
+                              <span title={c.fields.join(", ")}>
+                                {c.fields.map((f) => fieldLabel(f, tm, tm.has)).join(", ")}
+                              </span>
                             )}
                           </td>
                           <td className="px-3 py-2 text-xs text-muted">
                             {c.status === "not_imported"
                               ? t("personalNote")
-                              : c.conversions.join(", ") || "—"}
+                              : c.conversions
+                                  .map((v) => conversionLabel(v, tm, tm.has))
+                                  .join(", ") || "—"}
                           </td>
                         </tr>
                       ))}
@@ -603,6 +615,20 @@ export function ImportPage() {
           )}
         </TabPanel>
       </Tabs>
+    </div>
+  );
+}
+
+/** A failed import: where it stopped, what to do, and the technical reason folded away. */
+function ImportFailed({ latest }: { latest: ImportOut }) {
+  const t = useTranslations("import");
+  return (
+    <div role="alert" className="flex flex-col gap-1 text-sm">
+      <p className="m-0 text-bad">{t("failed")}</p>
+      <p className="m-0">
+        {latest.failed_step ? t(`failedStep.${latest.failed_step}`) : t("failedUnknown")}
+      </p>
+      {latest.error && <TechnicalDetails lines={[latest.error]} />}
     </div>
   );
 }

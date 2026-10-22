@@ -10,12 +10,13 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, Request
 from sqlalchemy import Connection
 
 from cip_api.auth.access import Access, load_access
 from cip_api.auth.roles import Decision, Plants, Role
 from cip_api.auth.sessions import COOKIE, Principal, find_session, tenant_conn
+from cip_api.errors import ApiProblem
 from cip_api.settings import Settings, get_settings
 
 
@@ -30,17 +31,17 @@ def current_principal(
     if token:
         principal = find_session(settings, token)
         if principal is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session expired or signed out")
+            raise ApiProblem("session_expired")
         return principal
     if settings.env != "dev":
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "sign-in required")
+        raise ApiProblem("sign_in_required")
     if x_tenant_id is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "X-Tenant-Id header required in dev")
+        raise ApiProblem("dev_header_required")
     try:
         tenant = uuid.UUID(x_tenant_id)
         role = Role(x_role or Role.COO)
     except ValueError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "bad dev X-Tenant-Id or X-Role") from exc
+        raise ApiProblem("dev_header_invalid") from exc
     return Principal(tenant, "dev", "header", role, plant_code=x_plant)
 
 
@@ -74,7 +75,7 @@ class Ctx:
 
     def check_plant(self, plant_code: str) -> None:
         if not self.can_see_plant(plant_code):
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "this role sees its own plant only")
+            raise ApiProblem("own_plant_only")
 
 
 def require(page: str | None = None, decision: Decision | None = None) -> Callable[..., Ctx]:
@@ -86,9 +87,9 @@ def require(page: str | None = None, decision: Decision | None = None) -> Callab
     ) -> Ctx:
         access = load_access(db, principal.role)
         if page is not None and page not in access.pages:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, f"role may not open page {page}")
+            raise ApiProblem("page_not_allowed")
         if decision is not None and decision not in access.decisions:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, f"role may not {decision.value}")
+            raise ApiProblem("decision_not_allowed")
         return Ctx(principal, access, db)
 
     return dependency

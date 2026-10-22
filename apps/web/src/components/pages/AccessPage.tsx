@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Button, MicroLabel, Panel } from "@cip/ui";
-import { api } from "@/lib/api/client";
+import { api, ensureOk } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { GROUPS, ROLES, type Role } from "@/lib/pages";
 import { PageHeader } from "../PageHeader";
@@ -34,11 +34,14 @@ export function AccessPage() {
     queryFn: async () => (await api.GET("/access")).data ?? null,
   });
   const save = useMutation({
-    mutationFn: async (call: () => Promise<{ data?: Matrix }>) => (await call()).data,
+    mutationFn: async (call: () => Promise<{ data?: Matrix; response: Response }>) =>
+      (await ensureOk(call())).data,
     onSuccess: (data) => {
       if (data) queries.setQueryData(["access"], data);
       void queries.invalidateQueries({ queryKey: ["me"] });
     },
+    // Undo the optimistic change: show what the server really has.
+    onError: () => void queries.invalidateQueries({ queryKey: ["access"] }),
   });
   /** Show the change at once; the server's answer then replaces it (or restores on error). */
   const optimistic = (role: Role, field: "pages" | "decisions", item: string, allowed: boolean) =>

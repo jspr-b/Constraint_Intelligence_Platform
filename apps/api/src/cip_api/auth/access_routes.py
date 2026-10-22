@@ -2,13 +2,14 @@
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 
 from cip_api.auth.access import decision_locked, load_access, page_locked
 from cip_api.auth.roles import PAGES, ROLE_MENUS, Decision, Money, Plants, Role
 from cip_api.auth.sessions import audit
+from cip_api.errors import ApiProblem
 from cip_api.tenancy import Ctx, require
 
 router = APIRouter(prefix="/access", tags=["access"])
@@ -82,11 +83,9 @@ def get_access(ctx: View) -> AccessOut:
 @router.put("/pages", response_model=AccessOut)
 def set_page(body: PageIn, ctx: Change) -> AccessOut:
     if body.page not in PAGES:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "unknown page")
+        raise ApiProblem("unknown_page")
     if page_locked(body.role, body.page):
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "this page cannot be turned off for this role"
-        )
+        raise ApiProblem("page_locked")
     before = body.page in load_access(ctx.db, body.role).pages
     ctx.db.execute(
         text(
@@ -132,7 +131,7 @@ def set_data(body: DataIn, ctx: Change) -> AccessOut:
 @router.put("/decisions", response_model=AccessOut)
 def set_decision(body: DecisionIn, ctx: Change) -> AccessOut:
     if decision_locked(body.decision):
-        raise HTTPException(status.HTTP_409_CONFLICT, "this decision cannot be reassigned")
+        raise ApiProblem("decision_locked")
     before = body.decision in load_access(ctx.db, body.role).decisions
     ctx.db.execute(
         text(

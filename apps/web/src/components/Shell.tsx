@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -13,6 +14,7 @@ import { EmptyState } from "./EmptyState";
 import { GettingStarted, useOnboarding } from "./GettingStarted";
 import { RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
 import { NavRail } from "./NavRail";
+import { Problems } from "./Problems";
 import { ViewContext } from "./ViewContext";
 
 function ApiStatus() {
@@ -80,6 +82,7 @@ export function Shell({
     session.status === "ready" ? effectiveView(session.me, matrix, viewAs) : null;
   const station = view?.role === "station";
   const router = useRouter();
+  const queries = useQueryClient();
   const [guide, setGuide] = useState(storedGuide);
   const onboarding = useOnboarding();
   const showGuide =
@@ -98,7 +101,18 @@ export function Shell({
   let body: ReactNode = children;
   if (session.status === "loading") body = <p className="text-muted">{t("shell.loading")}</p>;
   else if (session.status === "unreachable")
-    body = <EmptyState title={t("header.apiDown")}>{t("shell.apiUnreachable")}</EmptyState>;
+    body = (
+      <EmptyState title={t("header.apiDown")}>
+        <p className="m-0">{t("shell.apiUnreachable")}</p>
+        <button
+          type="button"
+          onClick={() => void queries.refetchQueries()}
+          className="mt-3 cursor-pointer rounded-control border border-line-strong bg-transparent px-2 py-1 text-sm text-accent"
+        >
+          {t("problems.tryNow")}
+        </button>
+      </EmptyState>
+    );
   else if (session.status === "signed-out")
     body = (
       <EmptyState title={t("login.title")}>
@@ -138,6 +152,7 @@ export function Shell({
         <main id="content" tabIndex={-1} className="min-w-0 flex-1 p-5 outline-none">
           {view ? (
             <ViewContext value={view}>
+              <Problems />
               {view.preview && <PreviewBanner view={view} />}
               {showGuide && <GettingStarted view={view} onHide={() => choose("hidden")} />}
               {body}

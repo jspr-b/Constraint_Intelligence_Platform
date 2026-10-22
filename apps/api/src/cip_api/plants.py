@@ -3,10 +3,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 
+from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut
 from cip_api.tenancy import Ctx, require
 from constraint_engine.summary import record_count
@@ -74,7 +75,7 @@ def plant_summary(
         text("SELECT name FROM plants WHERE plant_code = :p"), {"p": plant_code}
     ).first()
     if plant is None:
-        raise HTTPException(404, "plant not found")
+        raise ApiProblem("plant_not_found")
     counts = {}
     for name, table in COUNTED.items():
         n = db.execute(
