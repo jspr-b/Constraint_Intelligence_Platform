@@ -30,6 +30,10 @@ COPY --from=build --chown=cip:cip /opt/venv /opt/venv
 COPY --from=build --chown=cip:cip /app /app
 RUN mkdir -p /app/var/data && chown cip:cip /app/var/data
 ENV PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1 CIP_ENV=production
+# Which source the image was built from (scripts/source_id.sh); scripts/check_images.sh compares it.
+ARG CIP_SOURCE_ID=unknown
+LABEL org.opencontainers.image.revision=$CIP_SOURCE_ID
+ENV CIP_SOURCE_ID=$CIP_SOURCE_ID
 USER cip
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 \

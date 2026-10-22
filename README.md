@@ -19,7 +19,9 @@ uv run pre-commit install
 ## Commands
 
 ```bash
-docker compose up              # full local stack
+bash scripts/build_images.sh   # build every image, stamped with the current source
+docker compose up -d --no-build  # full local stack
+bash scripts/check_images.sh   # fails if a running container is older than the code
 uv run pytest                  # Python tests
 uv run ruff check . && uv run mypy .
 pnpm --filter web dev          # frontend dev server

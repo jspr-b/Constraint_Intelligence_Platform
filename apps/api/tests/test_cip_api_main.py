@@ -62,3 +62,8 @@ def test_access_log_is_json_without_bodies(
         "request_id",
     }
     logging.getLogger("cip").handlers.clear()
+
+
+def test_meta_reports_the_source_the_image_was_built_from() -> None:
+    body = TestClient(create_app(Settings(source_id="abc123"))).get("/meta").json()
+    assert body["source_id"] == "abc123"

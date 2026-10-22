@@ -60,12 +60,14 @@ History is like plant A (paint line binding). From order-book week 7 a weld-heav
 - **Lost constraint hours:** every shift minute of the constraint that did not produce good units, by cause.
 - **Forecast load:** for each order-book week, run plus setup minutes of the orders created that week ÷ available minutes (shifts minus uncovered breaks minus planned maintenance; random breakdowns are not forecast). The binding machine is the highest-loaded one if it is at least 85%.
 
-## plant_a/erp_export: messy exports to test import
+## plant_*/erp_export: messy exports to test import
 
-Plant A as an ERP and MES would export it, generated from the plant files:
+Each plant as an ERP and MES would export it, generated from the plant files (plants B and C are used by the demo, `scripts/demo_reset.py --loaded`):
 
 ```bash
-uv run python -m constraint_engine.synthetic.erp_export data/synthetic/plant_a data/synthetic/plant_a/erp_export
+for p in plant_a plant_b plant_c; do
+  uv run python -m constraint_engine.synthetic.erp_export data/synthetic/$p data/synthetic/$p/erp_export
+done
 ```
 
 - `clean/csv/*.csv` (semicolon-separated, Dutch Excel style) and `clean/xlsx/*.xlsx`: the same 10 tables (`werkplekken`, `artikelen`, `bewerkingen`, `orders`, `mes_events`, `rooster`, `overuren`, `capaciteitskosten`, `omsteltijden`, `uitbesteding`)

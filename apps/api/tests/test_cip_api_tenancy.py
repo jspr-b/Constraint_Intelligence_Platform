@@ -134,3 +134,16 @@ def test_cannot_write_into_another_tenant(engines: tuple[Engine, Engine]) -> Non
     with pytest.raises(DBAPIError, match="row-level security"), app.begin() as conn:
         conn.execute(text("SELECT set_config('app.tenant_id', :t, true)"), {"t": str(A)})
         conn.execute(text(insert_sql(table, row)), row)
+
+
+def test_tenant_transaction_commits_before_the_response_is_sent() -> None:
+    """A client that acts on a response (upload, then run) must find what it just created."""
+    import inspect
+    from typing import get_args
+
+    from cip_api.auth.routes import me
+    from cip_api.tenancy import require
+
+    for endpoint in (require(), me):
+        db = inspect.signature(endpoint).parameters["db"].annotation
+        assert get_args(db)[1].scope == "function"

@@ -126,7 +126,7 @@ Build order: ingestion → data model → event reconstruction → detection →
 - **Euros must be traceable.** Every euro figure links back to its inputs and formula.
 - **Read-only by default.** The platform does not change ERP/MES data unless write-back is explicitly enabled.
 - Plant data is confidential: tenant isolation per customer, encryption at rest and in transit.
-- **Done means a client can do it.** A feature, task or festival step is only done when a real user, signed in with the role it is meant for, does it themselves in the browser from start to finish on the running stack, and every page on the way loads and tells them what to do next. Passing tests, calling the API directly, scripts or seed data do not count. Before saying something works, click through it as that client on freshly built images (all of them: `docker compose build migrate worker web`, the api image is built by `migrate`) and say what you clicked and what you saw.
+- **Done means a client can do it.** A feature, task or festival step is only done when a real user, signed in with the role it is meant for, does it themselves in the browser from start to finish on the running stack, and every page on the way loads and tells them what to do next. Passing tests, calling the API directly, scripts or seed data do not count. Before saying something works, click through it as that client on freshly built images (`bash scripts/build_images.sh`, then `docker compose up -d --no-build`; `bash scripts/check_images.sh` must pass) and say what you clicked and what you saw.
 - **No dead ends.** Every page tells the client what to do next. An empty, blocked or role-restricted state says why and links to the action that fixes it (e.g. "Your role cannot upload. Ask IT, or switch role"). A page that leaves a client stuck is not done.
 - **No silent errors.** A client never sees a blank "This page couldn't load". Every error says in plain words what happened and what to do next. A crash on any page fails the step it belongs to.
 - **Plain words in the app.** A plant director understands every screen without training. Terms such as constraint, OEE, buffer or throughput get a one-line explanation where they appear. No internal codes, formula ids or developer terms in client-facing text unless the client asks for detail.
@@ -350,7 +350,9 @@ The three questions that decide the product:
 ## Commands
 
 ```
-docker compose up              # full local stack
+bash scripts/build_images.sh   # build every image, stamped with the current source
+docker compose up -d --no-build  # full local stack
+bash scripts/check_images.sh   # fails if a running container is older than the code
 uv run pytest                  # Python tests
 uv run ruff check . && uv run mypy .
 pnpm --filter web dev          # frontend dev server

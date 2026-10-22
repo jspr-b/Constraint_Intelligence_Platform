@@ -73,6 +73,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def meta() -> dict[str, object]:
         return {
             "version": settings.version,
+            "source_id": settings.source_id,
             "env": settings.env,
             "formulas": [
                 {"formula_id": f.formula_id, "text": f.text, "unit": f.unit}

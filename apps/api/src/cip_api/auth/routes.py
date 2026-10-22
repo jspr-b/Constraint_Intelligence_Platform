@@ -200,7 +200,7 @@ def logout(request: Request, settings: SettingsDep, response: Response) -> None:
 @router.get("/me", response_model=MeOut)
 def me(
     principal: Annotated[Principal, Depends(current_principal)],
-    db: Annotated[Connection, Depends(tenant_db)],
+    db: Annotated[Connection, Depends(tenant_db, scope="function")],
 ) -> MeOut:
     access = load_access(db, principal.role)
     return MeOut(

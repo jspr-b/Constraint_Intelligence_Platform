@@ -1,5 +1,6 @@
 # Full local stack from the production images (infra/docker): data services, migrations, API,
-# worker and web. `docker compose up --build`; open http://localhost:53000.
+# worker and web. Build with `bash scripts/build_images.sh` (stamps the source id), start with
+# `docker compose up -d --no-build`, check with `bash scripts/check_images.sh`; open http://localhost:53000.
 # For hot reload while developing: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 # Host ports are offset (55432, 56379, 58000, 53000) to avoid clashing with other local projects.
 # CIP_ENV=dev here enables the pilot email sign-in; real deployments set their own environment.
@@ -42,7 +43,10 @@ services:
       retries: 20
 
   migrate:
-    build: { context: ., dockerfile: infra/docker/api.Dockerfile }
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args: { CIP_SOURCE_ID: "${CIP_SOURCE_ID:-unknown}" }
     image: cip-api:local
     working_dir: /app/apps/api
     command: ["alembic", "upgrade", "head"]
@@ -53,6 +57,11 @@ services:
     restart: "no"
 
   api:
+    # Same image as migrate; both build it so `docker compose build api` is never a no-op.
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      args: { CIP_SOURCE_ID: "${CIP_SOURCE_ID:-unknown}" }
     image: cip-api:local
     environment: *app-env
     volumes:
@@ -66,7 +75,10 @@ services:
         condition: service_healthy
 
   worker:
-    build: { context: ., dockerfile: infra/docker/worker.Dockerfile }
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+      args: { CIP_SOURCE_ID: "${CIP_SOURCE_ID:-unknown}" }
     image: cip-worker:local
     environment: *app-env
     volumes:
@@ -78,7 +90,10 @@ services:
         condition: service_healthy
 
   web:
-    build: { context: ., dockerfile: infra/docker/web.Dockerfile }
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args: { CIP_SOURCE_ID: "${CIP_SOURCE_ID:-unknown}" }
     image: cip-web:local
     environment:
       CIP_ENV: ${CIP_ENV:-dev}

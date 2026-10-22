@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 56379
     version: str = "0.0.0"
+    source_id: str = "unknown"
+    """Source the image was built from (scripts/source_id.sh); ``unknown`` outside images."""
     session_hours: int = 12
     """A personal or station session lasts one long shift; then sign in again."""
     pin_max_attempts: int = 5

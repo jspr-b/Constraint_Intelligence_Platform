@@ -1,0 +1,26 @@
+Artikel;Bewerking nr;Bewerking;Werkplek;Alternatief;Insteltijd (min);Stuktijd (min)
+B-40;010;Cut;SNIJ1;;;1,4
+B-40;020;Weld;LAS2;;;2,8
+B-40;030;Paint;LAK1;;20,0;6,8
+B-40;040;Assemble;MONT1;;;3,0
+B-40;050;Pack;INPAK1;;;0,5
+F-200;010;Cut;SNIJ1;;;2,4
+F-200;020;Weld;LAS1;LAS2;;9,0
+F-200;030;Paint;LAK1;;20,0;14,0
+F-200;040;Assemble;MONT1;;;6,0
+F-200;050;Pack;INPAK1;;;1,0
+H-12;010;Cut;SNIJ1;;;2,0
+H-12;020;Weld;LAS2;;;6,8
+H-12;030;Paint;LAK1;;20,0;9,3
+H-12;040;Assemble;MONT1;;;5,0
+H-12;050;Test;MONT1;;;1,0
+H-12;060;Mark;SNIJ1;;;0,8
+H-12;070;Pack;INPAK1;;;0,8
+C-3;010;Cut;SNIJ1;;;1,0
+C-3;020;Paint;LAK1;;20,0;3,8
+C-3;030;Assemble;MONT1;;;2,0
+C-3;040;Pack;INPAK1;;;0,5
+R-8;010;Cut;SNIJ1;;;1,2
+R-8;020;Weld;LAS1;;;3,0
+R-8;030;Grind;LAS2;;;3,2
+R-8;040;Pack;INPAK1;;;0,4

@@ -21,6 +21,10 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 WORKDIR /app
 COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
+# Which source the image was built from (scripts/source_id.sh); scripts/check_images.sh compares it.
+ARG CIP_SOURCE_ID=unknown
+LABEL org.opencontainers.image.revision=$CIP_SOURCE_ID
+ENV CIP_SOURCE_ID=$CIP_SOURCE_ID
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 \

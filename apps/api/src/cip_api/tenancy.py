@@ -52,7 +52,11 @@ def tenant_db(
     principal: Annotated[Principal, Depends(current_principal)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> Iterator[Connection]:
-    """A connection in a transaction with the tenant set (SET LOCAL semantics)."""
+    """A connection in a transaction with the tenant set (SET LOCAL semantics).
+
+    Depend on it with ``scope="function"``: the transaction then commits before the response is
+    sent, so a client that acts on the response (upload, then run) always finds the row.
+    """
     with tenant_conn(settings, principal.tenant_id) as conn:
         yield conn
 
@@ -78,7 +82,7 @@ def require(page: str | None = None, decision: Decision | None = None) -> Callab
 
     def dependency(
         principal: Annotated[Principal, Depends(current_principal)],
-        db: Annotated[Connection, Depends(tenant_db)],
+        db: Annotated[Connection, Depends(tenant_db, scope="function")],
     ) -> Ctx:
         access = load_access(db, principal.role)
         if page is not None and page not in access.pages:
