@@ -12,6 +12,7 @@ import { ImportPage } from "./pages/ImportPage";
 import { LossPage } from "./pages/LossPage";
 import { MachinesPage } from "./pages/MachinesPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { ReportPage } from "./pages/ReportPage";
 import { RunPage } from "./pages/RunPage";
 import { SetupPage } from "./pages/SetupPage";
 import { UsersPage } from "./pages/UsersPage";
@@ -31,6 +32,7 @@ const BUILT: Partial<Record<PageKey, ComponentType>> = {
   loss: LossPage,
   machines: MachinesPage,
   main: OverviewPage,
+  report: ReportPage,
   run: RunPage,
   setup: SetupPage,
   users: UsersPage,

@@ -39,3 +39,21 @@ test("overview says the answer and loss shows the causes, from the real import",
   await page.goto("/run");
   await expect(page.getByText("The diagnosis is complete.")).toBeVisible();
 });
+
+test("results report from the real import, downloaded as a PDF", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Work email").fill("it@e2e.example.test");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/conn$/);
+  await page.goto("/report");
+  const report = page.getByRole("article", { name: "Results report" });
+  await expect(report).toContainText("PNT-01) limits your output.", { timeout: 90_000 });
+  await expect(report).toContainText("In total the bottleneck lost");
+  await expect(report).toContainText("4 of 4 independent checks");
+  await expect(report.locator("#source-1")).toContainText("[1]");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Download PDF" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^results-report_PLANT-A_.+\.pdf$/);
+});

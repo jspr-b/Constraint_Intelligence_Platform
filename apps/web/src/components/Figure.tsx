@@ -75,6 +75,35 @@ function useFormulaTexts(): Map<string, string> {
   return new Map((formulas ?? []).map((f) => [f.formula_id, f.text]));
 }
 
+/** A Figure's formula in plain words: the message text, else the engine's own text. */
+export function useFormulaText(): (figure: FigureLike) => string {
+  const t = useTranslations("figure");
+  const engineTexts = useFormulaTexts();
+  return (figure) => {
+    const name = figure.formula_id.replace(/_v\d+$/, "");
+    return t.has(`formulas.${name}`)
+      ? t(`formulas.${name}`)
+      : (engineTexts.get(figure.formula_id) ?? "");
+  };
+}
+
+/** A Figure's inputs as plain lines ("truly variable cost (€): €12.00"), for the report. */
+export function useInputLines(): (figure: FigureLike) => string[] {
+  const t = useTranslations("figure");
+  const locale = useLocale();
+  return (figure) =>
+    Object.entries(figure.inputs).map(([key, value]) => {
+      const [raw, unit] = inputName(key);
+      const plain = t.has(`inputNames.${key}`) ? t(`inputNames.${key}`) : raw;
+      const shown = unit ? `${plain} (${unit})` : plain;
+      if (isFigure(value)) {
+        return `${shown}: ${isMissing(value.value) ? t("missing") : formatFigure(value, locale)}`;
+      }
+      if (isMissingInput(value)) return `${shown}: ${t("missing")} (${value.reason})`;
+      return `${shown}: ${value === "none" ? t("noMachine") : inputValue(key, value, locale)}`;
+    });
+}
+
 /** The "how is this calculated" panel: value, formula in plain words, inputs, period, confidence. */
 export function HowCalculated({ figure, label }: { figure: FigureLike; label: string }) {
   const t = useTranslations("figure");

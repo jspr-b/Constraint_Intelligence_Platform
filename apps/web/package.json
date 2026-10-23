@@ -21,6 +21,7 @@
     "next": "16.3.8",
     "next-intl": "4.14.8",
     "openapi-fetch": "0.17.0",
+    "pdf-lib": "1.17.1",
     "react": "19.3.0",
     "react-aria-components": "1.21.1",
     "react-dom": "19.3.0",
