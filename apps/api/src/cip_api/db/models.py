@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     Double,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -343,6 +344,7 @@ class Fact(Base):
     """
 
     __tablename__ = "facts"
+    __table_args__ = (Index("ix_facts_plant_family", "tenant_id", "plant_code", "family"),)
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -372,6 +374,9 @@ class DetectionRow(Base):
     """The constraint found for one period of an import, with every method's output (JSON)."""
 
     __tablename__ = "detections"
+    __table_args__ = (
+        Index("ix_detections_plant_period", "tenant_id", "plant_code", "period_kind"),
+    )
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
