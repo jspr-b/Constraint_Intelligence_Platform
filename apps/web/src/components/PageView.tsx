@@ -9,7 +9,10 @@ import { CalendarPage } from "./pages/CalendarPage";
 import { ConnectionsPage } from "./pages/ConnectionsPage";
 import { DataQualityPage } from "./pages/DataQualityPage";
 import { ImportPage } from "./pages/ImportPage";
+import { LossPage } from "./pages/LossPage";
 import { MachinesPage } from "./pages/MachinesPage";
+import { OverviewPage } from "./pages/OverviewPage";
+import { RunPage } from "./pages/RunPage";
 import { SetupPage } from "./pages/SetupPage";
 import { UsersPage } from "./pages/UsersPage";
 import { EmptyState } from "./EmptyState";
@@ -25,7 +28,10 @@ const BUILT: Partial<Record<PageKey, ComponentType>> = {
   conn: ConnectionsPage,
   data: DataQualityPage,
   import: ImportPage,
+  loss: LossPage,
   machines: MachinesPage,
+  main: OverviewPage,
+  run: RunPage,
   setup: SetupPage,
   users: UsersPage,
 };
@@ -34,7 +40,7 @@ const NEXT_PAGE: Record<string, string> = {
   plant: "/setup",
   upload: "/import",
   check: "/data",
-  answer: "/machines",
+  answer: "/main",
 };
 
 export function PageView({ page }: { page: PageKey }) {

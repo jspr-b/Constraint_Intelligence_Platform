@@ -6,19 +6,15 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 import { ConstraintMarker, isMissing, MicroLabel, Panel, type FigureLike } from "@cip/ui";
 import { api } from "@/lib/api/client";
-import type { components } from "@/lib/api/schema";
 import { ConstraintBanner, useDetection } from "../ConstraintBanner";
 import { useDetails } from "../Details";
+import { useFacts, valueOf, type Fact, type Period } from "../diagnose";
 import { EmptyState } from "../EmptyState";
 import { Figure, HowCalculated } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { Term } from "../Term";
 import { termTags } from "../terms";
-
-type Fact = components["schemas"]["FactOut"];
-type Period = components["schemas"]["PeriodOut"];
-type Family = Fact["family"];
 
 const TH =
   "px-3 py-2 text-left text-micro font-medium uppercase tracking-[var(--tracking-micro)] text-muted [&_button]:uppercase";
@@ -60,34 +56,6 @@ const TERM_OF: Partial<Record<ColumnKey, "setup" | "starved" | "blocked" | "oee"
   oee: "oee",
   capacity: "capacity",
 };
-
-function valueOf(fact: Fact | undefined): number | null {
-  if (!fact || isMissing(fact.figure.value)) return null;
-  return fact.figure.value;
-}
-
-function useFacts(
-  plant: string | null,
-  query: {
-    family?: Family[];
-    resource_code?: string;
-    period_kind?: "all" | "month" | "week" | "day";
-    period_start_at?: string;
-  },
-  enabled = true,
-) {
-  return useQuery({
-    queryKey: ["facts", plant, query],
-    enabled: plant !== null && enabled,
-    queryFn: async () =>
-      (
-        await api.GET("/plants/{plant_code}/facts", {
-          params: { path: { plant_code: plant ?? "" }, query },
-        })
-      ).data ?? null,
-    refetchInterval: (q) => (q.state.data?.run?.status === "calculating" ? 3000 : false),
-  });
-}
 
 function MachineName({ name, code }: { name: string; code: string }) {
   return (

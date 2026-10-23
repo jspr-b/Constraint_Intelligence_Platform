@@ -113,9 +113,34 @@ const BLOCKED_MISSING = {
   confidence_impact: "medium",
 };
 
-/** The stored detection: PNT-01 for the whole period, no machine binding in a month. */
-export function stubDetection(kind: string): Record<string, unknown> {
-  const market = kind !== "all";
+const RUN_READY = {
+  status: "ready",
+  started_at: "2026-10-13T07:16:00Z",
+  finished_at: "2026-10-13T07:17:00Z",
+  period_start_at: "2026-07-20T04:00:00Z",
+  period_end_at: "2026-10-09T20:00:00Z",
+  error: null,
+};
+
+/** Stored detections: PNT-01 for the whole period and August; no machine binding in July. */
+export function stubDetections(kind: string, start: string | null): Record<string, unknown>[] {
+  const all =
+    kind === "all"
+      ? [stubDetection("all", "2026-07-20T04:00:00Z", false)]
+      : kind === "month"
+        ? [
+            stubDetection("month", "2026-07-01T00:00:00Z", true),
+            stubDetection("month", "2026-08-01T00:00:00Z", false),
+          ]
+        : [stubDetection("week", "2026-08-03T00:00:00Z", false)];
+  return all.filter((d) => !start || d.period_start_at === start);
+}
+
+export function stubDetection(
+  kind: string,
+  start = "2026-07-20T04:00:00Z",
+  market = kind !== "all",
+): Record<string, unknown> {
   const method = (m: string, code: string | null, value: number, unit: string, id: string) => ({
     method: m,
     resource_code: market ? null : code,
@@ -124,7 +149,7 @@ export function stubDetection(kind: string): Record<string, unknown> {
   });
   return {
     period_kind: kind,
-    period_start_at: "2026-07-20T04:00:00Z",
+    period_start_at: start,
     period_end_at: "2026-10-09T20:00:00Z",
     resource_code: market ? null : "PNT-01",
     kind: market ? "market" : "internal",
@@ -229,7 +254,10 @@ export function stubFacts(url: URL): Record<string, unknown>[] {
         reason_code: "MECH",
       }),
     ];
-    if (code === "PNT-01") {
+    const lossStart =
+      kind === "all" ? null : kind === "month" ? "2026-08-01T00:00:00Z" : "2026-08-03T00:00:00Z";
+    const wanted = url.searchParams.get("period_start_at");
+    if (code === "PNT-01" && kind !== "day" && (!wanted || !lossStart || wanted === lossStart)) {
       const rate = FIG(187_581.28, "eur_cents_per_h", "throughput_per_constraint_h_v1");
       for (const [cause, h] of [
         ["setup", 102.8],
@@ -237,9 +265,10 @@ export function stubFacts(url: URL): Record<string, unknown>[] {
         ["total", 231],
       ] as const) {
         const hours = FIG(h, "h", "lost_constraint_h_total_v1");
-        all.push(
-          fact("loss", code, "lost_h", h, "h", "lost_constraint_h_v1", { reason_code: cause }),
-        );
+        const lost = fact("loss", code, "lost_h", h, "h", "lost_constraint_h_v1", {
+          reason_code: cause,
+        });
+        all.push({ ...lost, figure: { ...hours, period_start_at: lossStart } });
         all.push({
           ...fact("loss", code, "lost_eur_cents", 0, "eur_cents", "lost_throughput_eur_cents_v1", {
             reason_code: cause,
@@ -247,6 +276,7 @@ export function stubFacts(url: URL): Record<string, unknown>[] {
           figure: {
             ...FIG(Math.round(h * 187_581.28), "eur_cents", "lost_throughput_eur_cents_v1"),
             inputs: { lost_h: hours, throughput_per_constraint_h_eur_cents: rate },
+            period_start_at: lossStart,
           },
         });
       }
@@ -306,6 +336,11 @@ export async function stubPages(
         },
         {
           period_kind: "month",
+          period_start_at: "2026-07-01T00:00:00Z",
+          period_end_at: "2026-08-01T00:00:00Z",
+        },
+        {
+          period_kind: "month",
           period_start_at: "2026-08-01T00:00:00Z",
           period_end_at: "2026-09-01T00:00:00Z",
         },
@@ -333,17 +368,36 @@ export async function stubPages(
     }),
   );
   await page.route(/\/api\/plants\/PLANT-A\/detection(\?.*)?$/, (route) => {
-    const kind = new URL(route.request().url()).searchParams.get("period_kind") ?? "all";
+    const params = new URL(route.request().url()).searchParams;
+    const kind = params.get("period_kind") ?? "all";
+    const status = overrides.factsStatus ?? "ready";
     route.fulfill({
       json: {
         plant_code: "PLANT-A",
-        run: null,
+        run: { ...RUN_READY, status },
         import_id: "i1",
-        detections:
-          overrides.factsStatus && overrides.factsStatus !== "ready" ? [] : [stubDetection(kind)],
+        detections: status !== "ready" ? [] : stubDetections(kind, params.get("period_start_at")),
       },
     });
   });
+  await page.route("**/api/onboarding*", (route) =>
+    route.fulfill({
+      json: {
+        plant_code: "PLANT-A",
+        plant_name: "Plant A (synthetic)",
+        steps: ["plant", "upload", "check", "answer"].map((key) => ({
+          key,
+          state: "done",
+          detail: null,
+          missing: [],
+        })),
+        next_step: null,
+        complete: true,
+        can_set_up: true,
+        setup_contacts: [],
+      },
+    }),
+  );
   await page.route("**/api/plants/PLANT-A/resources", (route) =>
     route.fulfill({
       json: [

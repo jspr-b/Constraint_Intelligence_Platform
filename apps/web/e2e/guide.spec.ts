@@ -68,9 +68,9 @@ test("the guide stays away once every step is done", async ({ page }) => {
 test("a placeholder page says what it will show and what to do today", async ({ page }) => {
   await stubApi(page, { role: "coo" });
   await stubOnboarding(page, false);
-  await page.goto("/loss");
+  await page.goto("/actions");
   await expect(page.getByText("Coming soon")).toBeVisible();
-  await expect(page.getByText(/hours and euros your bottleneck loses/)).toBeVisible();
+  await expect(page.getByText(/What to do about your bottleneck/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Finish getting started" })).toBeVisible();
 });
 

@@ -10,7 +10,6 @@ test("shell loads on the role's start page with the API status", async ({ page }
   await expect(page).toHaveURL(/\/main$/);
   await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
   await expect(page.getByRole("status")).toHaveText(/Connected/);
-  await expect(page.getByText("Coming soon")).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Details" })).toBeVisible();
 });
 

@@ -84,7 +84,7 @@ test("the bottleneck is named with its checks, confidence and reasons", async ({
   await expect(banner.getByRole("row")).toHaveCount(5);
   await expect(banner).toContainText("The busiest machine.");
 
-  await page.getByRole("combobox", { name: "Period" }).selectOption({ label: "August 2026" });
+  await page.getByRole("combobox", { name: "Period" }).selectOption({ label: "July 2026" });
   await expect(banner).toContainText("No machine limits your output in this period");
   await expect(banner).toContainText("busy 71% of its available time");
   await expect(page.locator("[data-constraint]")).toHaveCount(0);

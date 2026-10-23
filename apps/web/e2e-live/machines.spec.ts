@@ -20,3 +20,22 @@ test("after the import the planner sees the bottleneck on Machines, with its fou
   await expect(banner.getByRole("row")).toHaveCount(5);
   await expect(page.getByRole("table").last().locator("[data-constraint]")).toContainText("PNT-01");
 });
+
+test("overview says the answer and loss shows the causes, from the real import", async ({
+  page,
+}) => {
+  await page.goto("/login");
+  await page.getByLabel("Work email").fill("it@e2e.example.test");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/conn$/);
+  await page.goto("/main");
+  const answer = page.getByRole("region", { name: "The answer" });
+  await expect(answer).toContainText("PNT-01", { timeout: 90_000 });
+  await expect(answer).toContainText("It cost you about");
+  await expect(answer).toContainText("We are sure");
+  await page.goto("/loss");
+  const table = page.getByRole("region", { name: /Lost at the bottleneck by cause/ });
+  await expect(table.getByRole("row")).toHaveCount(5);
+  await page.goto("/run");
+  await expect(page.getByText("The diagnosis is complete.")).toBeVisible();
+});

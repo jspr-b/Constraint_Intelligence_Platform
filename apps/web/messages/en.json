@@ -1029,5 +1029,169 @@
         "scrap": "scrap after the bottleneck"
       }
     }
+  },
+  "overview": {
+    "noPlant": "Add a plant first.",
+    "toSetup": "Go to Plant setup",
+    "noImportTitle": "No answer yet",
+    "noImport": "Import your exports first: the answer is calculated right after the import.",
+    "toImport": "Go to Import",
+    "calculating": "Calculating your numbers from the latest import… This page updates by itself.",
+    "failed": "The numbers could not be calculated from the latest import. Run the import again; if it fails again, send IT the details on the Import page.",
+    "noAnswerTitle": "No answer yet",
+    "noAnswer": "The numbers are ready but the bottleneck is not. See where the diagnosis stands.",
+    "toRun": "Open Diagnostic run",
+    "answerLabel": "The answer",
+    "answerTag": "The answer · {period}",
+    "tag": "BOTTLENECK",
+    "limits": "limits your output.",
+    "costAbout": "It cost you about",
+    "inMonth": "in {month}.",
+    "costLabel": "Lost throughput",
+    "lostAbout": "It lost",
+    "hoursInMonth": "of output time in {month}.",
+    "hoursLabel": "Bottleneck hours lost",
+    "noEuros": "Euros are not shown because your data has no sales prices. Add the products export (item master with sales price and truly variable cost).",
+    "market": "No machine limits you: you could make more if you sold more.",
+    "material": "No machine limits you: late material holds your output back. Get parts in on time and you can make more.",
+    "busiest": "Even your busiest machine, {machine}, is busy only",
+    "busyLabel": "Busy share of the busiest machine",
+    "busiestTail": "of its available time.",
+    "sure": {
+      "high": "We are sure",
+      "medium": "We are fairly sure",
+      "low": "We are not sure yet",
+      "none": "We cannot tell yet"
+    },
+    "because": "because {count} of {total} independent checks point at it.",
+    "becauseMarket": "because none of the 4 independent checks finds a machine that is full.",
+    "agreement": "Checks that agree",
+    "confidence": "<confidence>Confidence</confidence>:",
+    "level": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low",
+      "none": "none"
+    },
+    "causesLabel": "Where the time went · {month}",
+    "causeHours": "Hours lost to {cause}",
+    "causeEuros": "Euros lost to {cause}",
+    "wholePeriod": "Whole data period:",
+    "toLoss": "See every cause, week by week, on Loss",
+    "evidenceLabel": "The evidence",
+    "evidence": {
+      "machines": "How we found the bottleneck: the 4 checks, on Machines",
+      "loss": "Lost hours and euros per week and month, on Loss",
+      "data": "What your data covers and what is missing, on Data quality",
+      "run": "Where the diagnosis stands, on Diagnostic run",
+      "machinesNone": "How we checked every machine: the 4 checks, on Machines"
+    }
+  },
+  "loss": {
+    "noPlant": "Add a plant first.",
+    "toSetup": "Go to Plant setup",
+    "noImportTitle": "No losses yet",
+    "noImport": "Import your exports first: the answer is calculated right after the import.",
+    "toImport": "Go to Import",
+    "calculating": "Calculating your numbers from the latest import… This page updates by itself.",
+    "failed": "The numbers could not be calculated from the latest import. Run the import again; if it fails again, send IT the details on the Import page.",
+    "headline": "At {machine}, {cause} cost the most time. Click any bar or number to see how it is worked out.",
+    "intro": "Every hour the <bottleneck>bottleneck</bottleneck> does not produce is output the whole plant never ships. Here is where its time went, and what it was worth in <throughput>throughput</throughput>.",
+    "noBottleneckTitle": "No bottleneck, so no bottleneck losses",
+    "noBottleneck": {
+      "market": "No machine limits your output: every machine has spare time, so the limit is demand. Losing time at a machine with spare time costs no output.",
+      "material": "No machine limits your output: late material holds work back, so time lost at machines costs no output."
+    },
+    "toOverview": "See the answer on Overview",
+    "periodLabel": "Show per",
+    "by": {
+      "month": "Per month",
+      "week": "Per week"
+    },
+    "showLabel": "Show in",
+    "show": {
+      "eur": "Euros",
+      "h": "Hours"
+    },
+    "unit": {
+      "eur": "€",
+      "h": "hours"
+    },
+    "noEuros": "Shown in hours because your data has no sales prices. Add the products export to see euros.",
+    "chartLabel": "Lost at the bottleneck · {unit} · {by}",
+    "legend": "Causes",
+    "biggest": "biggest",
+    "segment": "{period}, {cause}: {amount}",
+    "none": "no bottleneck",
+    "noneRow": "No machine limited output in this period, so nothing was lost at a bottleneck.",
+    "tableLabel": "Lost at the bottleneck by cause · {unit}",
+    "colPeriod": "Period",
+    "colTotal": "Total",
+    "tableHelp": "Breaks and maintenance count when the bottleneck stops for them: covering them is often the cheapest gain.",
+    "next": "Next",
+    "toMachines": "See the bottleneck's day-by-day timeline on Machines"
+  },
+  "run": {
+    "noPlant": "Add a plant first.",
+    "toSetup": "Go to Plant setup",
+    "stepsLabel": "Diagnosis steps",
+    "stepNo": "{n}.",
+    "nextIs": "Next step: {step}.",
+    "allDone": "The diagnosis is complete.",
+    "toOverview": "See the answer on Overview",
+    "state": {
+      "done": "done",
+      "running": "in progress",
+      "todo": "to do",
+      "failed": "needs attention",
+      "waiting": "waits for the step above"
+    },
+    "level": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low",
+      "none": "none"
+    },
+    "data": {
+      "title": "Your data is in",
+      "none": "No export uploaded yet. Upload the exports from your ERP or MES.",
+      "uploaded": "Files uploaded but not imported yet. Run the import.",
+      "running": "The import is running. This page updates by itself.",
+      "failed": "The last import failed. Open Import to see why and what to do.",
+      "missing": "Imported, but still missing: {items}.",
+      "done": "Your exports are imported and cover what a diagnosis needs.",
+      "goUpload": "Upload files",
+      "goRun": "Run the import",
+      "goImport": "Open Import",
+      "goQuality": "Open Data quality"
+    },
+    "numbers": {
+      "title": "Numbers calculated",
+      "waiting": "Calculated right after a complete import.",
+      "running": "Calculating the numbers from your data… this updates by itself.",
+      "failed": "The numbers could not be calculated. Run the import again; if it fails again, send IT the details on the Import page.",
+      "done": "Machine states, busy shares, queues and task times are calculated.",
+      "go": "See them on Machines"
+    },
+    "bottleneck": {
+      "title": "Bottleneck found",
+      "waiting": "Found once the numbers are calculated.",
+      "none": "No answer was saved for the latest import. Run the import again.",
+      "found": "{machine} limits your output. Confidence: {level}.",
+      "market": "No machine limits your output: the limit is demand. Confidence: {level}.",
+      "material": "No machine limits your output: late material does. Confidence: {level}.",
+      "go": "See how on Machines"
+    },
+    "cost": {
+      "title": "Cost calculated",
+      "waiting": "Calculated once the bottleneck is found.",
+      "noBottleneck": "Nothing to cost: with no bottleneck, lost machine time costs no output.",
+      "noPrices": "Lost hours are calculated, but euros need sales prices. Add the products export (item master with prices).",
+      "goPrices": "Add prices on Import",
+      "done": "Lost hours and euros per cause are calculated.",
+      "doneHours": "Lost hours per cause are calculated (your role sees hours).",
+      "go": "See them on Loss",
+      "goOverview": "See the answer on Overview"
+    }
   }
 }

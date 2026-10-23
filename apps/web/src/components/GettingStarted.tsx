@@ -16,7 +16,7 @@ const STEP_PAGE: Record<Step["key"], string> = {
   plant: "/setup",
   upload: "/import",
   check: "/data",
-  answer: "/machines",
+  answer: "/main",
 };
 
 const GLYPH: Record<"done" | "next" | "todo" | "later", string> = {
