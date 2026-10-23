@@ -68,3 +68,40 @@ def test_unknown_person_column_is_rejected_as_row_error(
     plant = load_plant(make_plant(extra={"resources.csv": resources}))
     assert plant.resources == []
     assert any("Extra inputs" in e.reason for e in plant.row_errors)
+
+
+def test_loads_a_workshop_without_products_or_routings(make_plant: PlantWriter) -> None:
+    extra = {
+        "resources.csv": (
+            "resource_code,name,station_code,kind,parallel_units\n"
+            "FINISH,Finishing,PAINT,manual,3\nPACK,Packing,PAINT,manual,2\n"
+        ),
+        "orders.csv": (
+            "order_id,sku,quantity_units,due_at,status,released_at,shipped_at,material_ready_at,"
+            "order_value_eur_cents,material_cost_eur_cents\n"
+            "J-1,,4,2026-10-20T16:00:00Z,released,,,,125000,40000\n"
+        ),
+        "calendar.csv": (
+            "resource_code,kind,start_at,end_at,covered,positions\n"
+            "FINISH,shift,2026-10-13T04:00:00Z,2026-10-13T12:30:00Z,false,2\n"
+        ),
+        "events.csv": (
+            "event_id,event_type,at,resource_code,station_code,order_id,operation_seq,"
+            "quantity_units,scrap_units,down_reason_code,scrap_reason_code\n"
+            "e1,start,2026-10-13T07:15:00Z,FINISH,,J-1,,4,0,,\n"
+            "e2,end,2026-10-13T09:50:00Z,FINISH,,J-1,,4,0,,\n"
+        ),
+        "teams.csv": "team_code,name,resource_codes\nFINISH-TEAM,Finishing,FINISH;PACK\n",
+        "team_shifts.csv": (
+            "team_code,start_at,end_at,positions\n"
+            "FINISH-TEAM,2026-10-13T04:00:00Z,2026-10-13T12:30:00Z,3\n"
+        ),
+    }
+    plant = load_plant(make_plant(skip=("products.csv", "routings.csv"), extra=extra))
+    assert plant.row_errors == []
+    assert plant.missing_files == {}
+    assert [r.kind for r in plant.resources] == ["manual", "manual"]
+    assert plant.orders[0].sku is None and plant.orders[0].order_value_eur_cents == 125000
+    assert plant.calendar[0].positions == 2
+    assert plant.teams[0].resource_codes == ("FINISH", "PACK")
+    assert plant.team_shifts[0].positions == 3

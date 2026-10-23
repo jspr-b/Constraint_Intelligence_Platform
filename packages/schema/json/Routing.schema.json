@@ -7,7 +7,7 @@
         "alternative_resource_codes": {
           "default": [],
           "items": {
-            "pattern": "^[A-Z]{2,4}-\\d{2}$",
+            "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
             "type": "string"
           },
           "title": "Alternative Resource Codes",
@@ -24,7 +24,7 @@
           "type": "integer"
         },
         "resource_code": {
-          "pattern": "^[A-Z]{2,4}-\\d{2}$",
+          "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
           "title": "Resource Code",
           "type": "string"
         },

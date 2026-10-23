@@ -3,6 +3,7 @@
     "ResourceKind": {
       "enum": [
         "machine",
+        "manual",
         "station",
         "work_centre"
       ],
@@ -11,7 +12,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "A machine or work centre. Belongs to exactly one station.",
+  "description": "A step: a machine, a handmade bench, a check. Belongs to exactly one station.\n\n``parallel_units`` is how many jobs it can work on at once (machines side by side, or\nbenches); shifts may set fewer or more staffed positions (``CalendarWindow.positions``).",
   "properties": {
     "kind": {
       "$ref": "#/$defs/ResourceKind",
@@ -29,7 +30,7 @@
       "type": "integer"
     },
     "resource_code": {
-      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
       "title": "Resource Code",
       "type": "string"
     },

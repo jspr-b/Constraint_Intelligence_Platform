@@ -3,6 +3,9 @@
 Operations and machines are separate (ADR-0008): a machine can run several operations,
 a routing may visit the same machine twice, and an operation may list alternative machines.
 ERP standard times are kept for reference only; calculations use measured times.
+
+A resource is a step (ADR-0009): a machine, a handmade bench or a check. Products and routings
+are optional; capacity is positions per step per shift, or a shared team's positions.
 """
 
 from enum import StrEnum
@@ -42,12 +45,18 @@ class Station(BaseRecord):
 
 class ResourceKind(StrEnum):
     MACHINE = "machine"
+    MANUAL = "manual"
+    """Handmade work at a bench or place; the client sees "handmade" (ADR-0009)."""
     STATION = "station"
     WORK_CENTRE = "work_centre"
 
 
 class Resource(BaseRecord):
-    """A machine or work centre. Belongs to exactly one station."""
+    """A step: a machine, a handmade bench, a check. Belongs to exactly one station.
+
+    ``parallel_units`` is how many jobs it can work on at once (machines side by side, or
+    benches); shifts may set fewer or more staffed positions (``CalendarWindow.positions``).
+    """
 
     resource_code: ResourceCode
     name: str = Field(min_length=1)
@@ -126,7 +135,7 @@ class CalendarKind(StrEnum):
 
 
 class CalendarWindow(BaseRecord):
-    """A period on one machine's capacity calendar."""
+    """A period on one step's capacity calendar."""
 
     resource_code: ResourceCode
     kind: CalendarKind
@@ -134,6 +143,9 @@ class CalendarWindow(BaseRecord):
     end_at: UtcDatetime
     covered: bool = False
     """For breaks: the machine keeps running because someone covers the break."""
+    positions: int | None = Field(default=None, ge=0)
+    """For shifts: how many positions of the step are staffed (a count, never who). None means
+    the step's ``parallel_units``."""
 
     @model_validator(mode="after")
     def _end_after_start(self) -> Self:
@@ -141,11 +153,38 @@ class CalendarWindow(BaseRecord):
             raise ValueError("end_at must be after start_at")
         if self.covered and self.kind is not CalendarKind.BREAK:
             raise ValueError("only breaks can be covered")
+        if self.positions is not None and self.kind is not CalendarKind.SHIFT:
+            raise ValueError("only shifts have staffed positions")
         return self
 
     @property
     def duration_min(self) -> float:
         return (self.end_at - self.start_at).total_seconds() / 60
+
+
+class Team(BaseRecord):
+    """A team shared by several steps (ADR-0009): together those steps cannot have more
+    positions busy than the team has on the shift. Only a count is kept, never who is in it."""
+
+    team_code: ResourceCode
+    name: str = Field(min_length=1)
+    resource_codes: tuple[ResourceCode, ...] = Field(min_length=1)
+    """The steps the team covers."""
+
+
+class TeamShift(BaseRecord):
+    """How many positions a team has during one shift (a count, never names)."""
+
+    team_code: ResourceCode
+    start_at: UtcDatetime
+    end_at: UtcDatetime
+    positions: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _end_after_start(self) -> Self:
+        if self.end_at <= self.start_at:
+            raise ValueError("end_at must be after start_at")
+        return self
 
 
 class Changeover(BaseRecord):

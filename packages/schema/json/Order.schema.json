@@ -13,11 +13,25 @@
     }
   },
   "additionalProperties": false,
+  "description": "A job: whatever moves through the steps (ADR-0009). The product is optional.",
   "properties": {
     "due_at": {
       "format": "date-time",
       "title": "Due At",
       "type": "string"
+    },
+    "material_cost_eur_cents": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Material Cost Eur Cents"
     },
     "material_ready_at": {
       "anyOf": [
@@ -37,6 +51,19 @@
       "minLength": 1,
       "title": "Order Id",
       "type": "string"
+    },
+    "order_value_eur_cents": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Order Value Eur Cents"
     },
     "quantity_units": {
       "exclusiveMinimum": 0,
@@ -70,10 +97,18 @@
       "title": "Shipped At"
     },
     "sku": {
-      "maxLength": 64,
-      "minLength": 1,
-      "title": "Sku",
-      "type": "string"
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sku"
     },
     "status": {
       "$ref": "#/$defs/OrderStatus",
@@ -88,7 +123,6 @@
   "required": [
     "tenant_id",
     "order_id",
-    "sku",
     "quantity_units",
     "due_at"
   ],

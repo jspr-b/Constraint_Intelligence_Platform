@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "description": "How many positions a team has during one shift (a count, never names).",
+  "properties": {
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "positions": {
+      "minimum": 0,
+      "title": "Positions",
+      "type": "integer"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "team_code": {
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+      "title": "Team Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "team_code",
+    "start_at",
+    "end_at",
+    "positions"
+  ],
+  "title": "TeamShift",
+  "type": "object"
+}

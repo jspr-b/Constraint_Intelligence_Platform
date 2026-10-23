@@ -43,6 +43,11 @@ CATALOG: dict[str, tuple[int, str]] = {
     "plant_exists": (409, "A plant with this code already exists. Choose another code."),
     "unknown_plant": (422, "This plant does not exist. Add it on Plant setup first."),
     "unknown_station": (422, "This station does not exist for the plant."),
+    "bad_step_code": (
+        422,
+        "Use your own short code for the step: capitals, digits and -, 2 to 32 characters, "
+        "starting with a letter. A step is a place, so no words for people.",
+    ),
     "unknown_machine": (
         422,
         "This machine does not exist for the plant. Machines come in with your import.",

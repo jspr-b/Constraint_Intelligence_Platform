@@ -24,18 +24,19 @@ from cip_schema.master import (
     Routing,
     RoutingStep,
     Station,
+    Team,
+    TeamShift,
 )
 from cip_schema.transactional import OperationEvent, Order
 from constraint_engine.figure import Confidence, Missing
 
 OFFLINE_TENANT = uuid5(NAMESPACE_URL, "cip:offline")
 
+# Products and routings are optional (ADR-0009): they add euros and confidence.
 REQUIRED = (
     "plant.json",
     "stations.csv",
     "resources.csv",
-    "products.csv",
-    "routings.csv",
     "orders.csv",
     "events.csv",
     "calendar.csv",
@@ -64,6 +65,8 @@ class LoadedPlant:
     overtime: list[OvertimeWorked] = field(default_factory=list)
     capacity_costs: list[CapacityCost] = field(default_factory=list)
     outsourcing: list[OutsourcingPrice] = field(default_factory=list)
+    teams: list[Team] = field(default_factory=list)
+    team_shifts: list[TeamShift] = field(default_factory=list)
     row_errors: list[RowError] = field(default_factory=list)
     missing_files: dict[str, Missing] = field(default_factory=dict)
 
@@ -96,12 +99,18 @@ def _read_csv(path: Path) -> list[tuple[int, dict[str, Any]]]:
         return [(i + 2, _clean(row)) for i, row in enumerate(csv.DictReader(fh))]
 
 
+# List columns in the standard layout, ";"-separated.
+_LISTS: dict[type[BaseModel], str] = {Team: "resource_codes"}
+
+
 def _load_rows[M: BaseModel](
     path: Path, model: type[M], tenant_id: UUID, plant: LoadedPlant
 ) -> list[M]:
     out: list[M] = []
     for line, row in _read_csv(path):
-        values = {k: v for k, v in row.items() if v is not None}
+        values: dict[str, Any] = {k: v for k, v in row.items() if v is not None}
+        if (column := _LISTS.get(model)) and column in values:
+            values[column] = tuple(c for c in values[column].split(";") if c)
         try:
             out.append(model.model_validate({"tenant_id": tenant_id, **values}))
         except ValidationError as exc:
@@ -156,6 +165,8 @@ _FILES: dict[str, tuple[str, type[BaseModel]]] = {
     "overtime.csv": ("overtime", OvertimeWorked),
     "capacity_costs.csv": ("capacity_costs", CapacityCost),
     "outsourcing.csv": ("outsourcing", OutsourcingPrice),
+    "teams.csv": ("teams", Team),
+    "team_shifts.csv": ("team_shifts", TeamShift),
 }
 
 

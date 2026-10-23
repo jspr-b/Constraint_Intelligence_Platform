@@ -10,7 +10,7 @@ from typing import Self
 from pydantic import Field, model_validator
 
 from cip_schema.base import BaseRecord
-from cip_schema.types import OrderId, ResourceCode, Sku, StationCode, UtcDatetime
+from cip_schema.types import EurCents, OrderId, ResourceCode, Sku, StationCode, UtcDatetime
 
 
 class OrderStatus(StrEnum):
@@ -22,14 +22,20 @@ class OrderStatus(StrEnum):
 
 
 class Order(BaseRecord):
+    """A job: whatever moves through the steps (ADR-0009). The product is optional."""
+
     order_id: OrderId
-    sku: Sku
+    sku: Sku | None = None
     quantity_units: int = Field(gt=0)
     due_at: UtcDatetime
     status: OrderStatus = OrderStatus.OPEN
     released_at: UtcDatetime | None = None
     shipped_at: UtcDatetime | None = None
     material_ready_at: UtcDatetime | None = None
+    order_value_eur_cents: EurCents | None = Field(default=None, ge=0)
+    """What the customer pays for the whole job; used for € when there are no product prices."""
+    material_cost_eur_cents: EurCents | None = Field(default=None, ge=0)
+    """Truly variable cost of the whole job (materials, bought parts, outsourcing; not labour)."""
 
     @model_validator(mode="after")
     def _consistent_dates(self) -> Self:
@@ -80,8 +86,9 @@ class OperationEvent(BaseRecord):
                 raise ValueError(f"{t} events need a station_code or resource_code")
         elif self.resource_code is None:
             raise ValueError(f"{t} events need a resource_code")
-        if t in _NEEDS_ORDER and (self.order_id is None or self.operation_seq is None):
-            raise ValueError(f"{t} events need order_id and operation_seq")
+        # The step number is optional (ADR-0009): without it, a job's path comes from its times.
+        if t in _NEEDS_ORDER and self.order_id is None:
+            raise ValueError(f"{t} events need an order_id (the job)")
         if self.down_reason_code is not None and t not in _DOWN:
             raise ValueError("down_reason_code is only allowed on down events")
         if t is EventType.SCRAP and self.scrap_units == 0:

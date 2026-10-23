@@ -9,30 +9,9 @@ mapping lists it in ``personal_columns``.
 import re
 
 from cip_connectors.readers import DropRule
+from cip_schema.types import PERSON_WORDS
 
-DENYLIST = (
-    "operator",
-    "operateur",
-    "employee",
-    "worker",
-    "person",
-    "personeel",
-    "medewerker",
-    "werknemer",
-    "badge",
-    "pasnummer",
-    "voornaam",
-    "achternaam",
-    "firstname",
-    "lastname",
-    "email",
-    "phone",
-    "telefoon",
-    "mobiel",
-    "gebruiker",
-    "username",
-    "userid",
-)
+DENYLIST = PERSON_WORDS
 
 
 def _normalise(column: str) -> str:

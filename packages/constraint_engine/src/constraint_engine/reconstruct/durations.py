@@ -42,6 +42,7 @@ def _operation_names(plant: LoadedPlant) -> dict[tuple[str, int], tuple[str, str
     return {
         (o.order_id, seq): (o.sku, name)
         for o in plant.orders
+        if o.sku is not None
         for seq, name in by_sku[o.sku].items()
     }
 

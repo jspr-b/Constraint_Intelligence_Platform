@@ -27,6 +27,8 @@ TABLES: dict[str, str] = {
     "overtime": "overtime_worked",
     "capacity_costs": "capacity_costs",
     "outsourcing": "outsourcing_prices",
+    "teams": "teams",
+    "team_shifts": "team_shifts",
 }
 
 

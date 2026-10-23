@@ -82,3 +82,40 @@ def test_concurrent_replaces_of_one_plant_are_serialised(tenant: uuid.UUID) -> N
         assert conn.execute(text("SELECT count(*) FROM stations")).scalar_one() == len(
             plant.stations
         )
+
+
+def test_a_workshop_with_teams_and_job_value_is_stored(tenant: uuid.UUID, tmp_path: Path) -> None:
+    files = {
+        "plant.json": '{"plant_code": "PLANT-A", "name": "W", "timezone_iana": "Europe/Amsterdam"}',
+        "stations.csv": "station_code,name\nFINISHING,Finishing\n",
+        "resources.csv": (
+            "resource_code,name,station_code,kind,parallel_units\n"
+            "FINISH,Finishing,FINISHING,manual,3\nPACK,Packing,FINISHING,manual,2\n"
+        ),
+        "orders.csv": (
+            "order_id,quantity_units,due_at,status,order_value_eur_cents,material_cost_eur_cents\n"
+            "J-1,4,2026-10-20T16:00:00Z,released,125000,40000\n"
+        ),
+        "calendar.csv": (
+            "resource_code,kind,start_at,end_at,positions\n"
+            "FINISH,shift,2026-10-13T04:00:00Z,2026-10-13T12:30:00Z,2\n"
+        ),
+        "teams.csv": "team_code,name,resource_codes\nFINISH-TEAM,Finishing,FINISH;PACK\n",
+        "team_shifts.csv": (
+            "team_code,start_at,end_at,positions\n"
+            "FINISH-TEAM,2026-10-13T04:00:00Z,2026-10-13T12:30:00Z,3\n"
+        ),
+    }
+    for name, content in files.items():
+        (tmp_path / name).write_text(content)
+    plant = load_plant(tmp_path)
+    assert plant.row_errors == []
+    with tenant_conn(get_settings(), tenant) as conn:
+        counts = replace_plant_data(conn, tenant, "PLANT-A", plant)
+        team = conn.execute(text("SELECT resource_codes FROM teams")).scalar_one()
+        shift = conn.execute(text("SELECT positions FROM team_shifts")).scalar_one()
+        job = conn.execute(text("SELECT sku, order_value_eur_cents FROM orders")).one()
+        positions = conn.execute(text("SELECT positions FROM calendar_windows")).scalar_one()
+    assert counts["teams"] == 1 and counts["team_shifts"] == 1
+    assert team == "FINISH,PACK" and shift == 3 and positions == 2
+    assert job.sku is None and job.order_value_eur_cents == 125000

@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "description": "A team shared by several steps (ADR-0009): together those steps cannot have more\npositions busy than the team has on the shift. Only a count is kept, never who is in it.",
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "resource_codes": {
+      "items": {
+        "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Resource Codes",
+      "type": "array"
+    },
+    "team_code": {
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
+      "title": "Team Code",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "team_code",
+    "name",
+    "resource_codes"
+  ],
+  "title": "Team",
+  "type": "object"
+}

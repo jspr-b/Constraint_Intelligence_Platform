@@ -1,5 +1,6 @@
 """Shared field types for the standard production-flow model (ADR-0002, ADR-0005)."""
 
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
@@ -23,8 +24,50 @@ EurCents = int
 
 TenantId = UUID
 
-ResourceCode = Annotated[str, StringConstraints(pattern=r"^[A-Z]{2,4}-\d{2}$")]
-"""Short machine code such as ``PNT-01`` or ``WLD-02``."""
+PERSON_WORDS = (
+    "operator",
+    "operateur",
+    "employee",
+    "worker",
+    "person",
+    "personeel",
+    "medewerker",
+    "werknemer",
+    "badge",
+    "pasnummer",
+    "voornaam",
+    "achternaam",
+    "firstname",
+    "lastname",
+    "email",
+    "phone",
+    "telefoon",
+    "mobiel",
+    "gebruiker",
+    "username",
+    "userid",
+)
+"""Words that point at a person (English and Dutch), ADR-0005. Columns and codes with them
+are refused."""
+
+
+def has_person_word(text: str) -> bool:
+    """True when ``text``, ignoring case and punctuation, contains a word for a person."""
+    flat = re.sub(r"[^a-z0-9]", "", text.lower())
+    return any(word in flat for word in PERSON_WORDS)
+
+
+def _names_a_place(code: str) -> str:
+    if has_person_word(code):
+        raise ValueError("a step code names a place where work happens, never a person (ADR-0009)")
+    return code
+
+
+ResourceCode = Annotated[
+    str, StringConstraints(pattern=r"^[A-Z][A-Z0-9-]{1,31}$"), AfterValidator(_names_a_place)
+]
+"""A step's own short code (ADR-0009): ``PNT-01``, ``WELD-BENCH``, ``FIN``. Upper case, digits and
+hyphens, 2 to 32 characters; a machine, a handmade bench or a check, never a person."""
 
 StationCode = Annotated[str, StringConstraints(pattern=r"^[A-Z][A-Z0-9-]{1,31}$")]
 """Station (work area) code such as ``PAINT`` or ``WELD-CELL``."""

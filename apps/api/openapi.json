@@ -2146,7 +2146,7 @@
         "properties": {
           "kind": {
             "default": "machine",
-            "pattern": "^(machine|station|work_centre)$",
+            "pattern": "^(machine|manual|station|work_centre)$",
             "title": "Kind",
             "type": "string"
           },

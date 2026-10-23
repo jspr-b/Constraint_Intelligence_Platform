@@ -69,3 +69,60 @@ def test_capacity_costs_in_cents() -> None:
     assert cost.overtime_eur_cents_per_h == 6250
     price = OutsourcingPrice(tenant_id=T, operation="Paint", price_eur_cents_per_unit=1800)
     assert price.sku is None
+
+
+def test_a_shift_has_staffed_positions_other_windows_not() -> None:
+    shift = CalendarWindow(
+        tenant_id=T,
+        resource_code="WELD-BENCH",
+        kind=CalendarKind.SHIFT,
+        start_at=A,
+        end_at=B,
+        positions=3,
+    )
+    assert shift.positions == 3
+    with pytest.raises(ValidationError, match="only shifts"):
+        CalendarWindow(
+            tenant_id=T,
+            resource_code="WELD-BENCH",
+            kind=CalendarKind.BREAK,
+            start_at=A,
+            end_at=B,
+            positions=3,
+        )
+    with pytest.raises(ValidationError):
+        CalendarWindow(
+            tenant_id=T,
+            resource_code="WELD-BENCH",
+            kind=CalendarKind.SHIFT,
+            start_at=A,
+            end_at=B,
+            positions=-1,
+        )
+
+
+def test_a_team_covers_steps_and_has_positions_per_shift() -> None:
+    from cip_schema.master import Team, TeamShift
+
+    team = Team(
+        tenant_id=T, team_code="FINISH-TEAM", name="Finishing", resource_codes=("FINISH", "PACK")
+    )
+    assert team.resource_codes == ("FINISH", "PACK")
+    with pytest.raises(ValidationError):
+        Team(tenant_id=T, team_code="FINISH-TEAM", name="Finishing", resource_codes=())
+    assert TeamShift(tenant_id=T, team_code="FINISH-TEAM", start_at=A, end_at=B, positions=3)
+    with pytest.raises(ValidationError, match="after"):
+        TeamShift(tenant_id=T, team_code="FINISH-TEAM", start_at=B, end_at=A, positions=3)
+
+
+def test_a_team_never_holds_who_is_in_it() -> None:
+    from cip_schema.master import Team, TeamShift
+
+    assert set(Team.model_fields) == {"tenant_id", "team_code", "name", "resource_codes"}
+    assert set(TeamShift.model_fields) == {
+        "tenant_id",
+        "team_code",
+        "start_at",
+        "end_at",
+        "positions",
+    }

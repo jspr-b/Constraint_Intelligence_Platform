@@ -80,7 +80,7 @@
     "resource_code": {
       "anyOf": [
         {
-          "pattern": "^[A-Z]{2,4}-\\d{2}$",
+          "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
           "type": "string"
         },
         {

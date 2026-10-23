@@ -21,6 +21,8 @@ from cip_schema.master import (
     Routing,
     RoutingStep,
     Station,
+    Team,
+    TeamShift,
 )
 from cip_schema.transactional import OperationEvent, Order
 from constraint_engine.figure import Confidence, Missing
@@ -38,6 +40,8 @@ RECORDS: dict[str, type[BaseModel]] = {
     "overtime": OvertimeWorked,
     "capacity_costs": CapacityCost,
     "outsourcing": OutsourcingPrice,
+    "teams": Team,
+    "team_shifts": TeamShift,
 }
 
 

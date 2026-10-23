@@ -40,6 +40,8 @@ STANDARD_COLUMNS: dict[str, tuple[str, ...]] = {
         "released_at",
         "shipped_at",
         "material_ready_at",
+        "order_value_eur_cents",
+        "material_cost_eur_cents",
     ),
     "events": (
         "event_id",
@@ -54,19 +56,21 @@ STANDARD_COLUMNS: dict[str, tuple[str, ...]] = {
         "down_reason_code",
         "scrap_reason_code",
     ),
-    "calendar": ("resource_code", "kind", "start_at", "end_at", "covered"),
+    "calendar": ("resource_code", "kind", "start_at", "end_at", "covered", "positions"),
     "resource_operations": ("resource_code", "operation", "standard_run_min_per_unit"),
     "changeovers": ("resource_code", "from_setup_family", "to_setup_family", "changeover_min"),
     "overtime": ("resource_code", "iso_year", "iso_week", "overtime_h"),
     "capacity_costs": ("resource_code", "overtime_eur_cents_per_h", "extra_shift_eur_cents"),
     "outsourcing": ("operation", "sku", "price_eur_cents_per_unit"),
+    "teams": ("team_code", "name", "resource_codes"),
+    "team_shifts": ("team_code", "start_at", "end_at", "positions"),
 }
 REQUIRED: dict[str, tuple[str, ...]] = {
     "stations": ("station_code", "name"),
     "resources": ("resource_code", "name", "station_code"),
     "products": ("sku", "name", "family", "sales_price_eur_cents", "truly_variable_cost_eur_cents"),
     "routings": ("sku", "operation_seq", "operation", "resource_code"),
-    "orders": ("order_id", "sku", "quantity_units", "due_at"),
+    "orders": ("order_id", "quantity_units", "due_at"),
     "events": ("event_id", "event_type", "at"),
     "calendar": ("resource_code", "kind", "start_at", "end_at"),
     "resource_operations": ("resource_code", "operation"),
@@ -74,6 +78,8 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "overtime": ("resource_code", "iso_year", "iso_week", "overtime_h"),
     "capacity_costs": ("resource_code",),
     "outsourcing": ("operation", "price_eur_cents_per_unit"),
+    "teams": ("team_code", "name", "resource_codes"),
+    "team_shifts": ("team_code", "start_at", "end_at", "positions"),
 }
 
 Reader = Callable[[Path, MappingSet, DropRule], SourceTable]

@@ -32,14 +32,24 @@ def test_naive_datetimes_are_rejected(value: datetime) -> None:
         utc_adapter.validate_python(value)
 
 
-@pytest.mark.parametrize("code", ["PNT-01", "WLD-02", "CUT-10", "ASMB-99"])
-def test_valid_resource_codes(code: str) -> None:
+@pytest.mark.parametrize(
+    "code", ["PNT-01", "WLD-02", "CUT-10", "ASMB-99", "FIN", "WELD-BENCH", "PACK", "LINE-2B"]
+)
+def test_valid_step_codes(code: str) -> None:
     assert code_adapter.validate_python(code) == code
 
 
-@pytest.mark.parametrize("code", ["pnt-01", "PNT01", "P-01", "PAINTS-01", "PNT-1", "PNT-001", ""])
-def test_invalid_resource_codes(code: str) -> None:
+@pytest.mark.parametrize(
+    "code", ["pnt-01", "P", "1ST-LINE", "WELD BENCH", "WELD_1", "-FIN", "A" * 33, ""]
+)
+def test_invalid_step_codes(code: str) -> None:
     with pytest.raises(ValidationError):
+        code_adapter.validate_python(code)
+
+
+@pytest.mark.parametrize("code", ["OPERATOR-1", "BENCH-MEDEWERKER", "WORKER-3"])
+def test_step_codes_never_name_a_person(code: str) -> None:
+    with pytest.raises(ValidationError, match="never a person"):
         code_adapter.validate_python(code)
 
 

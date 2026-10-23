@@ -176,3 +176,21 @@ def test_file_check_before_running(client_as: Callable[[str], TestClient]) -> No
         "calendar": False,
     }
     assert "mes_events" in body["expected_files"]
+
+
+def test_an_import_without_products_or_routings_succeeds(
+    client_as: Callable[[str], TestClient],
+) -> None:
+    """ADR-0009: steps, jobs and touchpoints are enough; products and routings add confidence."""
+    it = client_as("it")
+    keep = {"werkplekken.csv", "orders.csv", "mes_events.csv", "rooster.csv"}
+    files = [f for f in _files(EXPORT / "clean" / "csv") if f[1][0] in keep]
+    body = it.post("/plants/PLANT-1/imports", files=files).json()
+    assert it.post(f"/imports/{body['import_id']}/run").status_code == 202
+    done = it.get(f"/imports/{body['import_id']}").json()
+    assert done["status"] == "done", done["error"]
+    stored = done["report"]["stored_rows"]
+    assert stored["resources"] == 6 and stored["events"] > 1000 and stored["orders"] > 0
+    assert "products" not in stored and "routings" not in stored
+    files_missing = done["report"]["quality"]["files_missing"]
+    assert "products.csv" not in files_missing and "routings.csv" not in files_missing

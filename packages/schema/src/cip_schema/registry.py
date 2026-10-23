@@ -16,6 +16,8 @@ from cip_schema.master import (
     Routing,
     RoutingStep,
     Station,
+    Team,
+    TeamShift,
 )
 from cip_schema.transactional import OperationEvent, Order
 
@@ -31,6 +33,8 @@ MODELS: dict[str, type[BaseModel]] = {
         Routing,
         RoutingStep,
         CalendarWindow,
+        Team,
+        TeamShift,
         OvertimeWorked,
         CapacityCost,
         OutsourcingPrice,

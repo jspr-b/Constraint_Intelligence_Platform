@@ -210,7 +210,7 @@ export function SetupPage() {
                           body: {
                             name: String(form.get("name") ?? ""),
                             station_code: String(form.get("station") ?? ""),
-                            kind: "machine",
+                            kind: form.get("kind") === "manual" ? "manual" : "machine",
                             parallel_units: Number(form.get("units") ?? 1),
                           },
                         }),
@@ -229,6 +229,14 @@ export function SetupPage() {
                     </Field>
                     <Field label={t("machineName")}>
                       {(id) => <input id={id} name="name" required className={FIELD} />}
+                    </Field>
+                    <Field label={t("stepKind")}>
+                      {(id) => (
+                        <select id={id} name="kind" defaultValue="machine" className={FIELD}>
+                          <option value="machine">{t("kindMachine")}</option>
+                          <option value="manual">{t("kindManual")}</option>
+                        </select>
+                      )}
                     </Field>
                     <Field label={t("station")}>
                       {(id) => (
@@ -290,6 +298,9 @@ export function SetupPage() {
                                 <span key={m.resource_code} className="mr-3 inline-block">
                                   <span className="font-mono text-xs">{m.resource_code}</span>{" "}
                                   {m.name}
+                                  {m.kind === "manual" && (
+                                    <span className="text-muted"> · {t("handmade")}</span>
+                                  )}
                                   {m.parallel_units > 1 && (
                                     <span className="text-muted">
                                       {" ×"}

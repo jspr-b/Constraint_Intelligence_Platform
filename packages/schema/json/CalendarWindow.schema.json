@@ -13,7 +13,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "A period on one machine's capacity calendar.",
+  "description": "A period on one step's capacity calendar.",
   "properties": {
     "covered": {
       "default": false,
@@ -28,8 +28,21 @@
     "kind": {
       "$ref": "#/$defs/CalendarKind"
     },
+    "positions": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Positions"
+    },
     "resource_code": {
-      "pattern": "^[A-Z]{2,4}-\\d{2}$",
+      "pattern": "^[A-Z][A-Z0-9-]{1,31}$",
       "title": "Resource Code",
       "type": "string"
     },

@@ -12,7 +12,7 @@ from typing import Annotated, Any
 from zoneinfo import available_timezones
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
 from sqlalchemy import text
 
 from cip_api.auth.roles import Decision
@@ -20,6 +20,7 @@ from cip_api.auth.sessions import audit
 from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut
 from cip_api.tenancy import Ctx, require
+from cip_schema.types import ResourceCode
 from constraint_engine.figure import Missing
 from constraint_engine.formulas.throughput import throughput_per_unit_eur_cents
 
@@ -27,6 +28,17 @@ router = APIRouter(tags=["plant setup"])
 View = Annotated[Ctx, Depends(require(page="setup"))]
 Edit = Annotated[Ctx, Depends(require(page="setup", decision=Decision.EDIT_SETUP_CALENDAR))]
 CODE = re.compile(r"^[A-Z0-9][A-Z0-9_-]{0,31}$")
+
+
+STEP_CODE: TypeAdapter[str] = TypeAdapter(ResourceCode)
+
+
+def _step_code(value: str) -> str:
+    """The step code rule of the standard model (ADR-0009), with a plain error."""
+    try:
+        return STEP_CODE.validate_python(value.strip().upper())
+    except ValidationError:
+        raise ApiProblem("bad_step_code") from None
 
 
 def _code(value: str) -> str:
@@ -58,7 +70,7 @@ class StationIn(BaseModel):
 class ResourceIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     station_code: str
-    kind: str = Field(default="machine", pattern="^(machine|station|work_centre)$")
+    kind: str = Field(default="machine", pattern="^(machine|manual|station|work_centre)$")
     parallel_units: int = Field(default=1, ge=1, le=100)
 
     _c = field_validator("station_code")(_code)
@@ -344,7 +356,7 @@ def put_station(plant_code: str, station_code: str, body: StationIn, ctx: Edit) 
 @router.put("/plants/{plant_code}/resources/{resource_code}", response_model=SetupOut)
 def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edit) -> SetupOut:
     _exists(ctx, plant_code)
-    code = _code(resource_code)
+    code = _step_code(resource_code)
     station = ctx.db.execute(
         text("SELECT 1 FROM stations WHERE plant_code = :p AND station_code = :s"),
         {"p": plant_code, "s": body.station_code},
