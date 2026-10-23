@@ -35,7 +35,7 @@ Machine efficiency is an input to finding the constraint, not a goal on its own.
 
 ### Task-level timing
 
-Cycle time is measured per task and per station, so actual task times replace ERP standard times and feed the detection and forecast engines. Timing is never attributed to named individuals (see Hard constraints).
+Cycle time is measured per task and per step (machine or handmade), so actual task times replace ERP standard times and feed the detection and forecast engines. Timing is never attributed to named individuals (see Hard constraints).
 
 ### Time horizons
 
@@ -80,8 +80,15 @@ Key consequences for the code:
 
 ## Core concepts and entities
 
-- `Plant`, `Resource` (machine, station, work centre), `Routing`, `Operation`, `Order`, `Product`.
-- `OperationEvent`: timestamped start/end/setup/downtime per operation and resource.
+The plant is modelled as **steps and touchpoints**, not machines or products (ADR-0009). Physical transformation is not an industry standard: some steps are machines, some are handmade. We do not need to know the final product.
+
+- **Step**: any place where work happens (machine, handmade bench, check, packing). In code a `Resource` with a `kind` (machine, manual, station, work centre); the client sees "step".
+- **Job**: whatever moves through the steps (order, batch, ticket); in code an `Order`.
+- **Touchpoint**: a job passing a step (arrive, start, finish, leave, setup, stop, scrap); in code an `OperationEvent`.
+- **Capacity**: positions per step per shift, or a shared team's size per shift. Counts only, never people.
+- Products and routings are optional: they add euros, standard times and confidence. Without them a job's path comes from its touchpoint times, and euros from job value minus material cost.
+- `Plant`, `Resource`, `Routing`, `Operation`, `Order`, `Product`, `Team`.
+- `OperationEvent`: timestamped start/end/setup/downtime per job and step.
 - `ResourceState`: running, idle, starved, blocked, down, setup.
 - `CapacityCalendar`: shifts, maintenance, holidays per resource.
 - `ConstraintDetection`: resource, period, method results, agreement score, confidence.

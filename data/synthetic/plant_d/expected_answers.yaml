@@ -1,0 +1,14 @@
+# Fixed on 2026-10-23 (CI0003 sequence 01) before any code. Do not edit to fit the code.
+# Exact figures (busy shares, lost hours and euros per month) are added by the generator from its own log.
+plant_code: PLANT-D
+constraint: FINISH-TEAM
+constraint_type: team
+constraint_kind: internal
+constraint_covers: [FINISH, PACK]
+min_methods_agreeing: 3
+confidence: medium
+money_source: job_value
+euro_tolerance_pct: 2.0
+not_constraint: [LASER, PRESS]
+forgotten_finish_scan_share_pct: 4.0
+personal_column_dropped: operator

@@ -14,6 +14,7 @@ Every architecture decision is recorded here before it is implemented (CLAUDE.md
 | [0006](0006-frontend.md) | Frontend stack and theme | Accepted |
 | [0007](0007-roles-and-access.md) | Roles and access | Proposed |
 | [0008](0008-flow-views.md) | Plant flow views | Proposed |
+| [0009](0009-steps-and-touchpoints.md) | Steps and touchpoints, not machines or products | Accepted |
 
 ## Adding an ADR
 
