@@ -46,6 +46,22 @@ describe("messages", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("every export format's files, tables and fields have a label", () => {
+    const mappings = join(process.cwd(), "..", "..", "packages", "connectors", "mappings");
+    for (const format of readdirSync(mappings)) {
+      const yaml = readFileSync(join(mappings, format, "mapping.yaml"), "utf8");
+      const tables = yaml.split(/\n\s*- source: /).slice(1);
+      for (const table of tables) {
+        const source = (table.split("\n")[0] ?? "").trim();
+        const target = /\n\s+target: (\w+)/.exec(table)?.[1] ?? "";
+        expect(en.import.source[source as keyof typeof en.import.source], source).toBeTruthy();
+        expect(en.model.tables[target as keyof typeof en.model.tables], target).toBeTruthy();
+        for (const [, field] of table.matchAll(/\n\s{6}(\w+): \{/g))
+          expect(en.model.fields[field as keyof typeof en.model.fields], field).toBeTruthy();
+      }
+    }
+  });
+
   it("every glossary term has a name and a one-line explanation", () => {
     for (const term of TERMS) {
       expect(en.glossary.terms[term].name, term).toBeTruthy();

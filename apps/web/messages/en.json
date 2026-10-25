@@ -343,7 +343,13 @@
       "overuren": "Overtime per machine",
       "capaciteitskosten": "Capacity costs",
       "omsteltijden": "Changeover times",
-      "uitbesteding": "Outsourcing prices"
+      "uitbesteding": "Outsourcing prices",
+      "workstations": "Steps and areas",
+      "shift_plan": "Shifts with staffed positions",
+      "teams": "Teams and the steps they cover",
+      "team_plan": "Team sizes per shift",
+      "jobs": "Jobs with value",
+      "scans": "Scans (touchpoints)"
     },
     "failedStep": {
       "read": "We could not read your files. Check that each export is the full file, saved as CSV or Excel, and upload it again.",
@@ -684,7 +690,9 @@
       "products": "Products",
       "resources": "Machines",
       "routings": "Routings",
-      "stations": "Stations"
+      "stations": "Stations",
+      "team_shifts": "Team sizes per shift",
+      "teams": "Teams"
     },
     "fields": {
       "alternative_resource_codes": "other machines that can do it",
@@ -702,18 +710,22 @@
       "iso_week": "week",
       "iso_year": "year",
       "kind": "kind",
+      "material_cost_eur_cents": "material cost (€)",
       "material_ready_at": "material ready",
       "name": "name",
       "operation": "operation",
       "operation_seq": "step number",
       "order_id": "order number",
+      "order_value_eur_cents": "job value (€)",
       "overtime_eur_cents_per_h": "overtime cost (€ per hour)",
       "overtime_h": "overtime (hours)",
       "parallel_units": "units side by side",
+      "positions": "staffed positions",
       "price_eur_cents_per_unit": "price per unit (€)",
       "quantity_units": "quantity",
       "released_at": "released",
       "resource_code": "machine code",
+      "resource_codes": "steps the team covers",
       "sales_price_eur_cents": "sales price (€)",
       "scrap_reason_code": "scrap reason",
       "scrap_units": "scrap (units)",
@@ -725,6 +737,7 @@
       "start_at": "start",
       "station_code": "station code",
       "status": "status",
+      "team_code": "team code",
       "to_setup_family": "to colour/setup group",
       "truly_variable_cost_eur_cents": "truly variable cost (€)"
     },

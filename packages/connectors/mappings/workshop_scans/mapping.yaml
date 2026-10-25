@@ -1,0 +1,94 @@
+# Mapping for a workshop scan-system export (as produced by data/synthetic/plant_d/erp_export).
+# Steps, not machines or products (ADR-0009): a steps list, a shift plan with staffed positions,
+# a team and its plan, jobs with their value, and one scan log. The plant's own step codes are
+# used as they are; no products, routings or step numbers.
+source_system: WORKSHOP-SCANS
+timezone: Europe/Amsterdam
+decimal: "."
+delimiter: ","
+datetime_format: "%Y-%m-%d %H:%M"
+personal_columns: [Operator]
+
+code_tables:
+  step_kind: { Machine: machine, Handwork: manual }
+  action:
+    START: start
+    FINISH: end
+    STOP: down_start
+    RESTART: down_end
+    ARRIVE: scan
+    LEAVE: move
+  job_status: { Open: open, Released: released, In progress: in_progress, Shipped: shipped }
+  window: { Shift: shift, Break: break, Maintenance: maintenance, Holiday: holiday }
+
+tables:
+  # workstations: Workstation,Description,Area code,Area,Type,Positions  →  FINISH,Finishing and check,FINISHING,Finishing and packing,Handwork,3
+  - source: workstations
+    target: stations
+    unique: true
+    fields:
+      station_code: { from: Area code }
+      name: { from: Area }
+  - source: workstations
+    target: resources
+    fields:
+      resource_code: { from: Workstation }
+      name: { from: Description }
+      station_code: { from: Area code }
+      kind: { from: Type, code_table: step_kind }
+      parallel_units: { from: Positions, type: int }
+
+  # shift_plan: Workstation,Type,Start,End,Staffed  →  FINISH,Shift,2026-07-20 06:00,2026-07-20 14:30,3
+  - source: shift_plan
+    target: calendar
+    fields:
+      resource_code: { from: Workstation }
+      kind: { from: Type, code_table: window }
+      start_at: { from: Start, type: datetime }
+      end_at: { from: End, type: datetime }
+      positions: { from: Staffed, type: int, optional: true }
+
+  # teams: Team,Name,Workstations  →  FINISH-TEAM,Finishing team,FINISH;PACK
+  - source: teams
+    target: teams
+    fields:
+      team_code: { from: Team }
+      name: { from: Name }
+      resource_codes: { from: Workstations, type: list }
+
+  # team_plan: Team,Start,End,Staffed  →  FINISH-TEAM,2026-07-20 06:00,2026-07-20 14:30,3
+  - source: team_plan
+    target: team_shifts
+    fields:
+      team_code: { from: Team }
+      start_at: { from: Start, type: datetime }
+      end_at: { from: End, type: datetime }
+      positions: { from: Staffed, type: int }
+
+  # jobs: Job,Qty,Due,Status,Released,Shipped,Order value,Material cost
+  #       JOB-24000,3,2026-07-30 00:00,Shipped,2026-07-20 00:00,2026-07-20 12:30,2850.00,1050.00
+  - source: jobs
+    target: orders
+    fields:
+      order_id: { from: Job }
+      quantity_units: { from: Qty, type: int }
+      due_at: { from: Due, type: datetime }
+      status: { from: Status, code_table: job_status }
+      released_at: { from: Released, type: datetime, optional: true }
+      shipped_at: { from: Shipped, type: datetime, optional: true }
+      order_value_eur_cents: { from: Order value, type: eur_cents, optional: true }
+      material_cost_eur_cents: { from: Material cost, type: eur_cents, optional: true }
+
+  # scans: Job,Workstation,Area code,Time,Action,Qty,Reason,Operator
+  #        JOB-24000,FINISH,,2026-07-20 09:12,START,3,,(dropped: personal)
+  - source: scans
+    target: events
+    fields:
+      event_id: { generate: row_id }
+      event_type: { from: Action, code_table: action }
+      at: { from: Time, type: datetime }
+      resource_code: { from: Workstation, optional: true }
+      station_code: { from: Area code, optional: true }
+      order_id: { from: Job, optional: true }
+      quantity_units: { from: Qty, type: int, optional: true }
+      down_reason_code: { from: Reason, optional: true }

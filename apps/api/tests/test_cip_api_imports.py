@@ -194,3 +194,32 @@ def test_an_import_without_products_or_routings_succeeds(
     assert "products" not in stored and "routings" not in stored
     files_missing = done["report"]["quality"]["files_missing"]
     assert "products.csv" not in files_missing and "routings.csv" not in files_missing
+
+
+def test_a_workshop_scan_export_is_recognised_and_imported(
+    world: World, client_as: Callable[[str], TestClient]
+) -> None:
+    """Plant D (ADR-0009): its own format is recognised by its file names; the operator column
+    is dropped; steps, the shared team and the scans are stored."""
+    plant_d = EXPORT.parents[1] / "plant_d" / "erp_export" / "clean" / "csv"
+    it = client_as("it")
+    body = it.post("/plants/PLANT-1/imports", files=_files(plant_d)).json()
+    assert body["status"] == "uploaded" and len(body["files"]) == 6
+    assert all(f["recognised_as"] for f in body["files"])
+    scans = next(s for s in body["sources"] if s["source"] == "scans")
+    assert {c["name"]: c["status"] for c in scans["columns"]}["Operator"] == "not_imported"
+    assert {n["key"] for n in body["needed"]} >= {"orders", "events", "calendar"}
+    assert all(n["sources"] for n in body["needed"])
+
+    assert it.post(f"/imports/{body['import_id']}/run").status_code == 202
+    done = it.get(f"/imports/{body['import_id']}").json()
+    assert done["status"] == "done", done["error"]
+    assert done["report"]["import"]["dropped_columns"]["scans"] == ["Operator"]
+    stored = done["report"]["stored_rows"]
+    assert stored["resources"] == 6 and stored["teams"] == 1 and stored["events"] == 28541
+    with world.owner.connect() as conn:
+        team = conn.execute(
+            text("SELECT team_code FROM teams WHERE tenant_id = :t AND plant_code = 'PLANT-1'"),
+            {"t": world.a},
+        ).scalar_one()
+    assert team == "FINISH-TEAM"

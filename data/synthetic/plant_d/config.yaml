@@ -1,0 +1,90 @@
+# Synthetic plant D: a metal workshop where the bottleneck is handmade work (ADR-0009).
+# Two machine steps, three handmade steps and packing; finishing and packing share one team that
+# is smaller than the benches it covers. The plant shares no products, routings or step numbers;
+# jobs carry their value and material cost. 4% of finish scans at handmade steps are forgotten.
+# The fixed known answer is in known_answer.yaml. Not real customer data.
+plant_code: PLANT-D
+name: Plant D (synthetic)
+timezone: Europe/Amsterdam
+seed: 7
+start_date: 2026-07-20
+weeks_history: 12
+weeks_orderbook: 12
+initial_backlog_weeks: 1.0
+stations:
+  CUTTING: Cutting
+  BENDING: Bending
+  WELDING: Welding
+  ASSEMBLY: Assembly
+  FINISHING: Finishing and packing
+resources:
+  - {code: LASER, name: Laser cutter, station: CUTTING, downs_per_week: 0.5, down_mean_min: 20, down_reasons: [MECH]}
+  - {code: PRESS, name: Press brake, station: BENDING, downs_per_week: 0.3, down_mean_min: 25, down_reasons: [MECH]}
+  - {code: WELD-BENCH, name: Hand welding, station: WELDING, kind: manual, positions: [3, 3]}
+  - {code: ASSY-BENCH, name: Hand assembly, station: ASSEMBLY, kind: manual, positions: [4, 3]}
+  - {code: FINISH, name: Finishing and check, station: FINISHING, kind: manual, positions: [3, 3]}
+  - {code: PACK, name: Packing, station: FINISHING, kind: manual, positions: [2, 2]}
+teams:
+  - {code: FINISH-TEAM, name: Finishing team, steps: [FINISH, PACK], positions: [3, 2]}
+shifts:
+  - {start: "06:00", end: "14:30"}
+  - {start: "14:30", end: "23:00"}
+breaks:
+  - {start: "09:00", minutes: 15}
+  - {start: "12:00", minutes: 30}
+  - {start: "17:30", minutes: 15}
+  - {start: "20:00", minutes: 30}
+export:
+  products: false
+  step_numbers: false
+  forgotten_end_scan_rate: 0.04
+  order_prefix: JOB-
+# Job types: the generator needs them to make work; the plant never sends them (no products).
+products:
+  - sku: RACK
+    name: Storage rack
+    family: Racks
+    setup_family: none
+    price_eur_cents: 38000
+    tvc_eur_cents: 12000
+    orders_per_week: 55
+    qty_min: 2
+    qty_max: 6
+    steps:
+      - {operation: Cut, resource: LASER, run_min_per_unit: 4.0}
+      - {operation: Bend, resource: PRESS, run_min_per_unit: 3.0}
+      - {operation: Weld, resource: WELD-BENCH, run_min_per_unit: 18.0, cv: 0.25}
+      - {operation: Assemble, resource: ASSY-BENCH, run_min_per_unit: 15.0, cv: 0.25}
+      - {operation: Finish, resource: FINISH, run_min_per_unit: 18.0, cv: 0.25}
+      - {operation: Pack, resource: PACK, run_min_per_unit: 6.0, cv: 0.2}
+  - sku: CABINET
+    name: Tool cabinet
+    family: Cabinets
+    setup_family: none
+    price_eur_cents: 95000
+    tvc_eur_cents: 35000
+    orders_per_week: 45
+    qty_min: 1
+    qty_max: 4
+    steps:
+      - {operation: Cut, resource: LASER, run_min_per_unit: 6.0}
+      - {operation: Bend, resource: PRESS, run_min_per_unit: 5.0}
+      - {operation: Weld, resource: WELD-BENCH, run_min_per_unit: 30.0, cv: 0.25}
+      - {operation: Assemble, resource: ASSY-BENCH, run_min_per_unit: 25.0, cv: 0.25}
+      - {operation: Fit doors, resource: ASSY-BENCH, run_min_per_unit: 8.0, cv: 0.25}
+      - {operation: Finish, resource: FINISH, run_min_per_unit: 30.0, cv: 0.25}
+      - {operation: Pack, resource: PACK, run_min_per_unit: 10.0, cv: 0.2}
+  - sku: KIT
+    name: Bracket kit
+    family: Kits
+    setup_family: none
+    price_eur_cents: 6500
+    tvc_eur_cents: 2000
+    orders_per_week: 35
+    qty_min: 10
+    qty_max: 30
+    steps:
+      - {operation: Cut, resource: LASER, run_min_per_unit: 1.0}
+      - {operation: Weld, resource: WELD-BENCH, run_min_per_unit: 2.0, cv: 0.25}
+      - {operation: Finish, resource: FINISH, run_min_per_unit: 2.5, cv: 0.25}
+      - {operation: Pack, resource: PACK, run_min_per_unit: 1.0, cv: 0.2}

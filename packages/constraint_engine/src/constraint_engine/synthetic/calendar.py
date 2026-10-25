@@ -46,6 +46,19 @@ class MachineCalendar:
         return normalise((b.start, b.end) for b in self.breaks if not b.covered)
 
 
+def shift_windows(cfg: PlantCfg, clock: Clock, weeks: int) -> list[tuple[int, Interval]]:
+    """Every shift occurrence as (index in ``cfg.shifts``, interval), in time order."""
+    out: list[tuple[int, Interval]] = []
+    for offset in range(weeks * 7):
+        day = cfg.start_date + timedelta(days=offset)
+        for i, shift in enumerate(cfg.shifts):
+            if day.weekday() not in shift.weekdays:
+                continue
+            end_day = day if shift.end > shift.start else day + timedelta(days=1)
+            out.append((i, (clock.minute(day, shift.start), clock.minute(end_day, shift.end))))
+    return sorted(out, key=lambda w: w[1])
+
+
 def build_calendars(cfg: PlantCfg, clock: Clock, weeks: int) -> dict[str, MachineCalendar]:
     """Shift, break and maintenance windows per machine for the first ``weeks`` weeks."""
     cals = {r.code: MachineCalendar() for r in cfg.resources}

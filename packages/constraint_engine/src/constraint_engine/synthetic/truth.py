@@ -3,6 +3,9 @@
 Shift time splits exactly into: uncovered breaks + planned maintenance + breakdowns +
 available time, and available time into running + setup + blocked + starved. Nothing here
 uses engine calculations, so tests against it are not circular.
+
+Steps with several positions, and teams, are counted in position-minutes (ADR-0009): every
+staffed position of a shift adds its minutes, and every job's work adds its own minutes.
 """
 
 from datetime import date, time
@@ -67,11 +70,63 @@ def machine_truth(result: SimResult, code: str, window: Interval) -> dict[str, f
     return {k: round(v, 3) for k, v in zip(STATES, values, strict=True)}
 
 
+def pooled(result: SimResult, code: str) -> bool:
+    """True for steps counted in positions: several positions, or covered by a team."""
+    cfg = result.cfg
+    return max(cfg.positions(code)) > 1 or cfg.team_of(code) is not None
+
+
+def pooled_truth(
+    result: SimResult,
+    counts: tuple[int, ...],
+    cal_code: str,
+    running: list[Interval],
+    window: Interval,
+) -> dict[str, float]:
+    """State position-minutes of a step with positions, or of a team, in ``window``."""
+    cal, log = result.calendars[cal_code], result.logs[cal_code]
+    breaks = cal.uncovered_breaks()
+    downs = [(s, e) for s, e, reason in log.downs if reason != "PM"]
+    totals = dict.fromkeys(("shift", "break", "maintenance", "down"), 0.0)
+    for index, shift in result.shift_windows:
+        part = intersect([shift], [window])
+        if not part:
+            continue
+        n = counts[index]
+        brk = intersect(breaks, part)
+        maint = intersect(subtract(cal.maintenance, brk), part)
+        totals["shift"] += n * total(part)
+        totals["break"] += n * total(brk)
+        totals["maintenance"] += n * total(maint)
+        totals["down"] += n * total(intersect(subtract(downs, brk + maint), part))
+    available = totals["shift"] - totals["break"] - totals["maintenance"] - totals["down"]
+    run = sum(e - s for s, e in (iv for seg in running for iv in intersect([seg], [window])))
+    values = {
+        "shift_min": totals["shift"],
+        "break_min": totals["break"],
+        "maintenance_min": totals["maintenance"],
+        "down_min": totals["down"],
+        "running_min": run,
+        "setup_min": 0.0,
+        "blocked_min": 0.0,
+        "starved_min": max(available - run, 0.0),
+        "scrap_run_min": 0.0,
+    }
+    return {k: round(v, 3) for k, v in values.items()}
+
+
+def _step_truth(result: SimResult, code: str, window: Interval) -> dict[str, float]:
+    if pooled(result, code):
+        counts = result.cfg.positions(code)
+        return pooled_truth(result, counts, code, result.logs[code].running, window)
+    return machine_truth(result, code, window)
+
+
 def generator_log(result: SimResult) -> dict[str, Any]:
     months = month_windows(result)
     history = (0.0, result.history_end)
     shipped = [o for o in result.orders if o.shipped is not None]
-    return {
+    log: dict[str, Any] = {
         "plant_code": result.cfg.plant_code,
         "seed": result.cfg.seed,
         "history_start_at": result.clock.at(0).isoformat(),
@@ -81,9 +136,23 @@ def generator_log(result: SimResult) -> dict[str, Any]:
         "units_shipped": sum(o.good_quantity for o in shipped),
         "machines": {
             code: {
-                "total": machine_truth(result, code, history),
-                "months": {m: machine_truth(result, code, w) for m, w in months.items()},
+                "total": _step_truth(result, code, history),
+                "months": {m: _step_truth(result, code, w) for m, w in months.items()},
             }
             for code in result.logs
         },
     }
+    for team in result.cfg.teams:
+        first = team.steps[0]  # the team's steps share the plant calendar
+        runs = result.team_logs[team.code].running
+        log.setdefault("teams", {})[team.code] = {
+            "steps": list(team.steps),
+            "total": pooled_truth(result, team.positions, first, runs, history),
+            "months": {
+                m: pooled_truth(result, team.positions, first, runs, w) for m, w in months.items()
+            },
+        }
+    if result.end_scans:
+        log["end_scans_at_handmade_steps"] = dict(sorted(result.end_scans.items()))
+        log["forgotten_end_scans"] = dict(sorted(result.forgotten_end_scans.items()))
+    return log

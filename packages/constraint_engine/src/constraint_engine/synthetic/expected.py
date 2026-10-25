@@ -9,9 +9,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from constraint_engine.intervals import intersect, subtract, total
+from constraint_engine.intervals import Interval, intersect, subtract, total
 from constraint_engine.synthetic.model import SimResult
-from constraint_engine.synthetic.truth import generator_log
+from constraint_engine.synthetic.truth import generator_log, pooled
 
 BINDING_LOAD_PCT = 85.0
 """Below this utilisation everywhere, no machine is treated as binding (market-bound)."""
@@ -48,11 +48,15 @@ class ExpectedAnswers(_M):
     lost_constraint_h_by_month: dict[str, LostHours]
     forecast: list[ForecastWeek]
     constraint_moves: dict[str, Any] | None
+    # Plants with teams or handmade steps only (ADR-0009); left out of A, B and C's file.
+    constraint_type: Literal["step", "team"] | None = None
+    constraint_covers: list[str] | None = None
+    forgotten_end_scan_share_pct: float | None = None
 
 
 def _utilisation(log: dict[str, Any]) -> dict[str, float]:
     out = {}
-    for code, machine in log["machines"].items():
+    for code, machine in {**log["machines"], **log.get("teams", {})}.items():
         t = machine["total"]
         available = t["shift_min"] - t["break_min"] - t["maintenance_min"] - t["down_min"]
         out[code] = (
@@ -71,6 +75,27 @@ def _lost_hours(month: dict[str, float]) -> LostHours:
         maintenance_h=round(month["maintenance_min"] / 60, 3),
         scrap_h=round(month["scrap_run_min"] / 60, 3),
     )
+
+
+def _staffed_min(
+    result: SimResult, counts: tuple[int, ...], production: list[Interval], start: float
+) -> float:
+    """Staffed position-minutes of production time in the week starting at ``start``."""
+    week = [(start, start + 7 * 1440.0)]
+    return sum(
+        counts[i] * total(intersect(intersect(production, [shift]), week))
+        for i, shift in result.shift_windows
+    )
+
+
+def _job_throughput_per_team_h(result: SimResult, team: str) -> float | None:
+    """Jobs' value minus material per position-hour they used at the team's steps.
+
+    Only shipped jobs count; a job's value is quantity × its type's price (generator truth)."""
+    shipped = [o for o in result.orders if o.shipped is not None and o.team_run_min > 0]
+    minutes = sum(o.team_run_min for o in shipped)
+    money = sum(o.quantity * (o.product.price_eur_cents - o.product.tvc_eur_cents) for o in shipped)
+    return round(money / minutes * 60, 2) if minutes else None
 
 
 def _forecast(result: SimResult) -> list[ForecastWeek]:
@@ -94,12 +119,18 @@ def _forecast(result: SimResult) -> list[ForecastWeek]:
                     demand[step.resource] += step.run_min_per_unit * order.quantity + step.setup_min
         load = {}
         for code, cal in result.calendars.items():
-            available = total(
-                intersect(
-                    subtract(subtract(cal.shifts, cal.uncovered_breaks()), cal.maintenance), window
-                )
-            )
+            production = subtract(subtract(cal.shifts, cal.uncovered_breaks()), cal.maintenance)
+            if pooled(result, code):
+                available = _staffed_min(result, cfg.positions(code), production, start)
+            else:
+                available = total(intersect(production, window))
             load[code] = round(100 * demand[code] / available, 2) if available else 0.0
+        for team in cfg.teams:
+            cal = result.calendars[team.steps[0]]
+            production = subtract(subtract(cal.shifts, cal.uncovered_breaks()), cal.maintenance)
+            available = _staffed_min(result, team.positions, production, start)
+            needed = sum(demand[step] for step in team.steps)
+            load[team.code] = round(100 * needed / available, 2) if available else 0.0
         top = max(load, key=lambda c: load[c])
         iso = (cfg.start_date + timedelta(weeks=cfg.weeks_history + n - 1)).isocalendar()
         weeks.append(
@@ -119,14 +150,17 @@ def expected_answers(result: SimResult) -> ExpectedAnswers:
     top = max(util, key=lambda c: util[c])
     internal = util[top] >= BINDING_LOAD_PCT
     constraint = top if internal else "none"
+    teams = log.get("teams", {})
     throughput: dict[str, float | None] = {}
-    for p in result.cfg.products:
-        minutes = sum(s.run_min_per_unit for s in p.steps if s.resource == top)
-        tpu = p.price_eur_cents - p.tvc_eur_cents
-        throughput[p.sku] = round(tpu / minutes * 60, 2) if internal and minutes else None
-    lost = (
-        {m: _lost_hours(v) for m, v in log["machines"][top]["months"].items()} if internal else {}
-    )
+    if not result.cfg.export.products:
+        throughput["jobs"] = _job_throughput_per_team_h(result, top) if top in teams else None
+    else:
+        for p in result.cfg.products:
+            minutes = sum(s.run_min_per_unit for s in p.steps if s.resource == top)
+            tpu = p.price_eur_cents - p.tvc_eur_cents
+            throughput[p.sku] = round(tpu / minutes * 60, 2) if internal and minutes else None
+    months = (teams.get(top) or log["machines"][top])["months"]
+    lost = {m: _lost_hours(v) for m, v in months.items()} if internal else {}
     forecast = _forecast(result)
     moves = next(
         (
@@ -146,4 +180,19 @@ def expected_answers(result: SimResult) -> ExpectedAnswers:
         lost_constraint_h_by_month=lost,
         forecast=forecast,
         constraint_moves=moves,
+        **_steps_extras(result, log, top),
     )
+
+
+def _steps_extras(result: SimResult, log: dict[str, Any], top: str) -> dict[str, Any]:
+    """Answers that only plants with teams or handmade steps have."""
+    if not (result.cfg.teams or result.end_scans):
+        return {}
+    teams = log.get("teams", {})
+    scans = sum(result.end_scans.values())
+    forgotten = sum(result.forgotten_end_scans.values())
+    return {
+        "constraint_type": "team" if top in teams else "step",
+        "constraint_covers": teams[top]["steps"] if top in teams else None,
+        "forgotten_end_scan_share_pct": round(100 * forgotten / scans, 2) if scans else None,
+    }

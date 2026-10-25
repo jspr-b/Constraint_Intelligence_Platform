@@ -12,7 +12,7 @@ from constraint_engine.synthetic.model import simulate
 from constraint_engine.synthetic.writer import write_plant
 
 DATA = Path(__file__).resolve().parents[3] / "data" / "synthetic"
-PLANTS = ["plant_a", "plant_b", "plant_c"]
+PLANTS = ["plant_a", "plant_b", "plant_c", "plant_d"]
 
 
 def answers(plant: str) -> ExpectedAnswers:
@@ -26,7 +26,9 @@ def answers(plant: str) -> ExpectedAnswers:
 def test_regenerating_reproduces_committed_files(plant: str, tmp_path: Path) -> None:
     out = write_plant(simulate(load_config(DATA / plant / "config.yaml")), tmp_path / plant)
     committed = {
-        p.name for p in (DATA / plant).iterdir() if p.is_file() and p.name != "config.yaml"
+        p.name
+        for p in (DATA / plant).iterdir()
+        if p.is_file() and p.name not in ("config.yaml", "README.md", "known_answer.yaml")
     }
     assert {p.name for p in out.iterdir() if p.is_file()} == committed
     for name in committed:
@@ -130,3 +132,30 @@ def test_defect_counts_match_files() -> None:
         sum(";LAS9;" in f";{line}" or line.startswith("LAS9;") for line in broken)
         == defects["unknown_machine_code_rows"]
     )
+
+
+def test_plant_d_meets_its_answer_fixed_before_any_code() -> None:
+    """known_answer.yaml was written on 2026-10-23 before the generator could make plant D."""
+    fixed = yaml.safe_load((DATA / "plant_d" / "known_answer.yaml").read_text())
+    d = answers("plant_d")
+    assert d.constraint == fixed["constraint"] and d.constraint_kind == fixed["constraint_kind"]
+    assert d.constraint_type == fixed["constraint_type"]
+    assert d.constraint_covers == fixed["constraint_covers"]
+    assert d.forgotten_end_scan_share_pct is not None
+    assert abs(d.forgotten_end_scan_share_pct - fixed["forgotten_finish_scan_share_pct"]) < 1.0
+    top = d.utilisation_pct[d.constraint]
+    for code in fixed["not_constraint"]:
+        assert d.utilisation_pct[code] < top - 20, code
+    assert fixed["money_source"] == "job_value" and d.throughput_eur_cents_per_constraint_h["jobs"]
+    assert not (DATA / "plant_d" / "products.csv").exists()
+    assert not (DATA / "plant_d" / "routings.csv").exists()
+
+
+def test_plant_d_shares_no_step_numbers_and_one_team() -> None:
+    d = load_plant(DATA / "plant_d")
+    assert all(e.operation_seq is None for e in d.events)
+    assert all(o.sku is None and o.order_value_eur_cents for o in d.orders)
+    assert [(t.team_code, t.resource_codes) for t in d.teams] == [
+        ("FINISH-TEAM", ("FINISH", "PACK"))
+    ]
+    assert {r.kind for r in d.resources} == {"machine", "manual"}

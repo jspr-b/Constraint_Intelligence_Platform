@@ -124,6 +124,27 @@ def test_scrap_before_the_bottleneck_costs_no_bottleneck_time(plant_a: LoadedPla
     assert scrap.figure.value == 0
 
 
+def test_scrap_without_step_numbers_is_placed_by_time(plant_a: LoadedPlant) -> None:
+    """ADR-0009: a scrap with no step number counts when it happened after the bottleneck."""
+    from cip_schema.transactional import EventType
+
+    def scrap_h(plant: LoadedPlant) -> object:
+        loss = _loss(plant, kinds=("all",))
+        return next(
+            f for f in loss if f.measure == "lost_h" and f.reason_code == "scrap"
+        ).figure.value
+
+    unnumbered = [
+        e.model_copy(update={"operation_seq": None}) if e.event_type is EventType.SCRAP else e
+        for e in plant_a.events
+    ]
+    assert scrap_h(replace(plant_a, events=unnumbered)) == scrap_h(plant_a) != 0
+
+
+def test_a_plant_without_step_numbers_gets_its_loss_figures() -> None:
+    assert _loss(load_plant(DATA / "plant_d"), kinds=("all",))
+
+
 def test_a_stored_figure_reads_back_the_same(loss_a: list[Fact]) -> None:
     from constraint_engine.figure import Figure
 

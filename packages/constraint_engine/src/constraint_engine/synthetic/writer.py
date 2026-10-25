@@ -10,7 +10,7 @@ import yaml
 
 from constraint_engine.synthetic.expected import expected_answers
 from constraint_engine.synthetic.model import SimResult
-from constraint_engine.synthetic.truth import generator_log
+from constraint_engine.synthetic.truth import generator_log, pooled
 
 EVENT_COLUMNS = (
     "event_id",
@@ -62,12 +62,23 @@ def _master(result: SimResult, out: Path) -> None:
                 "resource_code": r.code,
                 "name": r.name,
                 "station_code": r.station,
-                "kind": "machine",
-                "parallel_units": 1,
+                "kind": r.kind,
+                "parallel_units": max(cfg.positions(r.code)),
             }
             for r in cfg.resources
         ],
     )
+    if cfg.teams:
+        _csv(
+            out / "teams.csv",
+            ("team_code", "name", "resource_codes"),
+            [
+                {"team_code": t.code, "name": t.name, "resource_codes": ";".join(t.steps)}
+                for t in cfg.teams
+            ],
+        )
+    if not cfg.export.products:
+        return  # ADR-0009: the plant shares no products or routings
     _csv(
         out / "products.csv",
         (
@@ -148,17 +159,31 @@ def _master(result: SimResult, out: Path) -> None:
 
 def _capacity(result: SimResult, out: Path) -> None:
     cfg, rows = result.cfg, []
+    staffed = any(pooled(result, code) for code in result.calendars)
     for code, cal in result.calendars.items():
-        rows += [
-            {
-                "resource_code": code,
-                "kind": "shift",
-                "start_at": _ts(result, s),
-                "end_at": _ts(result, e),
-                "covered": "false",
-            }
-            for s, e in cal.shifts
-        ]
+        if staffed:  # one row per shift, with its staffed positions
+            rows += [
+                {
+                    "resource_code": code,
+                    "kind": "shift",
+                    "start_at": _ts(result, s),
+                    "end_at": _ts(result, e),
+                    "covered": "false",
+                    "positions": cfg.positions(code)[i],
+                }
+                for i, (s, e) in result.shift_windows
+            ]
+        else:
+            rows += [
+                {
+                    "resource_code": code,
+                    "kind": "shift",
+                    "start_at": _ts(result, s),
+                    "end_at": _ts(result, e),
+                    "covered": "false",
+                }
+                for s, e in cal.shifts
+            ]
         rows += [
             {
                 "resource_code": code,
@@ -179,7 +204,23 @@ def _capacity(result: SimResult, out: Path) -> None:
             }
             for s, e in cal.maintenance
         ]
-    _csv(out / "calendar.csv", ("resource_code", "kind", "start_at", "end_at", "covered"), rows)
+    columns = ("resource_code", "kind", "start_at", "end_at", "covered")
+    _csv(out / "calendar.csv", (*columns, "positions") if staffed else columns, rows)
+    if cfg.teams:
+        _csv(
+            out / "team_shifts.csv",
+            ("team_code", "start_at", "end_at", "positions"),
+            [
+                {
+                    "team_code": t.code,
+                    "start_at": _ts(result, s),
+                    "end_at": _ts(result, e),
+                    "positions": t.positions[i],
+                }
+                for t in cfg.teams
+                for i, (s, e) in result.shift_windows
+            ],
+        )
     overtime = []
     for o in cfg.overtime:
         iso = (cfg.start_date + timedelta(weeks=o.week - 1)).isocalendar()
@@ -217,6 +258,7 @@ def _capacity(result: SimResult, out: Path) -> None:
 
 def _orders_and_events(result: SimResult, out: Path) -> None:
     rows = []
+    products = result.cfg.export.products
     for o in result.orders:
         status = (
             "shipped"
@@ -229,30 +271,34 @@ def _orders_and_events(result: SimResult, out: Path) -> None:
         rows.append(
             {
                 "order_id": o.order_id,
-                "sku": o.product.sku,
+                "sku": o.product.sku if products else None,
                 "quantity_units": o.quantity,
                 "due_at": _ts(result, o.due),
                 "status": status,
                 "released_at": _ts(result, o.arrival) if o.arrival is not None else None,
                 "shipped_at": _ts(result, o.shipped) if o.shipped is not None else None,
                 "material_ready_at": _ts(result, created),
+                "order_value_eur_cents": o.quantity * o.product.price_eur_cents,
+                "material_cost_eur_cents": o.quantity * o.product.tvc_eur_cents,
             }
         )
-    _csv(
-        out / "orders.csv",
-        (
-            "order_id",
-            "sku",
-            "quantity_units",
-            "due_at",
-            "status",
-            "released_at",
-            "shipped_at",
-            "material_ready_at",
-        ),
-        rows,
+    columns = (
+        "order_id",
+        "sku",
+        "quantity_units",
+        "due_at",
+        "status",
+        "released_at",
+        "shipped_at",
+        "material_ready_at",
     )
-    events = [{**e, "at": _ts(result, e["at"])} for e in result.events]
+    value = ("order_value_eur_cents", "material_cost_eur_cents")
+    _csv(out / "orders.csv", columns if products else (*columns, *value), rows)
+    numbers = result.cfg.export.step_numbers
+    events = [
+        {**e, "at": _ts(result, e["at"]), **({} if numbers else {"operation_seq": None})}
+        for e in result.events
+    ]
     _csv(out / "events.csv", EVENT_COLUMNS, events)
 
 
@@ -263,6 +309,9 @@ def write_plant(result: SimResult, out: Path | str) -> Path:
     _capacity(result, root)
     _orders_and_events(result, root)
     answers = expected_answers(result).model_dump(mode="json")
+    for extra in ("constraint_type", "constraint_covers", "forgotten_end_scan_share_pct"):
+        if answers[extra] is None:
+            del answers[extra]
     (root / "expected_answers.yaml").write_text(
         yaml.safe_dump(answers, sort_keys=False, allow_unicode=True)
     )

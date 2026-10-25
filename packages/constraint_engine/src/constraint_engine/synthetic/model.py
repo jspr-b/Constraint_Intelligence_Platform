@@ -17,7 +17,12 @@ from typing import Any
 import simpy
 
 from constraint_engine.intervals import Interval, normalise, subtract, total
-from constraint_engine.synthetic.calendar import Clock, MachineCalendar, build_calendars
+from constraint_engine.synthetic.calendar import (
+    Clock,
+    MachineCalendar,
+    build_calendars,
+    shift_windows,
+)
 from constraint_engine.synthetic.config import PlantCfg, ProductCfg
 
 NEVER = 10.0**9
@@ -44,6 +49,8 @@ class SimOrder:
     good_quantity: int = 0
     started: bool = False
     shipped: float | None = None
+    team_run_min: float = 0.0
+    """Position-minutes this job used at steps covered by a team."""
 
 
 @dataclass
@@ -56,6 +63,11 @@ class SimResult:
     orders: list[SimOrder]
     events: list[dict[str, Any]]
     history_end: float
+    shift_windows: list[tuple[int, Interval]] = field(default_factory=list)
+    team_logs: dict[str, MachineLog] = field(default_factory=dict)
+    forgotten_end_scans: dict[str, int] = field(default_factory=dict)
+    end_scans: dict[str, int] = field(default_factory=dict)
+    """Finish touchpoints per handmade step: all of them, and how many were forgotten."""
 
 
 class Availability:
@@ -86,12 +98,47 @@ class Simulation:
         self.events: list[dict[str, Any]] = []
         self.availability = {code: self._availability(code) for code in self.logs}
         self.env = simpy.Environment()
-        self.machines = {r.code: simpy.Resource(self.env, capacity=1) for r in cfg.resources}
+        self.shift_windows = shift_windows(cfg, self.clock, weeks)
+        # One machine: a plain resource (plants A, B and C). Several positions or a team: a
+        # priority resource whose unstaffed positions are held by a blocker for the shift.
+        self.machines: dict[str, simpy.Resource] = {}
+        for r in cfg.resources:
+            counts = cfg.positions(r.code)
+            if max(counts) == 1 and cfg.team_of(r.code) is None:
+                self.machines[r.code] = simpy.Resource(self.env, capacity=1)
+            else:
+                self.machines[r.code] = self._staffed(max(counts), counts)
+        self.teams = {t.code: self._staffed(max(t.positions), t.positions) for t in cfg.teams}
+        self.team_logs = {t.code: MachineLog() for t in cfg.teams}
+        self.end_scans: dict[str, int] = {}
+        self.forgotten: dict[str, int] = {}
         self.queues = {
             r.code: simpy.Resource(self.env, capacity=r.buffer_orders) for r in cfg.resources
         }
         self.last_family: dict[str, str | None] = {code: None for code in self.logs}
         self.orders: list[SimOrder] = []
+
+    def _staffed(self, capacity: int, counts: tuple[int, ...]) -> simpy.PriorityResource:
+        resource = simpy.PriorityResource(self.env, capacity=capacity)
+        for index, (start, end) in self.shift_windows:
+            unstaffed = capacity - counts[index]
+            if unstaffed > 0 and start < self.history_end:
+                self.env.process(self._blocker(resource, start, end, unstaffed))
+        return resource
+
+    def _blocker(
+        self, resource: simpy.PriorityResource, start: float, end: float, n: int
+    ) -> Generator[Any, Any, None]:
+        """Hold ``n`` positions for the shift: nobody staffs them. Work already on them
+        finishes first (the blocker waits for them, it never interrupts)."""
+        yield self.env.timeout(start)
+        held = [resource.request(priority=-1) for _ in range(n)]
+        for request in held:
+            yield request
+        if end > self.env.now:
+            yield self.env.timeout(end - self.env.now)
+        for request in held:
+            resource.release(request)
 
     # ------------------------------------------------------------------ calendar and downs
     def _production_time(self, code: str) -> list[Interval]:
@@ -208,7 +255,7 @@ class Simulation:
         arrivals.sort(key=lambda a: (a[0], a[1].sku))
         for n, (t, product) in enumerate(arrivals):
             order = SimOrder(
-                order_id=f"SO-{24000 + n:05d}",
+                order_id=f"{self.cfg.export.order_prefix}{24000 + n:05d}",
                 product=product,
                 quantity=self.rng.randint(product.qty_min, product.qty_max),
                 arrival=t if t < self.history_end else None,
@@ -233,6 +280,10 @@ class Simulation:
                 yield machine
                 if slot is not None:
                     self.queues[step.resource].release(slot)
+                team = self.cfg.team_of(step.resource)
+                member = self.teams[team.code].request() if team else None
+                if member is not None:
+                    yield member
                 order.started = True
                 yield from self._setup(step.resource, step.setup_min, order.product.setup_family)
                 run = step.run_min_per_unit * qty * self._noise(step.cv)
@@ -248,7 +299,11 @@ class Simulation:
                     self.logs[step.resource].running,
                     on_start=partial(self._emit, "start", **common),
                 )
-                self._emit("end", segs[-1][1], **common)
+                if team is not None and member is not None:
+                    self.team_logs[team.code].running.extend(segs)
+                    order.team_run_min += sum(e - s for s, e in segs)
+                    self.teams[team.code].release(member)
+                self._end_scan(step.resource, segs[-1][1], common)
                 per_unit.append((step.resource, run / qty))
                 qty = self._scrap(step.resource, segs, order, i + 1, qty, per_unit)
                 if i + 1 < len(order.product.steps):
@@ -257,6 +312,16 @@ class Simulation:
         order.good_quantity = qty
         order.shipped = self.env.now
         self.logs[order.product.steps[-1].resource].units_out.append((self.env.now, qty))
+
+    def _end_scan(self, code: str, at: float, common: dict[str, Any]) -> None:
+        """The finish touchpoint; at handmade steps a share is forgotten (logged in truth)."""
+        rate = self.cfg.export.forgotten_end_scan_rate
+        if self.cfg.resource(code).kind == "manual":
+            self.end_scans[code] = self.end_scans.get(code, 0) + 1
+            if rate > 0 and self.rng.random() < rate:
+                self.forgotten[code] = self.forgotten.get(code, 0) + 1
+                return
+        self._emit("end", at, **common)
 
     def _setup(self, code: str, setup_min: float, family: str) -> Generator[Any, Any, None]:
         previous, self.last_family[code] = self.last_family[code], family
@@ -328,6 +393,10 @@ class Simulation:
             orders=self.orders,
             events=self.events,
             history_end=self.history_end,
+            shift_windows=self.shift_windows,
+            team_logs=self.team_logs,
+            forgotten_end_scans=self.forgotten,
+            end_scans=self.end_scans,
         )
 
 

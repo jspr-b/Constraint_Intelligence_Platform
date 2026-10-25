@@ -54,6 +54,18 @@ History is like plant A (paint line binding). From order-book week 7 a weld-heav
 | Constraint in history | `PNT-01`, utilisation 99.9% |
 | Constraint moves | to `WLD-02` in order-book week 7 (ISO week 2026-W48) |
 
+## plant_d: handmade bottleneck, no product data
+
+A different workshop for ADR-0009 (steps and touchpoints): two machines and four handmade steps with positions per
+shift, `FINISH` and `PACK` share one team, no products or routings, and 4% of finish scans at handmade steps are
+forgotten. Details in `plant_d/README.md`.
+
+| Known answer | Value |
+|---|---|
+| What limits output | Team `FINISH-TEAM` (covers `FINISH` and `PACK`), internal, confidence medium |
+| Busy share | FINISH-TEAM 99.87%; next highest WELD-BENCH 66.52% |
+| Euros | From job value minus material cost |
+
 ## How the answers are defined
 
 - **Constraint:** the machine with the highest share of available time spent running or in setup. If that share is below 85% everywhere, there is no internal constraint.

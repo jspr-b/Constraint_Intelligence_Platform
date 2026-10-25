@@ -2,6 +2,7 @@
 
 from datetime import date, time
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -28,6 +29,9 @@ class ResourceCfg(_Cfg):
     code: str
     name: str
     station: str
+    kind: Literal["machine", "manual"] = "machine"
+    positions: tuple[int, ...] = ()
+    """Staffed positions per shift, in the order of ``PlantCfg.shifts`` (empty: one)."""
     buffer_orders: int = Field(default=1000, ge=1)
     """Orders that fit in the queue in front of this machine; full queue blocks upstream."""
     downs_per_week: float = Field(default=0.0, ge=0)
@@ -94,6 +98,28 @@ class OvertimeCfg(_Cfg):
     overtime_h: float = Field(ge=0)
 
 
+class TeamCfg(_Cfg):
+    """A team shared by several steps; together they cannot use more positions than it has."""
+
+    code: str
+    name: str
+    steps: tuple[str, ...] = Field(min_length=1)
+    positions: tuple[int, ...] = Field(min_length=1)
+    """Team size per shift, in the order of ``PlantCfg.shifts`` (a count)."""
+
+
+class ExportCfg(_Cfg):
+    """What the plant shares (ADR-0009). Plants A, B and C share everything."""
+
+    products: bool = True
+    """False: no products or routings; jobs carry their value and material cost instead."""
+    step_numbers: bool = True
+    """False: touchpoints carry no step number; the path comes from their times."""
+    forgotten_end_scan_rate: float = Field(default=0.0, ge=0, lt=1)
+    """Share of finish scans at handmade steps that are forgotten (noisy bench data)."""
+    order_prefix: str = "SO-"
+
+
 class PlantCfg(_Cfg):
     plant_code: str
     name: str
@@ -115,6 +141,8 @@ class PlantCfg(_Cfg):
     scrap: tuple[ScrapCfg, ...] = ()
     outsourcing: tuple[OutsourcingCfg, ...] = ()
     overtime: tuple[OvertimeCfg, ...] = ()
+    teams: tuple[TeamCfg, ...] = ()
+    export: ExportCfg = ExportCfg()
 
     @model_validator(mode="after")
     def _references(self) -> "PlantCfg":
@@ -128,10 +156,24 @@ class PlantCfg(_Cfg):
             for s in p.steps:
                 if s.resource not in codes or not set(s.alternatives) <= codes:
                     raise ValueError(f"{p.sku}: unknown resource in step {s.operation}")
+        n = len(self.shifts)
+        for r in self.resources:
+            if r.positions and len(r.positions) != n:
+                raise ValueError(f"{r.code}: positions needs one count per shift ({n})")
+        for t in self.teams:
+            if not set(t.steps) <= codes or len(t.positions) != n:
+                raise ValueError(f"{t.code}: unknown step, or not one size per shift ({n})")
         return self
 
     def resource(self, code: str) -> ResourceCfg:
         return next(r for r in self.resources if r.code == code)
+
+    def positions(self, code: str) -> tuple[int, ...]:
+        """Staffed positions per shift of a step (one per shift when not given)."""
+        return self.resource(code).positions or (1,) * len(self.shifts)
+
+    def team_of(self, code: str) -> TeamCfg | None:
+        return next((t for t in self.teams if code in t.steps), None)
 
     def orders_per_week(self, sku: str, week: int) -> float:
         rate = next(p.orders_per_week for p in self.products if p.sku == sku)

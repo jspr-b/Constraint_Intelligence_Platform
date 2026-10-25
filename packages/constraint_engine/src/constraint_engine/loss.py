@@ -204,9 +204,12 @@ def _rates(
 
 
 def _scrap(plant: LoadedPlant, ops: Operations, code: str, period: Period) -> Figure:
-    """Bottleneck minutes spent on units later scrapped (or scrapped at the bottleneck)."""
+    """Bottleneck minutes spent on units later scrapped (or scrapped at the bottleneck).
+
+    A scrap before the job reached the bottleneck costs no bottleneck time: by step number when
+    both have one, otherwise by time (ADR-0009: jobs without step numbers)."""
     at_bottleneck = {
-        r["order_id"]: (int(r["operation_seq"]), float(r["work_min_per_unit"]))
+        r["order_id"]: (r["operation_seq"], to_min(r["start_at"]), float(r["work_min_per_unit"]))
         for r in ops.jobs.filter(pl.col("resource_code") == code).iter_rows(named=True)
     }
     units = events = 0
@@ -216,8 +219,10 @@ def _scrap(plant: LoadedPlant, ops: Operations, code: str, period: Period) -> Fi
             continue
         if not period.window[0] <= to_min(e.at) < period.window[1]:
             continue
-        seq, per_unit = at_bottleneck[e.order_id]
-        if e.operation_seq is not None and e.operation_seq < seq:
+        seq, start_min, per_unit = at_bottleneck[e.order_id]
+        numbered = e.operation_seq is not None and seq is not None
+        before = e.operation_seq < seq if numbered else to_min(e.at) < start_min
+        if before:
             continue  # scrapped before it reached the bottleneck: no bottleneck time lost
         units += e.scrap_units
         events += 1

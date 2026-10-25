@@ -1,0 +1,7 @@
+resource_code,name,station_code,kind,parallel_units
+LASER,Laser cutter,CUTTING,machine,1
+PRESS,Press brake,BENDING,machine,1
+WELD-BENCH,Hand welding,WELDING,manual,3
+ASSY-BENCH,Hand assembly,ASSEMBLY,manual,4
+FINISH,Finishing and check,FINISHING,manual,3
+PACK,Packing,FINISHING,manual,2

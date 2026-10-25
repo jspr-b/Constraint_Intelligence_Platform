@@ -40,6 +40,24 @@ history 2026-07-20 to 2026-10-11 (12 weeks), like plants A, B and C.
 | Euros | From job value minus material cost (no products); per month within 2% of the generator log |
 | Not the answer | No machine: `LASER` and `PRESS` are well below the team's load |
 
-The exact busy shares and lost hours per month are written to `expected_answers.yaml` by the generator from its
-own log (sequence 03 of CI0003), never from engine calculations. The rows above are fixed now and are not edited
-to fit the code.
+`known_answer.yaml` holds the rows above, fixed before any code and never edited to fit it.
+`expected_answers.yaml` holds the exact numbers, written by the generator from its own log (never from engine
+calculations):
+
+| Busy share (running ÷ staffed time) | Value |
+|---|---|
+| `FINISH-TEAM` | 99.87% |
+| `WELD-BENCH` | 66.52% (next highest) |
+| `FINISH` · `LASER` · `ASSY-BENCH` · `PACK` · `PRESS` | 62.4% · 52.47% · 44.89% · 31.3% · 27.45% |
+| Forgotten finish scans at handmade steps | 4.06% |
+
+## The export
+
+`erp_export/clean/csv/` is the plant as a workshop scan system would send it (English column names, commas,
+`yyyy-mm-dd hh:mm`, euros like `2850.00`, an `Operator` column with fake values `TEST-OPERATOR-nn` that the import
+drops): `workstations`, `shift_plan`, `teams`, `team_plan`, `jobs`, `scans`. Its mapping is
+`packages/connectors/mappings/workshop_scans/mapping.yaml`; the Import page recognises the format by its file names.
+
+```bash
+uv run python -m constraint_engine.synthetic.scan_export data/synthetic/plant_d data/synthetic/plant_d/erp_export/clean/csv
+```

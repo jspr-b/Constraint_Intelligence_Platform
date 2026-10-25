@@ -1,14 +1,186 @@
-# Fixed on 2026-10-23 (CI0003 sequence 01) before any code. Do not edit to fit the code.
-# Exact figures (busy shares, lost hours and euros per month) are added by the generator from its own log.
 plant_code: PLANT-D
+seed: 7
 constraint: FINISH-TEAM
-constraint_type: team
 constraint_kind: internal
-constraint_covers: [FINISH, PACK]
-min_methods_agreeing: 3
-confidence: medium
-money_source: job_value
-euro_tolerance_pct: 2.0
-not_constraint: [LASER, PRESS]
-forgotten_finish_scan_share_pct: 4.0
-personal_column_dropped: operator
+utilisation_pct:
+  LASER: 52.47
+  PRESS: 27.45
+  WELD-BENCH: 66.52
+  ASSY-BENCH: 44.89
+  FINISH: 62.4
+  PACK: 31.3
+  FINISH-TEAM: 99.87
+throughput_eur_cents_per_constraint_h:
+  jobs: 75743.9
+lost_constraint_h_by_month:
+  2026-07:
+    breaks_h: 37.5
+    setup_h: 0.0
+    starved_h: 9.792
+    blocked_h: 0.0
+    breakdowns_h: 0.0
+    maintenance_h: 0.0
+    scrap_h: 0.0
+  2026-08:
+    breaks_h: 78.75
+    setup_h: 0.0
+    starved_h: 0.0
+    blocked_h: 0.0
+    breakdowns_h: 0.0
+    maintenance_h: 0.0
+    scrap_h: 0.0
+  2026-09:
+    breaks_h: 82.5
+    setup_h: 0.0
+    starved_h: 0.0
+    blocked_h: 0.0
+    breakdowns_h: 0.0
+    maintenance_h: 0.0
+    scrap_h: 0.0
+  2026-10:
+    breaks_h: 26.25
+    setup_h: 0.0
+    starved_h: 0.182
+    blocked_h: 0.0
+    breakdowns_h: 0.0
+    maintenance_h: 0.0
+    scrap_h: 0.0
+forecast:
+- orderbook_week: 1
+  iso_week: 2026-W42
+  load_pct:
+    LASER: 50.09
+    PRESS: 25.87
+    WELD-BENCH: 63.05
+    ASSY-BENCH: 41.68
+    FINISH: 65.88
+    PACK: 34.35
+    FINISH-TEAM: 106.54
+  binding_resource: FINISH-TEAM
+- orderbook_week: 2
+  iso_week: 2026-W43
+  load_pct:
+    LASER: 44.47
+    PRESS: 23.25
+    WELD-BENCH: 56.5
+    ASSY-BENCH: 38.47
+    FINISH: 59.0
+    PACK: 30.75
+    FINISH-TEAM: 95.41
+  binding_resource: FINISH-TEAM
+- orderbook_week: 3
+  iso_week: 2026-W44
+  load_pct:
+    LASER: 49.25
+    PRESS: 26.34
+    WELD-BENCH: 63.15
+    ASSY-BENCH: 43.04
+    FINISH: 65.77
+    PACK: 34.19
+    FINISH-TEAM: 106.28
+  binding_resource: FINISH-TEAM
+- orderbook_week: 4
+  iso_week: 2026-W45
+  load_pct:
+    LASER: 33.35
+    PRESS: 18.95
+    WELD-BENCH: 43.99
+    ASSY-BENCH: 30.65
+    FINISH: 45.51
+    PACK: 23.52
+    FINISH-TEAM: 73.42
+  binding_resource: null
+- orderbook_week: 5
+  iso_week: 2026-W46
+  load_pct:
+    LASER: 50.13
+    PRESS: 27.63
+    WELD-BENCH: 65.32
+    ASSY-BENCH: 45.62
+    FINISH: 67.83
+    PACK: 35.17
+    FINISH-TEAM: 109.54
+  binding_resource: FINISH-TEAM
+- orderbook_week: 6
+  iso_week: 2026-W47
+  load_pct:
+    LASER: 45.29
+    PRESS: 26.9
+    WELD-BENCH: 61.15
+    ASSY-BENCH: 43.89
+    FINISH: 62.98
+    PACK: 32.41
+    FINISH-TEAM: 101.51
+  binding_resource: FINISH-TEAM
+- orderbook_week: 7
+  iso_week: 2026-W48
+  load_pct:
+    LASER: 51.74
+    PRESS: 29.01
+    WELD-BENCH: 68.06
+    ASSY-BENCH: 48.28
+    FINISH: 70.57
+    PACK: 36.54
+    FINISH-TEAM: 113.91
+  binding_resource: FINISH-TEAM
+- orderbook_week: 8
+  iso_week: 2026-W49
+  load_pct:
+    LASER: 49.68
+    PRESS: 29.29
+    WELD-BENCH: 66.81
+    ASSY-BENCH: 47.74
+    FINISH: 68.87
+    PACK: 35.46
+    FINISH-TEAM: 111.01
+  binding_resource: FINISH-TEAM
+- orderbook_week: 9
+  iso_week: 2026-W50
+  load_pct:
+    LASER: 42.17
+    PRESS: 21.51
+    WELD-BENCH: 53.06
+    ASSY-BENCH: 36.13
+    FINISH: 55.57
+    PACK: 29.04
+    FINISH-TEAM: 89.92
+  binding_resource: FINISH-TEAM
+- orderbook_week: 10
+  iso_week: 2026-W51
+  load_pct:
+    LASER: 48.28
+    PRESS: 26.32
+    WELD-BENCH: 62.58
+    ASSY-BENCH: 43.5
+    FINISH: 65.06
+    PACK: 33.77
+    FINISH-TEAM: 105.1
+  binding_resource: FINISH-TEAM
+- orderbook_week: 11
+  iso_week: 2026-W52
+  load_pct:
+    LASER: 50.24
+    PRESS: 29.29
+    WELD-BENCH: 67.01
+    ASSY-BENCH: 46.86
+    FINISH: 69.12
+    PACK: 35.61
+    FINISH-TEAM: 111.43
+  binding_resource: FINISH-TEAM
+- orderbook_week: 12
+  iso_week: 2026-W53
+  load_pct:
+    LASER: 54.95
+    PRESS: 29.91
+    WELD-BENCH: 71.0
+    ASSY-BENCH: 48.53
+    FINISH: 73.79
+    PACK: 38.29
+    FINISH-TEAM: 119.18
+  binding_resource: FINISH-TEAM
+constraint_moves: null
+constraint_type: team
+constraint_covers:
+- FINISH
+- PACK
+forgotten_end_scan_share_pct: 4.06

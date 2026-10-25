@@ -10,8 +10,10 @@ import json
 import re
 import shutil
 import uuid
+from collections.abc import Iterable
 from dataclasses import asdict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -39,7 +41,10 @@ from constraint_engine.summary import record_count
 
 router = APIRouter(tags=["imports"])
 REPO = Path(__file__).resolve().parents[4]
-GENERIC_MAPPING = REPO / "packages" / "connectors" / "mappings" / "generic" / "mapping.yaml"
+MAPPINGS = REPO / "packages" / "connectors" / "mappings"
+GENERIC_MAPPING = MAPPINGS / "generic" / "mapping.yaml"
+EXPORT_FORMATS = (GENERIC_MAPPING, MAPPINGS / "workshop_scans" / "mapping.yaml")
+"""Export formats the Import page knows; the first one wins a tie."""
 INPUT_DATA = REPO / "docs" / "input-data.md"
 SAFE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}\.(csv|xlsx)$")
 View = Annotated[Ctx, Depends(require(page="import"))]
@@ -222,6 +227,18 @@ MINIMUM_TARGETS = {
 """Minimum diagnostic set (engine MINIMUM_SET keys) -> the standard table that must be filled."""
 
 
+@lru_cache
+def _formats() -> tuple[MappingSet, ...]:
+    return tuple(load_mapping(p) for p in EXPORT_FORMATS)
+
+
+def choose_mapping(file_names: Iterable[str]) -> MappingSet:
+    """The export format whose file names match the most uploaded files (ADR-0009: a plant
+    sends its own format; we never guess columns, we recognise a known format by its files)."""
+    stems = {Path(n).stem.lower() for n in file_names}
+    return max(_formats(), key=lambda m: len(stems & {t.source.lower() for t in m.tables}))
+
+
 def check_file(path: Path, mapping: MappingSet) -> dict[str, Any]:
     """Inspect an uploaded file once (stored with the import); personal values are never read."""
     sources = {t.source.lower(): t.source for t in mapping.tables}
@@ -248,6 +265,8 @@ def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
     out = []
     for key, target in MINIMUM_TARGETS.items():
         sources = sorted({t.source for t in mapping.tables if t.target == target})
+        if not sources:
+            continue  # this export format does not carry it (e.g. no products, ADR-0009)
         present = any(f.readable and f.recognised_as in sources for f in files)
         out.append(NeededOut(key=key, sources=sources, present=present))
     return out
@@ -255,9 +274,10 @@ def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
 
 def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> ImportOut:
     folder = import_dir(settings, tenant, row.plant_code, row.import_id) / "source"
-    mapping = load_mapping(GENERIC_MAPPING)
+    stored_files = json.loads(row.files)
+    mapping = choose_mapping(f["name"] for f in stored_files)
     report = json.loads(row.report) if row.report else None
-    files = [FileCheckOut.model_validate(f) for f in json.loads(row.files) if "readable" in f]
+    files = [FileCheckOut.model_validate(f) for f in stored_files if "readable" in f]
     return ImportOut(
         import_id=row.import_id,
         plant_code=row.plant_code,
@@ -319,7 +339,7 @@ async def upload(
     folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id) / "source"
     folder.mkdir(parents=True, exist_ok=True)
     limit = settings.max_upload_mb * 1024 * 1024
-    stored = []
+    written = []
     for f in files:
         target = folder / str(f.filename)
         size = 0
@@ -330,7 +350,9 @@ async def upload(
                     shutil.rmtree(folder.parent, ignore_errors=True)
                     raise ApiProblem("file_too_large", limit_mb=settings.max_upload_mb)
                 out.write(chunk)
-        stored.append(check_file(target, load_mapping(GENERIC_MAPPING)))
+        written.append(target)
+    mapping = choose_mapping(p.name for p in written)
+    stored = [check_file(p, mapping) for p in written]
     ctx.db.execute(
         text("UPDATE imports SET files = :f WHERE import_id = :i"),
         {"f": json.dumps(stored), "i": import_id},
@@ -461,7 +483,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 {"p": row.plant_code},
             ).one()
         folder = import_dir(settings, tenant, row.plant_code, import_id)
-        mapping = load_mapping(GENERIC_MAPPING)
+        mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
         standard = folder / "standard"
         if standard.exists():
             shutil.rmtree(standard)
