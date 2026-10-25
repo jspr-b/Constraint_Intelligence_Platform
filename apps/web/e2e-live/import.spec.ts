@@ -51,13 +51,13 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
     "Imported",
   );
   await expect(results.getByRole("row").filter({ hasText: "mes_events.csv" })).toContainText(
-    /events \d/,
+    /Events \(touchpoints\) \d/,
   );
   const minimum = page.getByRole("region", { name: /Minimum to start a diagnostic/ });
   for (const item of [
-    "Orders",
-    "Routings and operations per machine",
-    "Operation events (8+ weeks)",
+    "Event log: start and finish per job and step",
+    "Steps list",
+    "Shift sheet",
   ]) {
     await expect(minimum.getByRole("listitem").filter({ hasText: item })).toContainText("OK");
   }
@@ -73,7 +73,7 @@ test("plant setup shows engine numbers from the import and takes kick-off entrie
   await expect(page).toHaveURL(/\/conn$/);
   await page.goto("/setup");
   await page.waitForLoadState("networkidle");
-  await expect(page.getByText(/6 machines/)).toBeVisible();
+  await expect(page.getByText(/6 steps/)).toBeVisible();
 
   await page.getByRole("tab", { name: "Operations" }).click();
   const measured = page.getByRole("button", { name: /min\/unit/ }).first();
@@ -89,7 +89,7 @@ test("plant setup shows engine numbers from the import and takes kick-off entrie
     "throughput_per_unit_v1",
   );
 
-  await page.getByRole("tab", { name: "Stations and machines" }).click();
+  await page.getByRole("tab", { name: "Stations and steps" }).click();
   await page.getByRole("button", { name: "Add station" }).click();
   let dialog = page.getByRole("dialog", { name: "Add station" });
   await dialog.getByLabel("Station code").fill("qa");
@@ -97,13 +97,13 @@ test("plant setup shows engine numbers from the import and takes kick-off entrie
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("cell", { name: /Quality check/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "Add machine" }).click();
-  dialog = page.getByRole("dialog", { name: "Add machine" });
-  await dialog.getByLabel("Machine code").fill("qa-01");
-  await dialog.getByLabel("Machine name").fill("Inspection bench");
+  await page.getByRole("button", { name: "Add step" }).click();
+  dialog = page.getByRole("dialog", { name: "Add step" });
+  await dialog.getByLabel("Step code").fill("qa-01");
+  await dialog.getByLabel("Step name").fill("Inspection bench");
   await dialog.getByLabel("Station").selectOption("QA");
   await dialog.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText(/7 machines/)).toBeVisible();
+  await expect(page.getByText(/7 steps/)).toBeVisible();
 
   await page.getByRole("tab", { name: "Capacity costs" }).click();
   await page.getByRole("button", { name: "Edit costs PNT-01" }).click();
@@ -123,9 +123,15 @@ test("capacity calendar: timeline, covered break, maintenance and overtime", asy
   const paint = page.getByRole("list", { name: "PNT-01" });
   await expect(paint.getByRole("listitem").first()).toBeAttached();
 
-  const lunch = paint.getByRole("button", { name: /^Break: machine stops/ }).first();
+  // The page opens on today; a weekend day has no shifts, so open the next working day.
+  const workday = new Date();
+  while ([0, 6].includes(workday.getDay())) workday.setDate(workday.getDate() + 1);
+  const iso = `${workday.getFullYear()}-${String(workday.getMonth() + 1).padStart(2, "0")}-${String(workday.getDate()).padStart(2, "0")}`;
+  await page.getByLabel("Day", { exact: true }).fill(iso);
+  const lunch = paint.getByRole("button", { name: /^Break: the step stops/ }).first();
+  await expect(lunch).toBeVisible();
   const name = (await lunch.getAttribute("aria-label")) ?? "";
-  const time = name.replace(/^Break: machine stops /, "").split(".")[0] ?? "";
+  const time = name.replace(/^Break: the step stops /, "").split(".")[0] ?? "";
   await lunch.click();
   await expect(
     paint.getByRole("button", { name: new RegExp(`^Break covered: keeps running ${time}`) }),
@@ -133,7 +139,7 @@ test("capacity calendar: timeline, covered break, maintenance and overtime", asy
 
   await page.getByRole("button", { name: "Add to calendar" }).click();
   const dialog = page.getByRole("dialog", { name: "Add to calendar" });
-  await dialog.getByLabel("Machine").selectOption("PNT-01");
+  await dialog.getByLabel("Step").selectOption("PNT-01");
   await dialog.getByLabel("Kind").selectOption("maintenance");
   await dialog.getByLabel("From").fill("18:00");
   await dialog.getByLabel("Until", { exact: true }).fill("22:00");
@@ -149,7 +155,7 @@ test("capacity calendar: timeline, covered break, maintenance and overtime", asy
 
   await page.getByRole("button", { name: "Enter overtime" }).click();
   const overtime = page.getByRole("dialog", { name: "Enter overtime" });
-  await overtime.getByLabel("Machine").selectOption("PNT-01");
+  await overtime.getByLabel("Step").selectOption("PNT-01");
   await overtime.getByLabel("Week").fill("42");
   await overtime.getByLabel("Hours").fill("6,5");
   await overtime.getByRole("button", { name: "Save" }).click();
