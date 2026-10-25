@@ -88,6 +88,7 @@ The plant is modelled as **steps and touchpoints**, not machines or products (AD
 - **Capacity**: positions per step per shift, or a shared team's size per shift. Counts only, never people.
 - Products and routings are optional: they add euros, standard times and confidence. Without them a job's path comes from its touchpoint times, and euros from job value minus material cost.
 - `Plant`, `Resource`, `Routing`, `Operation`, `Order`, `Product`, `Team`.
+- Imports are a history the client manages (ADR-0010): files are the source, the event log adds and lists replace, fixed rows are corrections next to the original, deleting an import rebuilds from the rest, and every data change refreshes the answer. The engine reads the plant from the database.
 - `OperationEvent`: timestamped start/end/setup/downtime per job and step.
 - `ResourceState`: running, idle, starved, blocked, down, setup.
 - `CapacityCalendar`: shifts, maintenance, holidays per resource.

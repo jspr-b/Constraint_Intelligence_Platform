@@ -1,0 +1,73 @@
+source: data/synthetic/plant_a/erp_export/clean/csv
+rule: ADR-0010. Written before the code; never edited to fit it.
+plant_answer: data/synthetic/plant_a/expected_answers.yaml
+events_in_plant_a: 7084
+cases:
+  split:
+    uploads:
+    - split/upload_1
+    - split/upload_2
+    note: Both event files are named mes_events.csv and hold different weeks.
+    events_per_upload:
+    - 3545
+    - 3539
+    events_after: 7084
+    events_already_there:
+    - 0
+    - 0
+    answer: plant_answer
+    after_deleting_upload_2:
+      events_after: 3545
+      answer: same as split/upload_1 imported alone
+  repeat:
+    uploads:
+    - split/upload_1
+    - split/upload_2
+    - repeat/upload_2
+    note: 'Weeks 4-12 sent again, cut differently: other line numbers.'
+    events_per_upload:
+    - 3545
+    - 3539
+    - 5174
+    events_after: 7084
+    events_already_there:
+    - 0
+    - 0
+    - 5174
+    answer: plant_answer
+  whole_twice:
+    uploads:
+    - plant_a clean
+    - plant_a clean
+    events_after: 7084
+    events_already_there:
+    - 0
+    - 7084
+    answer: plant_answer
+  broken_rows_fixed_in_app:
+    uploads:
+    - broken/upload_1
+    rejected_rows: 5
+    fixes:
+    - file: mes_events.csv
+      line: 101
+      column: Tijdstip
+      value: 20-07-2026 10:11
+    - file: mes_events.csv
+      line: 1501
+      column: Tijdstip
+      value: 04-08-2026 17:36
+    - file: mes_events.csv
+      line: 3001
+      column: Tijdstip
+      value: 24-08-2026 06:37
+    - file: mes_events.csv
+      line: 4501
+      column: Tijdstip
+      value: 09-09-2026 21:28
+    - file: mes_events.csv
+      line: 6001
+      column: Tijdstip
+      value: 28-09-2026 19:41
+    events_after_fixes: 7084
+    answer_after_fixes: same as plant_a clean imported once

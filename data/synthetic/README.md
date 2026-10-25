@@ -99,3 +99,7 @@ ERP machine codes (`erp_codes.json`):
 | INPAK1 | PCK-01 |
 
 MES statuses: `GESTART` start, `GEREED` end, `OMSTEL_START`/`OMSTEL_EINDE` setup, `STORING_START`/`STORING_EINDE` down, `AFKEUR` scrap, `AANKOMST` scan, `VERTREK` move.
+
+## import_cases: sending exports more than once (ADR-0010)
+
+Uploads cut from plant A's clean ERP export, to test the import lifecycle: weeks 1-6 and 7-12 as two uploads whose event files are both named `mes_events.csv` (`split/`), weeks 4-12 sent again with other line numbers (`repeat/`), and the whole export with five event times broken (`broken/`, the right values are in `expected_answers.yaml` as fixes). The answer is always plant A's known answer, or the first upload's own answer after the second is deleted. Regenerate with `uv run python scripts/gen_import_cases.py`; tests: `apps/api/tests/test_cip_api_import_lifecycle.py` and `packages/connectors/tests/test_cip_connectors_event_ids.py`.

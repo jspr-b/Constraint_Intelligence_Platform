@@ -14,5 +14,7 @@ diff -q apps/web/src/lib/api/schema.d.ts "$tmp/schema.d.ts" >/dev/null \
   || { echo "apps/web/src/lib/api/schema.d.ts is stale: run pnpm --filter web gen:api"; exit 1; }
 
 uv run python scripts/gen_onboarding.py --check
+uv run python scripts/gen_import_cases.py --check \
+  || { echo "data/synthetic/import_cases is stale: run uv run python scripts/gen_import_cases.py"; exit 1; }
 
 echo "generated files are up to date"

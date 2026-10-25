@@ -8,6 +8,8 @@ Field names follow the conventions in CLAUDE.md: units in the name, times in UTC
 
 A step is any place where work happens: a machine, a handmade bench, a check or packing (ADR-0009). A job is whatever moves through the steps (an order, batch or ticket).
 
+You can send exports more than once (ADR-0010): a new event log adds to what is there (an event already sent is counted once), and a new steps list, shift sheet or order list replaces the earlier one.
+
 ## A. Plant structure (once, update when it changes)
 
 | # | Data | Key fields | Source | Need | Used by |
