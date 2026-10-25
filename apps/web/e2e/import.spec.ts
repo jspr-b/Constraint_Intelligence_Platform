@@ -36,7 +36,7 @@ test("results per file show rejected rows with reason and lines", async ({ page 
     .filter({ hasText: "mes_events.csv" });
   await expect(row).toContainText("Imported, some rows rejected");
   await expect(row).toContainText("unknown: 1 (lines 4)");
-  await expect(row).toContainText("events 9");
+  await expect(row).toContainText("Events (touchpoints) 9");
 });
 
 test("the import can be run from the Map columns step too", async ({ page }) => {

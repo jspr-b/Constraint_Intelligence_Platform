@@ -241,20 +241,26 @@ export function OverviewPage() {
         <Panel label={t("evidenceLabel")}>
           <ul className="m-0 flex flex-col gap-1 p-0 pl-5 text-sm">
             <li>
-              <Link href="/machines">
+              <Link className="inline-flex min-h-6 items-center" href="/machines">
                 {t(internal ? "evidence.machines" : "evidence.machinesNone")}
               </Link>
             </li>
             {internal && (
               <li>
-                <Link href="/loss">{t("evidence.loss")}</Link>
+                <Link className="inline-flex min-h-6 items-center" href="/loss">
+                  {t("evidence.loss")}
+                </Link>
               </li>
             )}
             <li>
-              <Link href="/data">{t("evidence.data")}</Link>
+              <Link className="inline-flex min-h-6 items-center" href="/data">
+                {t("evidence.data")}
+              </Link>
             </li>
             <li>
-              <Link href="/run">{t("evidence.run")}</Link>
+              <Link className="inline-flex min-h-6 items-center" href="/run">
+                {t("evidence.run")}
+              </Link>
             </li>
           </ul>
         </Panel>
