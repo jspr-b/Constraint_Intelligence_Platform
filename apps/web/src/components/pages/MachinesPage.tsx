@@ -10,6 +10,7 @@ import { ConstraintBanner, useDetection } from "../ConstraintBanner";
 import { useDetails } from "../Details";
 import { useFacts, useTeams, valueOf, type Fact, type Period } from "../diagnose";
 import { EmptyState } from "../EmptyState";
+import { missingName } from "@/lib/inputNames";
 import { Figure, HowCalculated } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
@@ -57,13 +58,22 @@ const TERM_OF: Partial<Record<ColumnKey, "setup" | "starved" | "blocked" | "oee"
   capacity: "capacity",
 };
 
-function MachineName({ name, code }: { name: string; code: string }) {
+function MachineName({
+  name,
+  code,
+  kind,
+}: {
+  name: string;
+  code: string;
+  kind?: string | undefined;
+}) {
   return (
     <span className="px-1">
       <span className="font-medium">{name}</span>{" "}
       <span className="font-mono text-xs text-muted" data-raw>
         {code}
       </span>
+      {kind && <span className="block text-xs text-muted">{kind}</span>}
     </span>
   );
 }
@@ -163,6 +173,29 @@ export function MachinesPage() {
     ...teams.map((team) => [team.team_code, team.name] as const),
   ]);
   const label = (code: string) => `${names.get(code) ?? code} (${code})`;
+  // What kind of step it is, and how many jobs it can work on at once (counts, never who).
+  const kinds = new Map([
+    ...(resources.data ?? []).map(
+      (r) =>
+        [
+          r.resource_code,
+          r.kind === "manual"
+            ? t("kind.manual", { positions: r.positions_max })
+            : r.positions_max > 1
+              ? t("kind.parallel", { kind: t(`kind.${r.kind}`), positions: r.positions_max })
+              : t(`kind.${r.kind}`),
+        ] as const,
+    ),
+    ...teams.map(
+      (team) =>
+        [
+          team.team_code,
+          team.size_max
+            ? t("kind.team", { steps: team.resource_codes.length, size: team.size_max })
+            : t("kind.teamNoSize", { steps: team.resource_codes.length }),
+        ] as const,
+    ),
+  ]);
   const byMachine = useMemo(() => {
     const out = new Map<string, Map<string, Fact>>();
     for (const f of facts.data?.facts ?? []) {
@@ -320,13 +353,21 @@ export function MachinesPage() {
                     key={code}
                     className={`border-b border-line ${open === code ? "bg-raised" : ""}`}
                   >
-                    <td className={`${TD} ${code === bottleneck ? "pt-6" : ""}`}>
+                    <td className={`${TD} min-w-48 ${code === bottleneck ? "pt-6" : ""}`}>
                       {code === bottleneck ? (
                         <ConstraintMarker tag={t("bottleneckTag")}>
-                          <MachineName name={names.get(code) ?? code} code={code} />
+                          <MachineName
+                            name={names.get(code) ?? code}
+                            code={code}
+                            kind={kinds.get(code)}
+                          />
                         </ConstraintMarker>
                       ) : (
-                        <MachineName name={names.get(code) ?? code} code={code} />
+                        <MachineName
+                          name={names.get(code) ?? code}
+                          code={code}
+                          kind={kinds.get(code)}
+                        />
                       )}
                     </td>
                     {COLUMNS.map(([key, , measure]) => (
@@ -397,7 +438,7 @@ function MachineDetail({
     : { period_kind: "all" as const };
   const days = useFacts(plant, { family: ["state"], resource_code: code, period_kind: "day" });
   const whole = useFacts(plant, {
-    family: ["task_time", "down_reason"],
+    family: ["task_time", "down_reason", "scan_gap"],
     resource_code: code,
   });
   const states = useFacts(plant, {
@@ -425,6 +466,11 @@ function MachineDetail({
   }, [days.data, period]);
   const tasks = (whole.data?.facts ?? []).filter((f) => f.family === "task_time");
   const operations = [...new Set(tasks.map((f) => f.operation ?? ""))].sort();
+  // Starts without a finish (a forgotten scan at a handmade step): left out, and they lower
+  // confidence (ADR-0009).
+  const scanGap = (whole.data?.facts ?? []).find(
+    (f) => f.family === "scan_gap" && f.period_kind === "all",
+  );
   const reasons = (whole.data?.facts ?? [])
     .filter((f) => f.family === "down_reason")
     .sort((a, b) => (valueOf(b) ?? 0) - (valueOf(a) ?? 0));
@@ -437,7 +483,11 @@ function MachineDetail({
   ]) {
     const v = f.figure.value;
     if (isMissing(v))
-      missing.set(v.reason, { what: v.missing, reason: v.reason, impact: v.confidence_impact });
+      missing.set(v.reason, {
+        what: missingName(tf, v.missing),
+        reason: v.reason,
+        impact: v.confidence_impact,
+      });
   }
   const day = (iso: string) =>
     new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" }).format(
@@ -623,7 +673,14 @@ function MachineDetail({
             <p className="m-0 mt-2 text-xs text-muted">{t("setupNoReason")}</p>
           </Panel>
           <Panel label={t("missingLabel")}>
-            {missing.size === 0 ? (
+            {scanGap && (
+              <p className="m-0 mb-2 text-sm">
+                {t("scanGap")}{" "}
+                <Figure figure={scanGap.figure as FigureLike} label={t("scanGapLabel")} />{" "}
+                {t("scanGapEffect", { impact: tf(`level.${scanGap.figure.confidence}`) })}
+              </p>
+            )}
+            {missing.size === 0 && !scanGap ? (
               <p className="m-0 text-sm text-muted">{t("missingNone")}</p>
             ) : (
               <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">

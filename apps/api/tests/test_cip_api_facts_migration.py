@@ -24,6 +24,12 @@ def test_facts_upgrade_and_downgrade() -> None:
         owner.connect().close()
     except DBAPIError:
         pytest.skip("database not running: docker compose up -d db")
+    with owner.connect() as conn:
+        rows = conn.execute(text("SELECT count(*) FROM orders")).scalar_one()
+    if rows:
+        # Downgrading drops the facts tables (the demo's numbers) and, by design, refuses to run
+        # while jobs without a product exist (migration 0009). Round-trip only an empty database.
+        pytest.skip(f"database holds plant data ({rows} orders): run on an empty database (CI)")
     cfg = Config(str(API / "alembic.ini"))
     command.upgrade(cfg, "head")
     try:

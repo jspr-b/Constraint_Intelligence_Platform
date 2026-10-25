@@ -111,7 +111,7 @@ test("IT disables an account and adds a station login", async ({ page }) => {
   await page.getByRole("button", { name: "Add station login" }).click();
   const dialog = page.getByRole("dialog", { name: "Add station login" });
   await dialog.getByLabel("Plant").selectOption("PLANT-A");
-  await dialog.getByLabel("Machine").selectOption({ label: "WLD-02 · Welding 2" });
+  await dialog.getByLabel("Step").selectOption({ label: "WLD-02 · Welding 2" });
   await dialog.getByLabel("Station PIN (4–8 digits)").fill("7395");
   await dialog.getByRole("button", { name: "Add station login" }).click();
   await expect(dialog).toHaveCount(0);

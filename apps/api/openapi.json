@@ -767,6 +767,7 @@
               "queue",
               "wip",
               "task_time",
+              "scan_gap",
               "loss",
               "throughput"
             ],
@@ -2202,6 +2203,10 @@
             "title": "Parallel Units",
             "type": "integer"
           },
+          "positions_max": {
+            "title": "Positions Max",
+            "type": "integer"
+          },
           "resource_code": {
             "title": "Resource Code",
             "type": "string"
@@ -2216,7 +2221,8 @@
           "name",
           "kind",
           "station_code",
-          "parallel_units"
+          "parallel_units",
+          "positions_max"
         ],
         "title": "ResourceOut",
         "type": "object"
@@ -2564,6 +2570,17 @@
             "title": "Resource Codes",
             "type": "array"
           },
+          "size_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Max"
+          },
           "team_code": {
             "title": "Team Code",
             "type": "string"
@@ -2572,7 +2589,8 @@
         "required": [
           "team_code",
           "name",
-          "resource_codes"
+          "resource_codes",
+          "size_max"
         ],
         "title": "TeamOut",
         "type": "object"
@@ -5003,6 +5021,7 @@
                       "queue",
                       "wip",
                       "task_time",
+                      "scan_gap",
                       "loss",
                       "throughput"
                     ],
@@ -5534,7 +5553,7 @@
     },
     "/plants/{plant_code}/resources": {
       "get": {
-        "description": "Machines of a plant (for pickers; the Plant setup page manages them).",
+        "description": "Steps of a plant, with their kind and positions (for pickers and labels; the Plant setup\npage manages them).",
         "operationId": "list_resources_plants__plant_code__resources_get",
         "parameters": [
           {

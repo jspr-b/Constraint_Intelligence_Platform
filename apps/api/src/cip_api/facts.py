@@ -183,6 +183,7 @@ Family = Literal[
     "queue",
     "wip",
     "task_time",
+    "scan_gap",
     "loss",
     "throughput",
 ]

@@ -1,7 +1,7 @@
 """Reset the synthetic demo tenant, so a demo always starts from the same place.
 
     uv run python scripts/demo_reset.py --empty   # tenant + IT account, no plant (live demo)
-    uv run python scripts/demo_reset.py --loaded  # plants A, B and C imported through the API
+    uv run python scripts/demo_reset.py --loaded  # plants A, B, C and D imported through the API
 
 Only the demo tenant (fixed id) is deleted and recreated; other tenants are never touched.
 ``--loaded`` goes through the running API (sign in, add plant, upload, run), exactly like a client
@@ -25,7 +25,7 @@ DEMO_TENANT = uuid.UUID("0de00000-0000-4000-8000-000000000001")
 DEMO_TENANT_NAME = "Demo Metal (synthetic)"
 DEMO_EMAIL = "it@demo.example"
 SYNTHETIC = Path(__file__).resolve().parents[4] / "data" / "synthetic"
-DEMO_PLANTS = ("plant_a", "plant_b", "plant_c")
+DEMO_PLANTS = ("plant_a", "plant_b", "plant_c", "plant_d")
 
 
 class DemoError(RuntimeError):
@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--empty", action="store_true", help="tenant and IT account, no plant")
-    mode.add_argument("--loaded", action="store_true", help="plants A, B and C imported")
+    mode.add_argument("--loaded", action="store_true", help="plants A, B, C and D imported")
     parser.add_argument("--api-url", default="http://localhost:58000")
     parser.add_argument("--web-url", default="http://localhost:53000")
     parser.add_argument("--env-file", type=Path, default=Path(".env"))
@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.write_env:
         write_env(args.env_file)
     hint = env_hint(args.env_file)
-    plants = "plants A, B and C imported" if args.loaded else "no plant yet"
+    plants = "plants A, B, C and D imported" if args.loaded else "no plant yet"
     print(f"Demo ready ({plants}). Sign in at {args.web_url}/login with {DEMO_EMAIL}.")
     if hint:
         print(hint)

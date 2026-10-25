@@ -573,7 +573,8 @@ export interface paths {
         };
         /**
          * List Resources
-         * @description Machines of a plant (for pickers; the Plant setup page manages them).
+         * @description Steps of a plant, with their kind and positions (for pickers and labels; the Plant setup
+         *     page manages them).
          */
         get: operations["list_resources_plants__plant_code__resources_get"];
         put?: never;
@@ -1031,7 +1032,7 @@ export interface components {
              * Family
              * @enum {string}
              */
-            family: "state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time" | "loss" | "throughput";
+            family: "state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time" | "scan_gap" | "loss" | "throughput";
             figure: components["schemas"]["FigureOut"];
             /** Measure */
             measure: string;
@@ -1513,6 +1514,8 @@ export interface components {
             name: string;
             /** Parallel Units */
             parallel_units: number;
+            /** Positions Max */
+            positions_max: number;
             /** Resource Code */
             resource_code: string;
             /** Station Code */
@@ -1637,6 +1640,8 @@ export interface components {
             name: string;
             /** Resource Codes */
             resource_codes: string[];
+            /** Size Max */
+            size_max: number | null;
             /** Team Code */
             team_code: string;
         };
@@ -2695,7 +2700,7 @@ export interface operations {
     read_facts_plants__plant_code__facts_get: {
         parameters: {
             query?: {
-                family?: ("state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time" | "loss" | "throughput")[] | null;
+                family?: ("state" | "state_share" | "down_reason" | "utilisation" | "setup_share" | "oee" | "effective_capacity" | "queue" | "wip" | "task_time" | "scan_gap" | "loss" | "throughput")[] | null;
                 resource_code?: string | null;
                 period_kind?: "all" | "month" | "week" | "day";
                 period_start_at?: string | null;

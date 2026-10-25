@@ -111,7 +111,7 @@ def _files(plant: LoadedPlant, errors: list[RowError]) -> list[FileQuality]:
 
 
 def _unpaired(events: list[OperationEvent]) -> dict[str, int]:
-    """Starts without an end per machine, ignoring the job still running at the end of the data."""
+    """Starts without an end per step, ignoring the job still running at the end of the data."""
     open_jobs: dict[tuple[str, str | None, int | None], int] = Counter()
     last_start: dict[str, tuple[str | None, int | None]] = {}
     for e in sorted(events, key=lambda e: e.at):
@@ -139,7 +139,7 @@ def _event_gaps(plant: LoadedPlant) -> list[Gap]:
                 "unpaired_start",
                 f"{n} start events on {code} have no end event",
                 Confidence.MEDIUM,
-                "Check that the MES export includes finish bookings",
+                "Check that the export includes finish bookings (forgotten scans count here)",
                 code,
                 n,
             )
@@ -156,7 +156,7 @@ def _event_gaps(plant: LoadedPlant) -> list[Gap]:
                     "no_downtime",
                     f"No breakdowns recorded for {code}",
                     Confidence.LOW,
-                    "Confirm the machine had no stops, or add the maintenance log",
+                    "Confirm the step had no stops, or add the maintenance log",
                     code,
                 )
             )
@@ -185,7 +185,7 @@ def _event_gaps(plant: LoadedPlant) -> list[Gap]:
                     "silent_days",
                     f"{code} has no events on {len(silent)} working days",
                     Confidence.LOW,
-                    "Check whether the machine was idle or the export missed those days",
+                    "Check whether the step was idle or the export missed those days",
                     code,
                     len(silent),
                 )

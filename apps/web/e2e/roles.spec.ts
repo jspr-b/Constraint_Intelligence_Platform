@@ -33,7 +33,7 @@ test("the station role gets only the station screen, without a menu", async ({ p
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await expect(page.getByRole("complementary", { name: "Details" })).toHaveCount(0);
   await page.goto("/main");
-  await expect(page.getByText("This screen belongs to a machine.")).toBeVisible();
+  await expect(page.getByText("This screen belongs to a step.")).toBeVisible();
 });
 
 test("each role lands on its start page", async ({ page }) => {

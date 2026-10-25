@@ -17,7 +17,7 @@
       "data": "Data quality",
       "main": "Overview",
       "loss": "Loss",
-      "machines": "Machines",
+      "machines": "Steps",
       "actions": "Recommendations",
       "report": "Results report",
       "planner": "Planner today",
@@ -68,17 +68,17 @@
     },
     "pages": {
       "run": "Where your diagnosis stands, from your data to the answer, step by step.",
-      "main": "The answer in one place: which machine is your <bottleneck>bottleneck</bottleneck>, what it costs and how sure we are (<confidence>confidence</confidence>).",
+      "main": "The answer in one place: which step is your <bottleneck>bottleneck</bottleneck>, what it costs and how sure we are (<confidence>confidence</confidence>).",
       "loss": "The hours and euros your <bottleneck>bottleneck</bottleneck> loses each week and month, and why.",
-      "machines": "How busy each machine really is: running, <setup>setup</setup>, down, <starved>starved</starved> or <blocked>blocked</blocked>.",
+      "machines": "How busy each step really is: running, <setup>setup</setup>, down, <starved>starved</starved> or <blocked>blocked</blocked>.",
       "actions": "What to do about your <bottleneck>bottleneck</bottleneck>, with the euros it could gain and what it costs.",
       "report": "A report for the plant director: the <bottleneck>bottleneck</bottleneck>, its cost, the evidence.",
       "planner": "Which orders to release today, in which order, to keep the <bottleneck>bottleneck</bottleneck> busy.",
       "buffer": "The orders waiting in front of your <bottleneck>bottleneck</bottleneck> (the <buffer>buffer</buffer>), marked green, yellow or red.",
-      "plan": "Which machine will be your <bottleneck>bottleneck</bottleneck> in the coming weeks.",
+      "plan": "Which step will be your <bottleneck>bottleneck</bottleneck> in the coming weeks.",
       "flow": "Your plant from input to output, with the <bottleneck>bottleneck</bottleneck> highlighted.",
       "shift": "One clear signal per shift: is the <bottleneck>bottleneck</bottleneck> running, waiting or down.",
-      "station": "The screen at a machine: tap start, done and stop.",
+      "station": "The screen at a step: tap start, done and stop.",
       "value": "The gain in <throughput>throughput</throughput> we predicted against the gain you measured, for finance to sign off."
     }
   },
@@ -87,7 +87,7 @@
     "apiUnreachable": "We can't reach the server right now. Try again in a moment; if it lasts, contact your IT / ERP owner.",
     "signInRequired": "Sign in to continue.",
     "notAllowed": "Your role may not open this page. The COO decides access.",
-    "stationOnly": "This screen belongs to a machine."
+    "stationOnly": "This screen belongs to a step."
   },
   "login": {
     "title": "Sign in",
@@ -133,7 +133,7 @@
     "plant": "Plant",
     "allPlants": "All plants",
     "choosePlant": "Choose a plant",
-    "machine": "Machine",
+    "machine": "Step",
     "pin": "Station PIN (4–8 digits)",
     "accounts": "Accounts",
     "accessNote": "What a role may see is set on",
@@ -164,11 +164,11 @@
     "ssoOffNote": "During the pilot, personal accounts use email sign-in. Station logins always use a station PIN.",
     "neverStored": "What is never stored",
     "neverStoredBody": "Who stood at which station, or how fast a person worked.",
-    "neverStoredNote": "Station logins belong to the machine. Personal accounts exist only for people who plan, decide or administer.",
+    "neverStoredNote": "Station logins belong to the step. Personal accounts exist only for people who plan, decide or administer.",
     "inviteHowSso": "No email is sent. Tell them to sign in at {url} with their company account. Their status turns Active on first sign-in.",
     "inviteHowDev": "No email is sent. Tell them to sign in at {url} with this email. Their status turns Active on first sign-in.",
-    "noPlantForStation": "No plant yet. Add your plant first, then import your export; its machines appear here.",
-    "noMachines": "No machines yet for this plant. They come in with your first import.",
+    "noPlantForStation": "No plant yet. Add your plant first, then import your export; its steps appear here.",
+    "noMachines": "No steps yet for this plant. They come in with your first import.",
     "openImport": "Go to Import",
     "openSetup": "Go to Plant setup"
   },
@@ -222,7 +222,7 @@
   "plant": {
     "label": "Plant",
     "none": "No plant yet",
-    "noneBody": "Add your plant first. Its machines come in with your export.",
+    "noneBody": "Add your plant first. Its steps come in with your export.",
     "toSetup": "Go to plant setup"
   },
   "import": {
@@ -338,13 +338,13 @@
     },
     "resultsNote": "Rejected rows are never guessed or fixed: correct them in the source or add the code to the code table, then run again.",
     "source": {
-      "werkplekken": "Machines and stations",
+      "werkplekken": "Steps and stations",
       "artikelen": "Products",
-      "bewerkingen": "Routings (operations per machine)",
+      "bewerkingen": "Routings (operations per step)",
       "orders": "Orders",
       "mes_events": "Operation events (MES)",
       "rooster": "Shifts, breaks and holidays",
-      "overuren": "Overtime per machine",
+      "overuren": "Overtime per step",
       "capaciteitskosten": "Capacity costs",
       "omsteltijden": "Changeover times",
       "uitbesteding": "Outsourcing prices",
@@ -400,15 +400,15 @@
   },
   "setup": {
     "label": "Plant setup",
-    "headline": "{stations, plural, one {# station} other {# stations}} · {machines, plural, one {# machine} other {# machines}}. Measured times come from the last import; ERP values are for reference.",
-    "headlineEmpty": "No plant yet. Add your plant: a name and a time zone. Its machines come in with your export.",
+    "headline": "{stations, plural, one {# station} other {# stations}} · {machines, plural, one {# step} other {# steps}}. Measured times come from the last import; ERP values are for reference.",
+    "headlineEmpty": "No plant yet. Add your plant: a name and a time zone. Its steps come in with your export.",
     "addPlant": "Add plant",
     "save": "Save",
     "cancel": "Cancel",
     "plantCode": "Short plant code (for example PLANT-A)",
     "plantName": "Name",
     "timezone": "Time zone (for example Europe/Amsterdam)",
-    "tabStations": "Stations and machines",
+    "tabStations": "Stations and steps",
     "tabOperations": "Operations",
     "tabProducts": "Products",
     "tabFamilies": "Setup families",
@@ -416,27 +416,27 @@
     "addStation": "Add station",
     "stationCode": "Station code",
     "stationName": "Station name",
-    "addMachine": "Add machine",
-    "machineCode": "Machine code",
-    "machineName": "Machine name",
+    "addMachine": "Add step",
+    "machineCode": "Step code",
+    "machineName": "Step name",
     "station": "Station",
     "parallelUnits": "Parallel units",
     "stepKind": "Kind of step",
     "kindMachine": "Machine",
     "kindManual": "Handmade (benches or places)",
     "handmade": "handmade",
-    "stationsLabel": "Stations and machines",
-    "noStations": "No stations or machines yet.",
-    "machines": "Machines",
+    "stationsLabel": "Stations and steps",
+    "noStations": "No stations or steps yet.",
+    "machines": "Steps",
     "stationScreen": "Station screens",
     "screens": "{count, plural, =0 {None} one {# screen} other {# screens}}",
-    "operationsLabel": "Operations per machine",
+    "operationsLabel": "Operations per step",
     "noOperations": "No operations yet. They come with the routings in an import.",
-    "machine": "Machine",
+    "machine": "Step",
     "operation": "Operation",
     "measured": "Measured min/unit",
     "erp": "ERP standard",
-    "alternatives": "Alternative machine",
+    "alternatives": "Alternative step",
     "usedBy": "Used by",
     "notMeasured": "Not measured yet",
     "measuredNote": "Measured times replace ERP standards in every calculation. ERP values are shown for reference only.",
@@ -462,14 +462,14 @@
     "costsNote": "Used later to weigh Elevate actions (overtime, extra shifts) against their gain. Empty means not known."
   },
   "calendar": {
-    "headline": "Shifts, breaks and maintenance per machine, in plant local time ({tz}).",
+    "headline": "Shifts, breaks and maintenance per step, in plant local time ({tz}).",
     "previousDay": "Previous day",
     "nextDay": "Next day",
     "day": "Day",
     "addWindow": "Add to calendar",
     "save": "Save",
     "cancel": "Cancel",
-    "machine": "Machine",
+    "machine": "Step",
     "kindLabel": "Kind",
     "date": "Date",
     "from": "From",
@@ -477,15 +477,15 @@
     "to": "Until",
     "localNote": "Times are local plant time ({tz}).",
     "timelineLabel": "{day} · local time",
-    "noMachines": "No machines yet. Add them on Plant setup.",
+    "noMachines": "No steps yet. Add them on Plant setup.",
     "noWindows": "Nothing on the calendar this day",
     "dataRange": "Nothing this day. The calendar has data from {from} to {to}.",
-    "coverHint": "Click a break to mark it covered (the machine keeps running) or not.",
+    "coverHint": "Click a break to mark it covered (the step keeps running) or not.",
     "markCovered": "Mark as covered",
-    "markStops": "Mark as machine stops",
+    "markStops": "Mark as stops",
     "kind": {
       "shift": "Production time",
-      "break": "Break: machine stops",
+      "break": "Break: the step stops",
       "covered": "Break covered: keeps running",
       "maintenance": "Maintenance",
       "holiday": "Holiday",
@@ -493,7 +493,7 @@
     },
     "legend": {
       "shift": "Production time",
-      "break": "Break: machine stops",
+      "break": "Break: the step stops",
       "covered": "Break covered: keeps running",
       "maintenance": "Maintenance",
       "holiday": "Holiday",
@@ -505,14 +505,14 @@
     "action": "Action",
     "delete": "Delete",
     "deleteWindow": "Delete {what}",
-    "overtimeLabel": "Overtime worked per machine per week",
+    "overtimeLabel": "Overtime worked per step per week",
     "addOvertime": "Enter overtime",
     "year": "Year",
     "week": "Week",
     "hours": "Hours",
     "isoWeek": "Week",
     "noOvertime": "No overtime entered or imported yet.",
-    "overtimeNote": "Per machine and week, never per person. Can also come from an import."
+    "overtimeNote": "Per step and week, never per person. Can also come from an import."
   },
   "connections": {
     "headlineNone": "No data has come in yet. Start with a file upload on the Import page.",
@@ -556,7 +556,7 @@
     "ssoOff": "Not configured · pilot uses email sign-in",
     "personalLogins": "Personal logins",
     "stationLogins": "Station logins",
-    "stationCount": "{count, plural, =0 {None} one {# (belongs to a machine, no person)} other {# (one per machine, no person)}}",
+    "stationCount": "{count, plural, =0 {None} one {# (belongs to a step, no person)} other {# (one per step, no person)}}",
     "toUsers": "Manage logins on the Users page",
     "protectionLabel": "Data protection",
     "region": "Region",
@@ -599,7 +599,7 @@
     "missingShown": "MISSING IS SHOWN AS MISSING",
     "noGaps": "No gaps found.",
     "gap": "Gap",
-    "machine": "Machine",
+    "machine": "Step",
     "impact": "<confidence>Confidence</confidence> impact",
     "fix": "Fix",
     "allMachines": "All",
@@ -627,7 +627,7 @@
     },
     "plant": {
       "title": "Add your plant",
-      "todo": "Name your plant and its time zone; machines come in with your export.",
+      "todo": "Name your plant and its time zone; steps come in with your export.",
       "done": "{plant} is set up.",
       "go": "Add plant"
     },
@@ -655,8 +655,8 @@
     },
     "answer": {
       "title": "See your bottleneck",
-      "todo": "See which machine limits your output and what it costs.",
-      "later": "Which machine limits your output and what it costs. This arrives with the Diagnose engine.",
+      "todo": "See which step limits your output and what it costs.",
+      "later": "Which step limits your output and what it costs. This arrives with the Diagnose engine.",
       "done": "Your bottleneck is found.",
       "go": "See the answer"
     },
@@ -720,19 +720,19 @@
       "calendar": "Calendar",
       "capacity_costs": "Capacity costs",
       "changeovers": "Changeovers",
-      "events": "Machine events",
+      "events": "Events (touchpoints)",
       "orders": "Orders",
       "outsourcing": "Outsourcing",
       "overtime": "Overtime",
       "products": "Products",
-      "resources": "Machines",
+      "resources": "Steps",
       "routings": "Routings",
       "stations": "Stations",
       "team_shifts": "Team sizes per shift",
       "teams": "Teams"
     },
     "fields": {
-      "alternative_resource_codes": "other machines that can do it",
+      "alternative_resource_codes": "other steps that can do it",
       "at": "time",
       "changeover_min": "changeover time (min)",
       "covered": "covered break",
@@ -761,7 +761,7 @@
       "price_eur_cents_per_unit": "price per unit (€)",
       "quantity_units": "quantity",
       "released_at": "released",
-      "resource_code": "machine code",
+      "resource_code": "step code",
       "resource_codes": "steps the team covers",
       "sales_price_eur_cents": "sales price (€)",
       "scrap_reason_code": "scrap reason",
@@ -791,9 +791,29 @@
   "glossary": {
     "title": "Words we use",
     "terms": {
+      "step": {
+        "name": "Step",
+        "text": "Any place where work happens: a machine, a handmade bench, a check or packing."
+      },
+      "handmade": {
+        "name": "Handmade step",
+        "text": "A step where people do the work by hand, at one or more benches or places."
+      },
+      "positions": {
+        "name": "Positions",
+        "text": "How many jobs a step can work on at once in a shift: its staffed benches or places, a count, never who."
+      },
+      "team": {
+        "name": "Team",
+        "text": "A group that covers several steps; together those steps cannot work on more jobs than the team has people on shift."
+      },
+      "touchpoint": {
+        "name": "Touchpoint",
+        "text": "A job passing a step: a start, finish, stop or scan, with its time."
+      },
       "bottleneck": {
         "name": "Bottleneck",
-        "text": "The one machine or step that limits how much the whole plant can ship. Also called the constraint."
+        "text": "The one step (a machine, a handmade bench or a team) that limits how much the whole plant can ship. Also called the constraint."
       },
       "throughput": {
         "name": "Throughput",
@@ -801,23 +821,23 @@
       },
       "capacity": {
         "name": "Effective capacity",
-        "text": "Hours a machine can really produce, after breaks, stops and setups are taken off."
+        "text": "Hours a step can really produce, after breaks, stops and setups are taken off."
       },
       "oee": {
         "name": "OEE",
-        "text": "How much of the planned time a machine made good parts at full speed, in %. Lost to stops, slow running and scrap."
+        "text": "How much of the planned time a step made good parts at full speed, in %. Lost to stops, slow running and scrap."
       },
       "setup": {
         "name": "Setup",
-        "text": "Time to switch a machine from one product or colour to the next. Nothing is made meanwhile."
+        "text": "Time to switch a step from one product or colour to the next. Nothing is made meanwhile."
       },
       "starved": {
         "name": "Starved",
-        "text": "The machine is ready but has no work: the step before it did not deliver."
+        "text": "The step is ready but has no work: the step before it did not deliver."
       },
       "blocked": {
         "name": "Blocked",
-        "text": "The machine has finished work but cannot pass it on: the step after it is full."
+        "text": "The step has finished work but cannot pass it on: the step after it is full."
       },
       "buffer": {
         "name": "Buffer",
@@ -853,10 +873,10 @@
     "formulas": {
       "data_quality_score": "Start at 100. Take off twice the share of rejected rows (at most 30 points), then 15, 7 or 2 points for each high, medium or low gap. Never below 0.",
       "record_count": "The number of rows that were read and accepted.",
-      "event_period_weeks": "Weeks between the first and the last machine event in your data.",
-      "oee_availability": "Share of the planned production time the machine was not stopped unplanned.",
-      "oee_performance": "How fast the machine ran compared with its ideal speed, while running.",
-      "oee_quality": "Share of the units that were good (not scrapped at this machine).",
+      "event_period_weeks": "Weeks between the first and the last event in your data.",
+      "oee_availability": "Share of the planned production time the step was not stopped unplanned.",
+      "oee_performance": "How fast the step ran compared with its ideal speed, while running.",
+      "oee_quality": "Share of the units that were good (not scrapped at this step).",
       "oee": "Availability × performance × quality.",
       "effective_capacity_h": "Planned production hours, minus the share lost to unplanned stops.",
       "task_time_median": "The middle value of the measured work minutes per unit over all finished operations.",
@@ -864,21 +884,21 @@
       "throughput_per_unit": "Sales price minus truly variable cost (mostly material).",
       "throughput_per_constraint_min": "Throughput per unit divided by the minutes the bottleneck needs per unit.",
       "constraint_hours": "A euro amount shown as hours of bottleneck time: amount ÷ throughput per bottleneck hour.",
-      "machine_state_min": "Minutes of shift time the machine spent in this state, rebuilt from its start, end, setup and stop events and the shift calendar.",
-      "utilisation_pct": "Busy = (running + setup) ÷ the time the machine was available (shift minus breaks, planned maintenance, breakdowns and time the data cannot explain) × 100.",
+      "machine_state_min": "Minutes of shift time the step spent in this state, rebuilt from its start, end, setup and stop events and the shift calendar.",
+      "utilisation_pct": "Busy = (running + setup) ÷ the time the step was available (shift minus breaks, planned maintenance, breakdowns and time the data cannot explain) × 100.",
       "state_share_pct": "Share of shift time = minutes in this state ÷ shift minutes × 100.",
       "setup_share_pct": "Setup share = setup minutes ÷ (running + setup minutes) × 100.",
-      "down_reason_min": "Minutes the machine was stopped unplanned with this reason, within planned production time.",
-      "queue_time_median_min": "Typical wait: half of the orders waited less than this in front of the machine, half waited longer.",
-      "queue_time_p90_min": "Long waits: 9 in 10 orders waited less than this in front of the machine.",
-      "wip_average_units": "Average number of orders waiting in front of the machine, weighted by how long they waited.",
-      "wip_max_units": "The most orders waiting in front of the machine at one moment.",
-      "constraint_by_utilisation": "The highest busy share among all machines. A machine limits output when it is busy 85% of its available time or more.",
-      "constraint_by_queue": "The highest average number of orders waiting in front of a machine. A machine limits output when at least 1 order waits there on average.",
-      "active_period_share_pct": "Share of the working time in which this machine was the one working longest without a pause (running, setup or a breakdown) × 100.",
-      "constraint_by_active_period": "The highest share of time a machine was the one working longest without a pause. It limits output at 75% or more.",
+      "down_reason_min": "Minutes the step was stopped unplanned with this reason, within planned production time.",
+      "queue_time_median_min": "Typical wait: half of the orders waited less than this in front of the step, half waited longer.",
+      "queue_time_p90_min": "Long waits: 9 in 10 orders waited less than this in front of the step.",
+      "wip_average_units": "Average number of orders waiting in front of the step, weighted by how long they waited.",
+      "wip_max_units": "The most orders waiting in front of the step at one moment.",
+      "constraint_by_utilisation": "The highest busy share among all steps. A step limits output when it is busy 85% of its available time or more.",
+      "constraint_by_queue": "The highest average number of orders waiting in front of a step. A step limits output when at least 1 order waits there on average.",
+      "active_period_share_pct": "Share of the working time in which this step was the one working longest without a pause (running, setup or a breakdown) × 100.",
+      "constraint_by_active_period": "The highest share of time a step was the one working longest without a pause. It limits output at 75% or more.",
       "idle_share_pct": "Waiting share = time starved (waiting for work) + time blocked (cannot pass work on), as a share of shift time.",
-      "constraint_by_starved_blocked": "The lowest waiting share among all machines. A machine limits output when it waits 10% of its shift time or less.",
+      "constraint_by_starved_blocked": "The lowest waiting share among all steps. A step limits output when it waits 10% of its shift time or less.",
       "constraint_agreement_pct": "Checks that point at the answer ÷ checks run (4) × 100.",
       "material_late_share_pct": "Released orders whose material arrived after release ÷ all released orders with a material date × 100.",
       "lost_constraint_h": "Hours the bottleneck did not produce for this cause = its minutes for the cause ÷ 60.",
@@ -918,7 +938,7 @@
       "setupPrice": "your ERP export (products), or typed in on Plant setup",
       "setupChangeover": "your changeover sheet, or typed in on Plant setup",
       "setupCosts": "your capacity-cost sheet, or typed in on Plant setup",
-      "setupUnits": "your ERP export (machines): how many identical units work side by side",
+      "setupUnits": "your ERP export (steps): how many identical units or positions work side by side",
       "overtime": "your overtime sheet, or typed in on this page",
       "accessPages": "the access settings the COO set on this page",
       "importRead": "{file}, read in this import",
@@ -943,7 +963,7 @@
       "throughput_per_constraint_h_eur_cents": "Throughput per bottleneck hour",
       "bottleneck_work_min": "Bottleneck work minutes",
       "units_without_price": "Units without a price",
-      "resource_code": "Machine",
+      "resource_code": "Step",
       "throughput_eur_cents": "Throughput of those orders",
       "units": "Units finished",
       "from_products_eur_cents": "Money from jobs with a product price",
@@ -954,13 +974,21 @@
       "starts_without_finish": "Starts without a finish",
       "starts": "Jobs started",
       "counted_in": "Counted in",
-      "path_from": "Path of each job taken from"
+      "path_from": "Path of each job taken from",
+      "ideal_min": "Standard time",
+      "units_processed": "Units made",
+      "run_time_min": "Running time",
+      "planned_production_min": "Planned production time",
+      "machines": "Steps",
+      "constraint_run_min_per_unit": "Bottleneck time per unit",
+      "end": "Finish event",
+      "start": "Start event"
     },
-    "noMachine": "no machine"
+    "noMachine": "no step"
   },
   "machines": {
-    "headline": "{name} is your busiest machine. Busy share per machine below; click any number to see how it is worked out.",
-    "intro": "Busy = running plus <setup>setup</setup>, as a share of the time the machine was available. Time at the <bottleneck>bottleneck</bottleneck> is what counts: a quiet machine elsewhere is normal and not a problem.",
+    "headline": "{name} is your busiest step. Busy share per step below; click any number to see how it is worked out.",
+    "intro": "Busy = running plus <setup>setup</setup>, as a share of the time the step was available. Time at the <bottleneck>bottleneck</bottleneck> is what counts: a quiet step elsewhere is normal and not a problem.",
     "period": "Period",
     "periodAll": "Whole data period",
     "periodWeek": "Week of {date}",
@@ -971,10 +999,10 @@
     "calculating": "Calculating your numbers from the latest import… This page updates by itself.",
     "failed": "The numbers could not be calculated from the latest import. Run the import again; if it fails again, send IT the details on the Import page.",
     "noFacts": "There are no numbers for this period. Choose another period.",
-    "tableLabel": "Machines · {period}",
+    "tableLabel": "Steps · {period}",
     "sortBy": "Sort by {column}",
     "col": {
-      "machine": "Machine",
+      "machine": "Step",
       "busy": "Busy",
       "running": "Running",
       "setup": "Setup",
@@ -1014,50 +1042,62 @@
     "colOperation": "Operation",
     "colTypical": "Typical",
     "colSlow": "Slow cases",
-    "noTasks": "No completed operations were measured on this machine.",
+    "noTasks": "No completed operations were measured on this step.",
     "downLabel": "Breakdowns by reason",
     "colReason": "Reason code",
     "colMinutes": "Stopped",
     "reasonUnknown": "No reason given",
-    "noDown": "No breakdowns were recorded on this machine.",
+    "noDown": "No breakdowns were recorded on this step.",
     "setupLabel": "Setup",
     "setupTime": "Setup time",
     "setupShare": "Share of busy time spent on setup",
     "setupNoReason": "Your data does not say why each setup happened, so setup time is not split by reason.",
     "missingLabel": "Missing data",
-    "missingNone": "Nothing is missing for this machine.",
+    "missingNone": "Nothing is missing for this step.",
     "missingItem": "{what}: {reason}. Effect on confidence: {impact}.",
     "confidenceNote": "Numbers marked with ◆ have lower confidence; open them to see why.",
-    "headlineConstraint": "{name} is your bottleneck: it limits the output of the whole plant. Busy share per machine below; click any number to see how it is worked out.",
-    "headlineNone": "No machine limits your output in this period. Busy share per machine below; click any number to see how it is worked out.",
-    "bottleneckTag": "BOTTLENECK"
+    "headlineConstraint": "{name} is your bottleneck: it limits the output of the whole plant. Busy share per step below; click any number to see how it is worked out.",
+    "headlineNone": "No step limits your output in this period. Busy share per step below; click any number to see how it is worked out.",
+    "bottleneckTag": "BOTTLENECK",
+    "kind": {
+      "machine": "Machine",
+      "manual": "Handmade · up to {positions, plural, one {# position} other {# positions}}",
+      "station": "Station",
+      "work_centre": "Work centre",
+      "parallel": "{kind} · {positions} side by side",
+      "team": "Team · covers {steps} steps · up to {size} on shift",
+      "teamNoSize": "Team · covers {steps} steps"
+    },
+    "scanGap": "Starts without a finish (a forgotten scan):",
+    "scanGapLabel": "Starts without a finish",
+    "scanGapEffect": "of starts here. Those jobs are left out of busy time and task times, never closed with a guessed time. Effect on confidence: {impact}."
   },
   "detection": {
     "label": "Your bottleneck",
     "heading": "Bottleneck · {period}",
     "tag": "BOTTLENECK",
     "internal": "limits your output. An hour lost here is an hour of output lost for the whole plant: this is the <bottleneck>bottleneck</bottleneck>.",
-    "market": "No machine limits your output in this period. Every machine has spare time, so the limit is demand: more orders, not more capacity, would raise output.",
-    "material": "No machine limits your output in this period. Late material holds work back: orders wait for parts, not for machines.",
+    "market": "No step limits your output in this period. Every step has spare time, so the limit is demand: more orders, not more capacity, would raise output.",
+    "material": "No step limits your output in this period. Late material holds work back: orders wait for parts, not for a free step.",
     "agreement": "Checks that agree",
     "confidence": "<confidence>Confidence</confidence>:",
     "howFound": "How we found it: 4 checks",
-    "howFoundHelp": "We never rely on one check. Each one looks at your data differently; the more of them point at the same machine, the surer the answer. Click a number to see how it is worked out.",
+    "howFoundHelp": "We never rely on one check. Each one looks at your data differently; the more of them point at the same step, the surer the answer. Click a number to see how it is worked out.",
     "colMethod": "Check",
     "colPoints": "Points at",
     "colEvidence": "Its number",
-    "noneBinding": "No machine (closest: {top})",
+    "noneBinding": "No step (closest: {top})",
     "methodHelp": {
-      "utilisation": "The busiest machine. It limits output when it is busy 85% of its available time or more.",
-      "queue": "The machine with most orders waiting in front of it. It limits output when at least 1 order waits on average.",
-      "active_period": "The machine that is most often the one working longest without a pause. It limits output when that is so 75% of the time or more.",
-      "starved_blocked": "The machine that is least often waiting for work or unable to pass work on. It limits output when that is 10% of its shift time or less."
+      "utilisation": "The busiest step. It limits output when it is busy 85% of its available time or more.",
+      "queue": "The step with most orders waiting in front of it. It limits output when at least 1 order waits on average.",
+      "active_period": "The step that is most often the one working longest without a pause. It limits output when that is so 75% of the time or more.",
+      "starved_blocked": "The step that is least often waiting for work or unable to pass work on. It limits output when that is 10% of its shift time or less."
     },
     "reason": {
       "agree": "{count} of {total} checks point at {machine}.",
       "differs": "The {method} check points at {machine} instead.",
-      "differsNone": "The {method} check finds no machine that limits output (closest: {top}).",
-      "market": "The busiest machine, {machine}, is busy {busy}% of its available time: below the 85% at which it would limit output.",
+      "differsNone": "The {method} check finds no step that limits output (closest: {top}).",
+      "market": "The busiest step, {machine}, is busy {busy}% of its available time: below the 85% at which it would limit output.",
       "material": "For {share}% of released orders the material arrived after the work was released.",
       "weak": "Confidence is lowered to {level} because some of the numbers behind the checks are less certain. Open them to see why.",
       "dataGap": "Confidence is lowered to medium because important data is missing. See Data quality for what to add.",
@@ -1118,10 +1158,10 @@
     "hoursInMonth": "of output time in {month}.",
     "hoursLabel": "Bottleneck hours lost",
     "noEuros": "Euros are not shown because your data has no job values or sales prices. Add jobs with value and material cost, or products with sales price and truly variable cost.",
-    "market": "No machine limits you: you could make more if you sold more.",
-    "material": "No machine limits you: late material holds your output back. Get parts in on time and you can make more.",
-    "busiest": "Even your busiest machine, {machine}, is busy only",
-    "busyLabel": "Busy share of the busiest machine",
+    "market": "No step limits you: you could make more if you sold more.",
+    "material": "No step limits you: late material holds your output back. Get parts in on time and you can make more.",
+    "busiest": "Even your busiest step, {machine}, is busy only",
+    "busyLabel": "Busy share of the busiest step",
     "busiestTail": "of its available time.",
     "sure": {
       "high": "We are sure",
@@ -1130,7 +1170,7 @@
       "none": "We cannot tell yet"
     },
     "because": "because {count} of {total} independent checks point at it.",
-    "becauseMarket": "because none of the 4 independent checks finds a machine that is full.",
+    "becauseMarket": "because none of the 4 independent checks finds a step that is full.",
     "agreement": "Checks that agree",
     "confidence": "<confidence>Confidence</confidence>:",
     "level": {
@@ -1146,11 +1186,11 @@
     "toLoss": "See every cause, week by week, on Loss",
     "evidenceLabel": "The evidence",
     "evidence": {
-      "machines": "How we found the bottleneck: the 4 checks, on Machines",
+      "machines": "How we found the bottleneck: the 4 checks, on Steps",
       "loss": "Lost hours and euros per week and month, on Loss",
       "data": "What your data covers and what is missing, on Data quality",
       "run": "Where the diagnosis stands, on Diagnostic run",
-      "machinesNone": "How we checked every machine: the 4 checks, on Machines"
+      "machinesNone": "How we checked every step: the 4 checks, on Steps"
     }
   },
   "loss": {
@@ -1165,8 +1205,8 @@
     "intro": "Every hour the <bottleneck>bottleneck</bottleneck> does not produce is output the whole plant never ships. Here is where its time went, and what it was worth in <throughput>throughput</throughput>.",
     "noBottleneckTitle": "No bottleneck, so no bottleneck losses",
     "noBottleneck": {
-      "market": "No machine limits your output: every machine has spare time, so the limit is demand. Losing time at a machine with spare time costs no output.",
-      "material": "No machine limits your output: late material holds work back, so time lost at machines costs no output."
+      "market": "No step limits your output: every step has spare time, so the limit is demand. Losing time at a step with spare time costs no output.",
+      "material": "No step limits your output: late material holds work back, so time lost at steps costs no output."
     },
     "toOverview": "See the answer on Overview",
     "periodLabel": "Show per",
@@ -1189,13 +1229,13 @@
     "biggest": "biggest",
     "segment": "{period}, {cause}: {amount}",
     "none": "no bottleneck",
-    "noneRow": "No machine limited output in this period, so nothing was lost at a bottleneck.",
+    "noneRow": "No step limited output in this period, so nothing was lost at a bottleneck.",
     "tableLabel": "Lost at the bottleneck by cause · {unit}",
     "colPeriod": "Period",
     "colTotal": "Total",
     "tableHelp": "Breaks and maintenance count when the bottleneck stops for them: covering them is often the cheapest gain.",
     "next": "Next",
-    "toMachines": "See the bottleneck's day-by-day timeline on Machines"
+    "toMachines": "See the bottleneck's day-by-day timeline on Steps"
   },
   "run": {
     "noPlant": "Add a plant first.",
@@ -1236,24 +1276,24 @@
       "waiting": "Calculated right after a complete import.",
       "running": "Calculating the numbers from your data… this updates by itself.",
       "failed": "The numbers could not be calculated. Run the import again; if it fails again, send IT the details on the Import page.",
-      "done": "Machine states, busy shares, queues and task times are calculated.",
-      "go": "See them on Machines"
+      "done": "Step states, busy shares, queues and task times are calculated.",
+      "go": "See them on Steps"
     },
     "bottleneck": {
       "title": "Bottleneck found",
       "waiting": "Found once the numbers are calculated.",
       "none": "No answer was saved for the latest import. Run the import again.",
       "found": "{machine} limits your output. Confidence: {level}.",
-      "market": "No machine limits your output: the limit is demand. Confidence: {level}.",
-      "material": "No machine limits your output: late material does. Confidence: {level}.",
-      "go": "See how on Machines"
+      "market": "No step limits your output: the limit is demand. Confidence: {level}.",
+      "material": "No step limits your output: late material does. Confidence: {level}.",
+      "go": "See how on Steps"
     },
     "cost": {
       "title": "Cost calculated",
       "waiting": "Calculated once the bottleneck is found.",
-      "noBottleneck": "Nothing to cost: with no bottleneck, lost machine time costs no output.",
+      "noBottleneck": "Nothing to cost: with no bottleneck, time lost at a step costs no output.",
       "noPrices": "Lost hours are calculated, but euros need job values or sales prices. Add jobs with value and material cost, or products with prices.",
-      "goPrices": "Add prices on Import",
+      "goPrices": "Add job values or prices on Import",
       "done": "Lost hours and euros per cause are calculated.",
       "doneHours": "Lost hours per cause are calculated (your role sees hours).",
       "go": "See them on Loss",
@@ -1287,8 +1327,8 @@
     "confidence": "Confidence: {level}.",
     "pointsAt": "points at {machine}. Evidence:",
     "importOf": "From the import of {date}.",
-    "dataPeriod": "Machine events from {start} to {end}:",
-    "weeksLabel": "Weeks of machine data",
+    "dataPeriod": "Events from {start} to {end}:",
+    "weeksLabel": "Weeks of event data",
     "score": "Data quality score:",
     "scoreLabel": "Data quality score",
     "scoreTail": "out of 100.",
@@ -1302,7 +1342,7 @@
     "noGaps": "No gaps were found in the data.",
     "noQuality": "No data quality report yet: import your exports first.",
     "method": {
-      "checks": "We ran four independent checks on every machine. A machine is the bottleneck when most checks point at it; how many agree sets how sure we are.",
+      "checks": "We ran four independent checks on every step. A step is the bottleneck when most checks point at it; how many agree sets how sure we are.",
       "loss": "Lost hours are the hours the bottleneck did not make good output: breakdowns, setups, waiting for work, blocked, breaks, planned maintenance, and scrap of work it had already done.",
       "euros": "Lost euros = lost bottleneck hours × throughput per bottleneck hour. Throughput is sales price minus truly variable cost (mostly material).",
       "facts": "This report states facts only. Recommended actions come in a later step."

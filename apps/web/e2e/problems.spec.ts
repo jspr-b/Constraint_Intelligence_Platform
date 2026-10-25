@@ -25,7 +25,7 @@ test("a read that fails says so, with details folded away, and can be tried agai
   fail = false;
   await banner.getByRole("button", { name: "Try again" }).click();
   await expect(banner).toHaveCount(0);
-  await expect(page.getByRole("tab", { name: /Stations and machines/ })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Stations and steps/ })).toBeVisible();
 });
 
 test("one banner when the API is unreachable", async ({ page }) => {

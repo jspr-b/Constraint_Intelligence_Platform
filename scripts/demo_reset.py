@@ -1,4 +1,4 @@
-"""Reset the synthetic demo tenant: `--empty` (no plant) or `--loaded` (plants A, B and C).
+"""Reset the synthetic demo tenant: `--empty` (no plant) or `--loaded` (plants A, B, C and D).
 
     uv run python scripts/demo_reset.py --empty
     uv run python scripts/demo_reset.py --loaded

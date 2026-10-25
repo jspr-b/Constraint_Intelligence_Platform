@@ -139,6 +139,20 @@ export function buildReport(input: ReportInput): Report {
   const answer: Line[] = [];
   if (internal && d.resource_code) {
     answer.push([text(t("report.limits", { machine: label(d.resource_code) }))]);
+    const team = d.reasons.find((r) => r.code === "team_covers");
+    if (team) {
+      answer.push([
+        text(
+          t("detection.reason.teamCovers", {
+            team: label(String(team.values.team)),
+            steps: String(team.values.steps)
+              .split(", ")
+              .map((code) => label(code))
+              .join(", "),
+          }),
+        ),
+      ]);
+    }
     const money = pick(input.monthLoss, "lost_eur_cents", "total");
     const hours = pick(input.monthLoss, "lost_h", "total");
     const moneyEur = euros(money);

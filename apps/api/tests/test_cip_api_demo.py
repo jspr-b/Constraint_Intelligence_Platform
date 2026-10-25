@@ -1,4 +1,4 @@
-"""Demo reset: only the demo tenant changes; --loaded imports A, B and C like a client would."""
+"""Demo reset: only the demo tenant changes; --loaded imports A, B, C and D like a client would."""
 
 import uuid
 from collections.abc import Iterator
@@ -51,7 +51,7 @@ def test_reset_twice_leaves_one_clean_tenant_and_others_untouched(demo: World) -
 
 
 @pytest.mark.db
-def test_loaded_imports_plants_a_b_and_c_through_the_api(demo: World, tmp_path: Path) -> None:
+def test_loaded_imports_plants_a_to_d_through_the_api(demo: World, tmp_path: Path) -> None:
     reset_tenant(demo.owner, TEST_DEMO)
     client = make_client(Settings(env="dev", data_dir=tmp_path, run_jobs_inline=True))
     body = {"tenant_id": str(TEST_DEMO), "email": DEMO_EMAIL}
@@ -62,7 +62,7 @@ def test_loaded_imports_plants_a_b_and_c_through_the_api(demo: World, tmp_path: 
         state = client.get(f"/imports/{import_id}").json()
         assert state["status"] == "done" and state["facts"]["status"] == "ready"
     codes = {p["plant_code"] for p in client.get("/plants").json()}
-    assert {"PLANT-A", "PLANT-B", "PLANT-C"} <= codes
+    assert {"PLANT-A", "PLANT-B", "PLANT-C", "PLANT-D"} <= codes
     reset_tenant(demo.owner, TEST_DEMO)
     assert _count(demo.owner, "SELECT count(*) FROM plants WHERE tenant_id = :t", TEST_DEMO) == 0
 

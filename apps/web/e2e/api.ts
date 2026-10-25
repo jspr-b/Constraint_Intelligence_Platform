@@ -542,7 +542,7 @@ export async function stubPages(
             code: "no_breakdowns",
             description: "No breakdowns recorded for PCK-01",
             confidence_impact: "low",
-            fix: "Confirm the machine had no stops, or add the maintenance log",
+            fix: "Confirm the step had no stops, or add the maintenance log",
             resource_code: "PCK-01",
             count: 1,
           },

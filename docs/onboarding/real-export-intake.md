@@ -85,4 +85,4 @@ rows are rejected and nothing required is missing.
 - The Import page today reads the generic mapping. Choosing a client's own mapping on the Import
   page is a later step; until then a real export is checked here, offline, before the diagnostic
   starts in the platform.
-- Synthetic plants A, B and C stay the only data in the repository and in the demo.
+- Synthetic plants A, B, C and D stay the only data in the repository and in the demo.

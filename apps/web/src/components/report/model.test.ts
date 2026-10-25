@@ -148,7 +148,25 @@ describe("results report model", () => {
     expect(allText(r)).not.toContain("€");
   });
 
-  it("says so when no machine limits output", () => {
+  it("names a shared team and the steps it covers", () => {
+    const r = buildReport(
+      input({
+        detection: {
+          ...detection,
+          resource_code: "FINISH-TEAM",
+          reasons: [
+            ...detection.reasons,
+            { code: "team_covers", values: { team: "FINISH-TEAM", steps: "FINISH, PACK" } },
+          ],
+        },
+      }),
+    );
+    expect(allText(r)).toContain("FINISH-TEAM) limits your output.");
+    expect(allText(r)).toContain("is a team shared by several steps (");
+    expect(allText(r)).toContain("(FINISH), ");
+  });
+
+  it("says so when no step limits output", () => {
     const r = buildReport(
       input({
         detection: {
@@ -168,9 +186,9 @@ describe("results report model", () => {
       }),
     );
     expect(r.sections.map((s) => s.key)).not.toContain("cost");
-    expect(allText(r)).toContain("No machine limits you");
+    expect(allText(r)).toContain("No step limits you");
     expect(allText(r)).toContain("42.1%");
-    expect(allText(r)).toContain("Busy time: No machine (closest: Paint line (PNT-01)). Evidence:");
+    expect(allText(r)).toContain("Busy time: No step (closest: Paint line (PNT-01)). Evidence:");
   });
 });
 

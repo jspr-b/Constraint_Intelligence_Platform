@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { useDetails } from "./Details";
 import { TechnicalDetails } from "./Problems";
 import { termTags } from "./terms";
+import { inputName, missingName } from "@/lib/inputNames";
 
 /** Where a plain (non-figure) input comes from, so every input opens its own source. */
 const INPUT_SOURCE: Record<string, string> = {
@@ -27,26 +28,10 @@ const INPUT_SOURCE: Record<string, string> = {
   unplanned_stop_min: "/data",
 };
 
-const UNIT_SUFFIX: [string, string][] = [
-  ["_eur_cents", "€"],
-  ["_min_per_unit", "min/unit"],
-  ["_min", "min"],
-  ["_h", "h"],
-  ["_pct", "%"],
-  ["_units", "units"],
-  ["_at", ""],
-];
-
 const isFigure = (v: unknown): v is FigureLike =>
   typeof v === "object" && v !== null && "formula_id" in v;
 const isMissingInput = (v: unknown): v is MissingValue =>
   typeof v === "object" && v !== null && "missing" in v;
-
-/** "truly_variable_cost_eur_cents" → ["truly variable cost", "€"]. Display only. */
-function inputName(key: string): [string, string] {
-  const [suffix, unit] = UNIT_SUFFIX.find(([s]) => key.endsWith(s)) ?? ["", ""];
-  return [key.slice(0, key.length - suffix.length).replaceAll("_", " "), unit];
-}
 
 function inputValue(key: string, value: unknown, locale: string): string {
   if (typeof value === "number") {
@@ -187,7 +172,7 @@ export function HowCalculated({ figure, label }: { figure: FigureLike; label: st
       {missing && (
         <p className="m-0 text-bad">
           {t("missingInput", {
-            what: missing.missing,
+            what: missingName(t, missing.missing),
             reason: missing.reason,
             impact: t(`level.${missing.confidence_impact}`),
           })}

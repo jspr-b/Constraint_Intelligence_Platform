@@ -53,10 +53,8 @@ test("overview for a plant without a bottleneck says the limit is demand", async
   await noBottleneck(page);
   await page.goto("/main");
   const answer = page.getByRole("region", { name: "The answer" });
-  await expect(answer).toContainText(
-    "No machine limits you: you could make more if you sold more.",
-  );
-  await expect(answer).toContainText("Even your busiest machine, Paint line (PNT-01)");
+  await expect(answer).toContainText("No step limits you: you could make more if you sold more.");
+  await expect(answer).toContainText("Even your busiest step, Paint line (PNT-01)");
   await expect(page.locator("[data-constraint]")).toHaveCount(0);
 });
 
@@ -68,7 +66,7 @@ test("loss shows causes per month and week, in euros or hours, every bar opens i
   await page.goto("/loss");
   await expect(page.getByText(/At Paint line \(PNT-01\), setups cost the most time/)).toBeVisible();
   const table = page.getByRole("region", { name: /Lost at the bottleneck by cause/ });
-  await expect(table.getByRole("row").nth(1)).toContainText("No machine limited output");
+  await expect(table.getByRole("row").nth(1)).toContainText("No step limited output");
   await expect(table.getByRole("row").nth(2)).toContainText("€433,313");
   await page.getByRole("button", { name: /August 2026, setups/ }).click();
   await expect(page.getByRole("region", { name: "How this is calculated" })).toContainText(

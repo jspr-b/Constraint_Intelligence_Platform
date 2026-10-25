@@ -49,16 +49,23 @@ class ResourceOut(BaseModel):
     kind: str
     station_code: str
     parallel_units: int
+    positions_max: int
+    """Most staffed positions in any shift (a count, never who); ``parallel_units`` when the
+    shift sheet gives no positions (ADR-0009)."""
 
 
 @router.get("/{plant_code}/resources", response_model=list[ResourceOut])
 def list_resources(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> list[ResourceOut]:
-    """Machines of a plant (for pickers; the Plant setup page manages them)."""
+    """Steps of a plant, with their kind and positions (for pickers and labels; the Plant setup
+    page manages them)."""
     ctx.check_plant(plant_code)
     rows = ctx.db.execute(
         text(
-            "SELECT resource_code, name, kind, station_code, parallel_units FROM resources "
-            "WHERE plant_code = :p ORDER BY resource_code"
+            "SELECT r.resource_code, r.name, r.kind, r.station_code, r.parallel_units, "
+            "COALESCE((SELECT max(c.positions) FROM calendar_windows c "
+            "WHERE c.plant_code = r.plant_code AND c.resource_code = r.resource_code "
+            "AND c.kind = 'shift'), r.parallel_units) AS positions_max "
+            "FROM resources r WHERE r.plant_code = :p ORDER BY r.resource_code"
         ),
         {"p": plant_code},
     )
@@ -70,6 +77,8 @@ class TeamOut(BaseModel):
     name: str
     resource_codes: list[str]
     """The steps the team covers."""
+    size_max: int | None
+    """Largest team size in any shift (a count, never who); None when no sizes were sent."""
 
 
 @router.get("/{plant_code}/teams", response_model=list[TeamOut])
@@ -78,13 +87,19 @@ def list_teams(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> list
     ctx.check_plant(plant_code)
     rows = ctx.db.execute(
         text(
-            "SELECT team_code, name, resource_codes FROM teams WHERE plant_code = :p "
-            "ORDER BY team_code"
+            "SELECT t.team_code, t.name, t.resource_codes, (SELECT max(s.positions) "
+            "FROM team_shifts s WHERE s.plant_code = t.plant_code AND s.team_code = t.team_code) "
+            "AS size_max FROM teams t WHERE t.plant_code = :p ORDER BY t.team_code"
         ),
         {"p": plant_code},
     )
     return [
-        TeamOut(team_code=r.team_code, name=r.name, resource_codes=r.resource_codes.split(","))
+        TeamOut(
+            team_code=r.team_code,
+            name=r.name,
+            resource_codes=r.resource_codes.split(","),
+            size_max=r.size_max,
+        )
         for r in rows
     ]
 
