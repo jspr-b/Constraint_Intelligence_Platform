@@ -1,8 +1,9 @@
 """Import page backend: upload exports, preview the column mapping, run the connector.
 
 Files live under ``data_dir/<tenant>/<plant>/imports/<import_id>/`` (source/ and standard/).
-The run happens in a worker (actor ``run_import``): connector -> standard layout -> load ->
-data checklist -> plant data stored in the database. Personal columns never leave the reader.
+The run happens in a worker (actor ``run_import``): connector -> standard layout -> the plant is
+rebuilt from all kept imports (ADR-0010: events add, lists replace) -> data checklist on the whole
+plant as stored. Personal columns never leave the reader.
 """
 
 import contextlib
@@ -23,7 +24,12 @@ from sqlalchemy import Connection, text
 
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit, tenant_conn
-from cip_api.db.plant_store import replace_plant_data
+from cip_api.db.plant_store import (
+    EventCounts,
+    load_plant_from_db,
+    merge_imports,
+    rebuild_plant_data,
+)
 from cip_api.errors import ApiProblem
 from cip_api.facts import FactRunOut, fact_run, queue_facts, start_facts
 from cip_api.jobs import enqueue
@@ -490,8 +496,58 @@ def _run_quietly(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) ->
         run_import(settings, tenant, import_id)
 
 
+ID_RULE = ".ids-content-v1"
+"""Marker in standard/: event ids made from the event itself (ADR-0010). Older folders are
+mapped again from their source files, which never change."""
+
+
+def map_import(folder: Path, plant: dict[str, Any]) -> Any:
+    """Map an import's source files to its standard layout. Returns the connector report."""
+    mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
+    standard = folder / "standard"
+    if standard.exists():
+        shutil.rmtree(standard)
+    report = import_export(folder / "source", mapping, standard, plant=plant)
+    (standard / ID_RULE).touch()
+    return report
+
+
+def kept_imports(
+    settings: Settings, conn: Connection, tenant: uuid.UUID, plant_code: str, running: uuid.UUID
+) -> list[tuple[uuid.UUID, LoadedPlant]]:
+    """The plant's kept imports in upload order, each as its standard layout (ADR-0010)."""
+    plant = conn.execute(
+        text("SELECT plant_code, name, timezone_iana FROM plants WHERE plant_code = :p"),
+        {"p": plant_code},
+    ).one()
+    ids = conn.execute(
+        text(
+            "SELECT import_id FROM imports WHERE plant_code = :p "
+            "AND (status = 'done' OR import_id = :i) ORDER BY created_at, import_id"
+        ),
+        {"p": plant_code, "i": running},
+    ).scalars()
+    out = []
+    for i in ids:
+        folder = import_dir(settings, tenant, plant_code, i)
+        if not (folder / "standard" / ID_RULE).exists():
+            map_import(folder, dict(plant._mapping))
+        out.append((i, load_plant(folder / "standard", tenant_id=tenant)))
+    return out
+
+
+def _period(start: datetime | None, end: datetime | None) -> dict[str, str | None]:
+    return {
+        "start_at": start.isoformat() if start else None,
+        "end_at": end.isoformat() if end else None,
+    }
+
+
 def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> None:
-    """The job: connector, load, checklist, store. Records 'done' or 'failed' (reason only)."""
+    """The job: connector, rebuild from kept imports, checklist, store. Records 'done' or 'failed'.
+
+    A failure leaves the plant's previous data in use (one transaction) and records the step.
+    """
     step: FailedStep = "read"
     try:
         with tenant_conn(settings, tenant) as conn:
@@ -502,29 +558,43 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
             ).one()
         folder = import_dir(settings, tenant, row.plant_code, import_id)
         mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
-        standard = folder / "standard"
-        if standard.exists():
-            shutil.rmtree(standard)
-        report = import_export(folder / "source", mapping, standard, plant=dict(plant._mapping))
+        report = map_import(folder, dict(plant._mapping))
         step = "load"
-        loaded = load_plant(standard, tenant_id=tenant)
-        step = "check"
-        items = checklist(parse_requirements(INPUT_DATA.read_text()), loaded)
-        measured = task_times(pair_operations(loaded), per_product=False)
-        # Rejected rows count against the standard file they would have filled (e.g. events.csv).
-        target = {f"{t.source}.csv": f"{t.target}.csv" for t in mapping.tables}
-        target |= {f"{t.source}.xlsx": f"{t.target}.csv" for t in mapping.tables}
-        quality = quality_report(
-            loaded,
-            [RowError(target.get(e.file, e.file), e.line, e.reason) for e in report.row_errors],
-        )
+        own = load_plant(folder / "standard", tenant_id=tenant)
         step = "store"
         with tenant_conn(settings, tenant) as conn:
-            stored = replace_plant_data(conn, tenant, row.plant_code, loaded)
+            merged = merge_imports(kept_imports(settings, conn, tenant, row.plant_code, import_id))
+            stored = rebuild_plant_data(conn, tenant, row.plant_code, merged)
+            loaded = load_plant_from_db(conn, tenant, row.plant_code)
+            step = "check"
+            loaded.row_errors.extend(own.row_errors)
+            items = checklist(parse_requirements(INPUT_DATA.read_text()), loaded)
+            measured = task_times(pair_operations(loaded), per_product=False)
+            # Rejected rows count against the standard file they would fill (e.g. events.csv).
+            target = {f"{t.source}.csv": f"{t.target}.csv" for t in mapping.tables}
+            target |= {f"{t.source}.xlsx": f"{t.target}.csv" for t in mapping.tables}
+            quality = quality_report(
+                loaded,
+                [RowError(target.get(e.file, e.file), e.line, e.reason) for e in report.row_errors],
+            )
+            counts = merged.events.get(import_id, EventCounts())
+            ats = [e.at for e in loaded.events]
+            events = {
+                "added": counts.added,
+                "already_there": counts.already_there,
+                "changed": counts.changed,
+                "repeated_in_file": counts.repeated_in_file,
+                "in_plant": len(loaded.events),
+                "period_added": _period(counts.period_start_at, counts.period_end_at),
+                "plant_period": _period(min(ats, default=None), max(ats, default=None)),
+            }
+            replaced = sorted(k for k, v in merged.lists_from.items() if v == import_id)
             result = {
                 "import": report.to_dict(),
+                "events": events,
+                "lists_replaced": replaced,
                 "load_errors": len(loaded.row_errors),
-                "stored_rows": stored,
+                "stored_rows": {k: v for k, v in stored.items() if v},
                 "checklist": [
                     {
                         "number": i.requirement.number,

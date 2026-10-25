@@ -251,8 +251,10 @@
     "status": {
       "uploaded": "UPLOADED",
       "running": "RUNNING",
-      "done": "DONE",
-      "failed": "FAILED"
+      "done": "IN USE",
+      "failed": "FAILED",
+      "replaced": "REPLACED",
+      "deleted": "DELETED"
     },
     "mappingName": "Export format: {name}",
     "colColumn": "Column in your file",
@@ -396,6 +398,39 @@
       "overtime": "the overtime signal",
       "capacity_costs": "the cost side of overtime and extra shifts",
       "outsourcing": "the outsourcing action"
+    },
+    "changes": {
+      "label": "What this import changed",
+      "count": {
+        "added": "Events added",
+        "already_there": "Already there",
+        "changed": "Changed",
+        "repeated_in_file": "Repeated in the file",
+        "in_plant": "Events in the plant"
+      },
+      "alreadyThereNote": "sent before; counted once",
+      "repeatedNote": "identical rows in this upload; counted once",
+      "periodAdded": "Period in this upload",
+      "plantNow": "Your plant now covers",
+      "eventsWord": "events",
+      "listsReplaced": "Lists replaced",
+      "noLists": "None: this upload brought only events, earlier lists stay",
+      "rule": "New events add to what is there; a list in this upload (steps, shifts, jobs…) replaces the earlier one. Lists you did not send stay as they were.",
+      "lists": {
+        "stations": "stations",
+        "resources": "steps list",
+        "products": "products",
+        "routings": "routings",
+        "orders": "jobs",
+        "calendar": "shift sheet",
+        "resource_operations": "operations per step",
+        "changeovers": "changeovers",
+        "overtime": "overtime worked",
+        "capacity_costs": "capacity costs",
+        "outsourcing": "outsourcing prices",
+        "teams": "teams",
+        "team_shifts": "team plan"
+      }
     }
   },
   "setup": {
@@ -943,7 +978,14 @@
       "accessPages": "the access settings the COO set on this page",
       "importRead": "{file}, read in this import",
       "importWritten": "rows from {file} that passed the checks and were stored as {target}",
-      "importRejected": "rows from {file} that failed a check; the reasons are listed next to it"
+      "importRejected": "rows from {file} that failed a check; the reasons are listed next to it",
+      "importEvents": {
+        "added": "Events in this upload that were not in your plant yet, counted by the event itself (step, job, what happened, time).",
+        "already_there": "Events in this upload that an earlier upload already sent. They are counted once.",
+        "changed": "Events with your own event id that came back with other values; the newest upload's values are used.",
+        "repeated_in_file": "Rows in this upload that are identical in every field; each is counted once.",
+        "in_plant": "All events your plant has now, from every upload you kept."
+      }
     },
     "pages": {
       "import": "Import",

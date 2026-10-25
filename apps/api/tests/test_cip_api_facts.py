@@ -1,6 +1,5 @@
 """Measured facts: calculated after each import, replaced by the next one, failures recorded."""
 
-import shutil
 import uuid
 from pathlib import Path
 
@@ -9,7 +8,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from cip_api import facts as facts_module
-from cip_api.imports import import_dir
 from cip_api.settings import Settings
 from cip_api_testkit import World, make_client
 
@@ -91,10 +89,10 @@ def test_a_new_import_replaces_the_plants_facts(world: World, it: TestClient) ->
 def test_a_failed_calculation_is_recorded(world: World, it: TestClient, settings: Settings) -> None:
     done = _import(it)
     import_id = uuid.UUID(done["import_id"])
-    shutil.rmtree(import_dir(settings, world.a, "PLANT-1", import_id) / "standard")
     from cip_api.auth.sessions import tenant_conn
 
     with tenant_conn(settings, world.a) as conn:
+        conn.execute(text("DELETE FROM operation_events WHERE plant_code = 'PLANT-1'"))
         facts_module.start_facts(conn, world.a, "PLANT-1", import_id)
     with pytest.raises(Exception):  # noqa: B017  (the job re-raises after recording)
         facts_module.compute_facts(settings, world.a, import_id)

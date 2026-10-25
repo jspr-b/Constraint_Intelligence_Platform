@@ -345,7 +345,8 @@ def put_station(plant_code: str, station_code: str, body: StationIn, ctx: Edit) 
         text(
             "INSERT INTO stations (tenant_id, plant_code, station_code, name) "
             "VALUES (:t, :p, :s, :n) "
-            "ON CONFLICT (tenant_id, plant_code, station_code) DO UPDATE SET name = EXCLUDED.name"
+            "ON CONFLICT (tenant_id, plant_code, station_code) DO UPDATE SET name = EXCLUDED.name, "
+            "import_id = NULL"
         ),
         {"t": ctx.principal.tenant_id, "p": plant_code, "s": code, "n": body.name},
     )
@@ -371,7 +372,7 @@ def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edi
             "ON CONFLICT (tenant_id, plant_code, resource_code) DO UPDATE SET "
             "name = EXCLUDED.name, "
             "kind = EXCLUDED.kind, station_code = EXCLUDED.station_code, "
-            "parallel_units = EXCLUDED.parallel_units"
+            "parallel_units = EXCLUDED.parallel_units, import_id = NULL"
         ),
         {
             "t": ctx.principal.tenant_id,
@@ -413,7 +414,7 @@ def put_changeover(plant_code: str, body: ChangeoverIn, ctx: Edit) -> SetupOut:
             "to_setup_family, changeover_min) VALUES (:t, :p, :r, :f, :to, :m) "
             "ON CONFLICT (tenant_id, plant_code, resource_code, from_setup_family, "
             "to_setup_family) "
-            "DO UPDATE SET changeover_min = EXCLUDED.changeover_min"
+            "DO UPDATE SET changeover_min = EXCLUDED.changeover_min, import_id = NULL"
         ),
         {
             "t": ctx.principal.tenant_id,
@@ -444,7 +445,7 @@ def put_capacity_cost(
             "overtime_eur_cents_per_h, extra_shift_eur_cents) VALUES (:t, :p, :r, :o, :x) "
             "ON CONFLICT (tenant_id, plant_code, resource_code) DO UPDATE SET "
             "overtime_eur_cents_per_h = EXCLUDED.overtime_eur_cents_per_h, "
-            "extra_shift_eur_cents = EXCLUDED.extra_shift_eur_cents"
+            "extra_shift_eur_cents = EXCLUDED.extra_shift_eur_cents, import_id = NULL"
         ),
         {
             "t": ctx.principal.tenant_id,

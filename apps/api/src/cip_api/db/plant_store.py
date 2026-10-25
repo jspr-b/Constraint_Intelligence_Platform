@@ -1,17 +1,25 @@
-"""Store a loaded plant (standard layout) in the database, replacing that plant's data.
+"""Store a plant in the database and read it back (ADR-0010).
 
-Runs inside the caller's tenant transaction, so row-level security applies to every write.
+A plant's data is rebuilt from its kept imports: the event log adds (an event counted once by its
+id), every other list comes from the newest import that brings it. Rows entered or edited in the
+app have no ``import_id`` and are never touched by a rebuild. Everything runs inside the caller's
+tenant transaction, so row-level security applies to every read and write.
 """
 
 import uuid
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import Connection, Table, delete, text
+from sqlalchemy import Connection, Table, delete, select, text
+from sqlalchemy.dialects.postgresql import insert
 
 from cip_api.db.models import Base
 from constraint_engine.figure import Missing
 from constraint_engine.io.plant_loader import LoadedPlant
+from constraint_engine.io.records import load_records
 
 # LoadedPlant attribute -> table. Routings are stored as their steps.
 TABLES: dict[str, str] = {
@@ -51,39 +59,146 @@ def _rows(plant: LoadedPlant, name: str) -> list[dict[str, Any]]:
     return [r.model_dump() for r in records]
 
 
-def replace_plant_data(
-    conn: Connection, tenant: uuid.UUID, plant_code: str, plant: LoadedPlant
-) -> dict[str, int]:
-    """Replace the plant's rows for every record type the import delivered. Returns counts.
+LISTS = tuple(name for name in TABLES if name != "events")
+# Tables keyed by a running number: an imported row clashes with an app row on these columns.
+NATURAL_KEYS: dict[str, tuple[str, ...]] = {
+    "calendar_windows": ("resource_code", "kind", "start_at", "end_at"),
+    "team_shifts": ("team_code", "start_at", "end_at"),
+    "outsourcing_prices": ("operation", "sku"),
+}
 
-    Record types the import did not deliver (empty) are left as they are, so machines and
-    stations entered on the Plant setup page survive an import without a machine list.
+
+@dataclass
+class EventCounts:
+    """What one import did to the event log (ADR-0010)."""
+
+    added: int = 0
+    already_there: int = 0
+    changed: int = 0
+    repeated_in_file: int = 0
+    period_start_at: datetime | None = None
+    period_end_at: datetime | None = None
+
+
+@dataclass
+class Merged:
+    """The plant from its kept imports: records per type, each with the import it came from."""
+
+    records: dict[str, list[tuple[uuid.UUID, dict[str, Any]]]] = field(default_factory=dict)
+    events: dict[uuid.UUID, EventCounts] = field(default_factory=dict)
+    lists_from: dict[str, uuid.UUID] = field(default_factory=dict)
+
+
+def merge_imports(imports: Sequence[tuple[uuid.UUID, LoadedPlant]]) -> Merged:
+    """Kept imports in upload order -> the plant's records. Pure.
+
+    Events: the first time an id is seen it is added; seen again with the same values it is
+    already there; with other values (only possible with the plant's own event ids) the newer
+    import's values win and it counts as changed. Lists: the newest import that brings a list
+    replaces it; a list no import brings is absent.
     """
-    # One import per plant at a time: concurrent replaces would interleave deletes and inserts.
+    merged = Merged()
+    events: dict[str, tuple[uuid.UUID, dict[str, Any]]] = {}
+    for import_id, plant in imports:
+        counts = EventCounts()
+        seen: set[str] = set()
+        for record in _rows(plant, "events"):
+            key = str(record["event_id"])
+            at = record["at"]
+            counts.period_start_at = min(filter(None, (counts.period_start_at, at)))
+            counts.period_end_at = max(filter(None, (counts.period_end_at, at)))
+            if key in seen:
+                counts.repeated_in_file += 1
+                continue
+            seen.add(key)
+            before = events.get(key)
+            if before is None:
+                counts.added += 1
+            elif before[1] == record:
+                counts.already_there += 1
+                continue
+            else:
+                counts.changed += 1
+            events[key] = (import_id, record)
+        merged.events[import_id] = counts
+        for name in LISTS:
+            if getattr(plant, name):
+                merged.lists_from[name] = import_id
+                merged.records[name] = [(import_id, r) for r in _rows(plant, name)]
+    merged.records["events"] = list(events.values())
+    return merged
+
+
+def rebuild_plant_data(
+    conn: Connection, tenant: uuid.UUID, plant_code: str, merged: Merged
+) -> dict[str, int]:
+    """Replace the plant's imported rows with ``merged``; app rows stay. Returns counts.
+
+    An imported row that clashes with an app row (same key) is skipped: what was entered or
+    edited in the app wins.
+    """
     conn.execute(
         text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": f"plant:{tenant}:{plant_code}"}
     )
     counts: dict[str, int] = {}
     for name, table_name in TABLES.items():
         table: Table = Base.metadata.tables[table_name]
-        if not getattr(plant, name):
-            continue
-        conn.execute(delete(table).where(table.c.plant_code == plant_code))
-        columns = [c.name for c in table.columns if not (c.primary_key and c.autoincrement is True)]
+        conn.execute(
+            delete(table).where(table.c.plant_code == plant_code, table.c.import_id.is_not(None))
+        )
+        columns = [
+            c.name
+            for c in table.columns
+            if not (c.primary_key and c.autoincrement is True) and c.name != "import_id"
+        ]
         rows = [
             {
-                c: (
-                    tenant
-                    if c == "tenant_id"
-                    else plant_code
-                    if c == "plant_code"
-                    else _value(record.get(c))
-                )
-                for c in columns
+                "import_id": import_id,
+                **{
+                    c: (
+                        tenant
+                        if c == "tenant_id"
+                        else plant_code
+                        if c == "plant_code"
+                        else _value(record.get(c))
+                    )
+                    for c in columns
+                },
             }
-            for record in _rows(plant, name)
+            for import_id, record in merged.records.get(name, [])
         ]
-        if rows:
-            conn.execute(table.insert(), rows)
+        if keys := NATURAL_KEYS.get(table_name):
+            app = {
+                tuple(r)
+                for r in conn.execute(
+                    select(*(table.c[k] for k in keys)).where(
+                        table.c.plant_code == plant_code, table.c.import_id.is_(None)
+                    )
+                )
+            }
+            rows = [r for r in rows if tuple(r[k] for k in keys) not in app]
+        for start in range(0, len(rows), 5000):
+            conn.execute(insert(table).on_conflict_do_nothing(), rows[start : start + 5000])
         counts[name] = len(rows)
     return counts
+
+
+def load_plant_from_db(conn: Connection, tenant: uuid.UUID, plant_code: str) -> LoadedPlant:
+    """The plant as the engine reads it: from the database rows, not from files (ADR-0010)."""
+    plant = conn.execute(
+        text("SELECT plant_code, name, timezone_iana FROM plants WHERE plant_code = :p"),
+        {"p": plant_code},
+    ).one()
+    records: dict[str, list[dict[str, Any]]] = {}
+    for name, table_name in TABLES.items():
+        table: Table = Base.metadata.tables[table_name]
+        skip = {"tenant_id", "plant_code", "import_id"}
+        cols = [
+            c
+            for c in table.columns
+            if c.name not in skip and not (c.primary_key and c.autoincrement is True)
+        ]
+        order = [table.c.at, table.c.event_id] if name == "events" else list(table.primary_key)
+        query = select(*cols).where(table.c.plant_code == plant_code).order_by(*order)
+        records[name] = [dict(r._mapping) for r in conn.execute(query)]
+    return load_records(dict(plant._mapping), records, tenant_id=tenant)

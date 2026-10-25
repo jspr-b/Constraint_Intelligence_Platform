@@ -57,6 +57,8 @@ class Plant(Base):
 
 class Station(Base):
     __tablename__ = "stations"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     station_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -65,6 +67,8 @@ class Station(Base):
 
 class Resource(Base):
     __tablename__ = "resources"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -80,6 +84,8 @@ class Resource(Base):
 
 class Product(Base):
     __tablename__ = "products"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     sku: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -94,6 +100,8 @@ class RoutingStep(Base):
     """One operation of a product's routing (the 'operations' table of the task)."""
 
     __tablename__ = "routing_steps"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     sku: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -109,6 +117,8 @@ class RoutingStep(Base):
 
 class ResourceOperation(Base):
     __tablename__ = "resource_operations"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -119,6 +129,8 @@ class ResourceOperation(Base):
 
 class CalendarWindow(Base):
     __tablename__ = "calendar_windows"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -137,6 +149,8 @@ class Team(Base):
     """A team shared by several steps (ADR-0009). Only its code, name and steps; never who."""
 
     __tablename__ = "teams"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     team_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -149,6 +163,8 @@ class TeamShift(Base):
     """A team's positions during one shift (a count)."""
 
     __tablename__ = "team_shifts"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -160,6 +176,8 @@ class TeamShift(Base):
 
 class Order(Base):
     __tablename__ = "orders"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     order_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -179,6 +197,8 @@ class OperationEvent(Base):
     """TimescaleDB hypertable on ``at``; the primary key includes ``at`` as Timescale requires."""
 
     __tablename__ = "operation_events"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -198,6 +218,8 @@ class OperationEvent(Base):
 
 class Changeover(Base):
     __tablename__ = "changeovers"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -208,6 +230,8 @@ class Changeover(Base):
 
 class OvertimeWorked(Base):
     __tablename__ = "overtime_worked"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -218,6 +242,8 @@ class OvertimeWorked(Base):
 
 class CapacityCost(Base):
     __tablename__ = "capacity_costs"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
     resource_code: Mapped[str] = mapped_column(String(32), primary_key=True)
@@ -227,6 +253,8 @@ class CapacityCost(Base):
 
 class OutsourcingPrice(Base):
     __tablename__ = "outsourcing_prices"
+    # The import this row came from (ADR-0010); NULL = entered or edited in the app.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     tenant_id: Mapped[uuid.UUID] = tenant_fk(primary_key=False)
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)

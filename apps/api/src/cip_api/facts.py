@@ -18,6 +18,7 @@ from sqlalchemy import Connection, text
 
 from cip_api.auth.roles import Money
 from cip_api.auth.sessions import tenant_conn
+from cip_api.db.plant_store import load_plant_from_db
 from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut, MissingOut, money_out
 from cip_api.jobs import enqueue
@@ -27,7 +28,6 @@ from constraint_engine.facts import Fact, measured_facts
 from constraint_engine.figure import Figure, Missing
 from constraint_engine.formulas.money import NO_RATE
 from constraint_engine.formulas.registry import registry
-from constraint_engine.io.plant_loader import load_plant
 from constraint_engine.loss import loss_facts
 
 FactStatus = Literal["calculating", "ready", "failed"]
@@ -120,9 +120,8 @@ class NoEventsError(RuntimeError):
 
 
 def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
-    """The job: reconstruct the import's data and replace the plant's facts. Returns the count."""
+    """The job: read the plant from the database and replace its facts. Returns the count."""
     from cip_api.detection import detect, store_detections  # detection.py reads this module
-    from cip_api.imports import import_dir  # imports.py queues this job
 
     try:
         with tenant_conn(settings, tenant) as conn:
@@ -130,10 +129,11 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
                 text("SELECT plant_code, report FROM imports WHERE import_id = :i"),
                 {"i": import_id},
             ).one()
-        plant = load_plant(import_dir(settings, tenant, plant_code, import_id) / "standard")
+            # The whole plant as stored, all kept imports and app rows (ADR-0010).
+            plant = load_plant_from_db(conn, tenant, plant_code)
         if not plant.events:
             # Nothing to calculate from: fail, so the plant's previous numbers stay.
-            raise NoEventsError("the import's standard layout has no events")
+            raise NoEventsError("the plant has no events")
         facts = measured_facts(plant)
         detections = detect(plant, facts, report)
         facts += loss_facts(plant, facts, detections)

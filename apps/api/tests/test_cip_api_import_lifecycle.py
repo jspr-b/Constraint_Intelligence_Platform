@@ -25,7 +25,6 @@ CLEAN = DATA / "plant_a" / "erp_export" / "clean" / "csv"
 ANSWERS: dict[str, Any] = yaml.safe_load((CASES / "expected_answers.yaml").read_text())
 PLANT_A: dict[str, Any] = yaml.safe_load((DATA / "plant_a" / "expected_answers.yaml").read_text())
 
-history = pytest.mark.xfail(strict=True, reason="ADR-0010: imports as history, CI0004 seq 02")
 fixes = pytest.mark.xfail(strict=True, reason="ADR-0010: fix rows in the app, CI0004 seq 04")
 deletes = pytest.mark.xfail(strict=True, reason="ADR-0010: delete an import, CI0004 seq 05")
 
@@ -89,7 +88,6 @@ def _is_plant_a(world: World, it: TestClient) -> None:
     assert whole["resource_code"] == PLANT_A["constraint"]
 
 
-@history
 def test_split_uploads_give_the_answer_of_one_upload(
     world: World, client_as: Callable[[str], TestClient]
 ) -> None:
@@ -102,7 +100,6 @@ def test_split_uploads_give_the_answer_of_one_upload(
     _is_plant_a(world, it)
 
 
-@history
 def test_events_sent_again_are_counted_once(
     world: World, client_as: Callable[[str], TestClient]
 ) -> None:
@@ -114,7 +111,6 @@ def test_events_sent_again_are_counted_once(
     _is_plant_a(world, it)
 
 
-@history
 def test_the_whole_export_twice_is_the_same_as_once(
     world: World, client_as: Callable[[str], TestClient]
 ) -> None:

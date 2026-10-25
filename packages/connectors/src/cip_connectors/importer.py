@@ -1,6 +1,7 @@
 """Import a directory of source exports into the standard plant layout."""
 
 import csv
+import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -140,6 +141,8 @@ def _map_table(
         record: dict[str, str] = {}
         try:
             for name, rule in table.fields.items():
+                if rule.generate == "content_id":
+                    continue  # filled below, from the other fields
                 if rule.generate == "row_id":
                     value: str | None = f"{rule.prefix}{source.name}-{line}"
                 elif rule.constant is not None:
@@ -152,8 +155,20 @@ def _map_table(
         except ConversionError as exc:
             report.row_errors.append(ImportIssue(source.path.name, line, str(exc)))
             continue
+        for name, rule in table.fields.items():
+            if rule.generate == "content_id":
+                record[name] = content_id(record, rule.prefix)
         out.append(record)
     return out
+
+
+def content_id(record: dict[str, str], prefix: str = "") -> str:
+    """Id made from the row itself, independent of file name and line (ADR-0010).
+
+    The same event exported twice gets the same id; any changed field gives another id.
+    """
+    body = "\x1f".join(f"{k}={record[k]}" for k in sorted(record))
+    return f"{prefix}ev-{hashlib.sha256(body.encode('utf-8')).hexdigest()[:32]}"
 
 
 def _write(path: Path, target: str, rows: list[dict[str, str]]) -> None:

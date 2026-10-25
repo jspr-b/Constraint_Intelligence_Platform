@@ -248,7 +248,8 @@ def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> 
     _plant(ctx, plant_code)
     row = ctx.db.execute(
         text(
-            "UPDATE calendar_windows SET covered = :c WHERE id = :i AND plant_code = :p "
+            "UPDATE calendar_windows SET covered = :c, import_id = NULL WHERE id = :i "
+            "AND plant_code = :p "
             "AND kind = 'break' RETURNING id, resource_code, kind, start_at, end_at, covered"
         ),
         {"c": body.covered, "i": window_id, "p": plant_code},
@@ -294,7 +295,8 @@ def put_overtime(plant_code: str, body: OvertimeIn, ctx: Edit) -> OvertimeOut:
             "INSERT INTO overtime_worked (tenant_id, plant_code, resource_code, iso_year, "
             "iso_week, "
             "overtime_h) VALUES (:t, :p, :r, :y, :w, :h) ON CONFLICT (tenant_id, plant_code, "
-            "resource_code, iso_year, iso_week) DO UPDATE SET overtime_h = EXCLUDED.overtime_h"
+            "resource_code, iso_year, iso_week) DO UPDATE SET overtime_h = EXCLUDED.overtime_h, "
+            "import_id = NULL"
         ),
         {
             "t": ctx.principal.tenant_id,

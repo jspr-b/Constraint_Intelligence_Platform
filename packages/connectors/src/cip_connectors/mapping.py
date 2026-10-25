@@ -28,7 +28,9 @@ class FieldRule(_M):
     prefix: str = ""
     optional: bool = False
     constant: str | None = None
-    generate: Literal["row_id"] | None = None
+    generate: Literal["row_id", "content_id"] | None = None
+    """``row_id``: ``<prefix><file>-<line>``. ``content_id``: a hash of the row's other mapped
+    fields, so the same event gets the same id in every upload (ADR-0010)."""
 
     @model_validator(mode="after")
     def _one_source(self) -> "FieldRule":

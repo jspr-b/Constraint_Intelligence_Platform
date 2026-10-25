@@ -84,7 +84,7 @@ tables:
   - source: scans
     target: events
     fields:
-      event_id: { generate: row_id }
+      event_id: { generate: content_id }
       event_type: { from: Action, code_table: action }
       at: { from: Time, type: datetime }
       resource_code: { from: Workstation, optional: true }

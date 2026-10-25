@@ -94,7 +94,7 @@ tables:
   - source: mes_events
     target: events
     fields:
-      event_id: { generate: row_id }
+      event_id: { generate: content_id }
       event_type: { from: Status, code_table: event_status }
       at: { from: Tijdstip, type: datetime }
       resource_code: { from: Werkplek, code_table: resource, optional: true }

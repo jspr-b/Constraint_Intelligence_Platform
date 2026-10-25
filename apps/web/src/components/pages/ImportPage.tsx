@@ -11,6 +11,7 @@ import type { components } from "@/lib/api/schema";
 import { Field } from "../FormDialog";
 import { conversionLabel, fieldLabel } from "@/lib/model";
 import { Count } from "../Figure";
+import { ImportChanges, type ImportEvents } from "../ImportChanges";
 import { PageHeader } from "../PageHeader";
 import { TechnicalDetails } from "../Problems";
 import { ReadOnlyNote } from "../ReadOnlyNote";
@@ -535,6 +536,12 @@ export function ImportPage() {
             <p className="m-0 text-sm text-muted">{t("checkAfterRun")}</p>
           ) : (
             <>
+              {latest.report?.events ? (
+                <ImportChanges
+                  events={latest.report.events as ImportEvents}
+                  replaced={(latest.report.lists_replaced as string[] | undefined) ?? []}
+                />
+              ) : null}
               <Panel label={t("resultsLabel")}>
                 <table className="w-full border-collapse text-sm">
                   <thead>
