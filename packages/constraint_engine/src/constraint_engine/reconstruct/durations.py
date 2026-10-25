@@ -15,6 +15,7 @@ from constraint_engine.io.plant_loader import LoadedPlant
 from constraint_engine.reconstruct.timeline import machine_time, to_min
 
 JobKey = tuple[str, str | None, int | None]
+NO_END = "start event without an end"
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +101,12 @@ def pair_operations(plant: LoadedPlant) -> Operations:
             continue
         key = (code, e.order_id, e.operation_seq)
         if e.event_type is EventType.START:
+            if e.operation_seq is None and e.order_id and open_jobs[key]:
+                # A job starts again at a step where it never finished: the finish scan was
+                # forgotten (ADR-0009). The open start is left out; it never takes this finish.
+                missing = Missing("end", NO_END, Confidence.MEDIUM)
+                unpaired.extend(Unpaired(old, missing) for old in open_jobs[key])
+                open_jobs[key].clear()
             open_jobs[key].append(e)
         elif e.event_type is EventType.END:
             if not open_jobs[key]:
@@ -125,9 +132,7 @@ def pair_operations(plant: LoadedPlant) -> Operations:
     for queue in open_jobs.values():
         for start in queue:
             running = start.resource_code is not None and latest.get(start.resource_code) is start
-            reason = (
-                "still running at the end of the data" if running else "start event without an end"
-            )
+            reason = "still running at the end of the data" if running else NO_END
             impact = Confidence.NONE if running else Confidence.MEDIUM
             unpaired.append(Unpaired(start, Missing("end", reason, impact)))
     return Operations(pl.DataFrame(jobs), pl.DataFrame(setups), unpaired)

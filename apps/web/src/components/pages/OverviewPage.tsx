@@ -33,6 +33,7 @@ function pick(loss: Fact[], measure: string, cause: string): Fact | undefined {
 export function OverviewPage() {
   const t = useTranslations("overview");
   const tc = useTranslations("detection.loss.cause");
+  const tReason = useTranslations("detection.reason");
   const picker = usePlant();
   const { plant } = picker;
   const label = useMachineLabel(plant);
@@ -90,6 +91,7 @@ export function OverviewPage() {
   }
 
   const agree = found?.reasons.find((r) => r.code === "methods_agree");
+  const teamCovers = found?.reasons.find((r) => r.code === "team_covers");
   const sure = found ? t(`sure.${found.confidence}`) : "";
   const monthFacts = monthLoss.data?.facts ?? [];
   const money = pick(monthFacts, "lost_eur_cents", "total");
@@ -127,6 +129,17 @@ export function OverviewPage() {
                 </ConstraintMarker>
                 <span>{t("limits")}</span>
               </p>
+              {teamCovers && (
+                <p className="m-0 text-sm text-muted" data-raw>
+                  {tReason("teamCovers", {
+                    team: label(String(teamCovers.values.team)),
+                    steps: String(teamCovers.values.steps)
+                      .split(", ")
+                      .map((code) => label(code))
+                      .join(", "),
+                  })}
+                </p>
+              )}
               {month && hours && (
                 <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-lg">
                   {euros && money ? (

@@ -47,7 +47,8 @@ export function useFactPeriods(plant: string | null) {
   });
 }
 
-/** "Paint line (PNT-01)" for a machine code, from the plant's resources. */
+/** "Paint line (PNT-01)" for a step code, or "Finishing team (FINISH-TEAM)" for a shared team,
+ * from the plant's steps and teams. */
 export function useMachineLabel(plant: string | null): (code: string) => string {
   const resources = useQuery({
     queryKey: ["resources", plant],
@@ -59,8 +60,27 @@ export function useMachineLabel(plant: string | null): (code: string) => string 
         })
       ).data ?? [],
   });
-  const names = new Map((resources.data ?? []).map((r) => [r.resource_code, r.name]));
+  const teams = useTeams(plant);
+  const names = new Map([
+    ...(resources.data ?? []).map((r) => [r.resource_code, r.name] as const),
+    ...teams.map((t) => [t.team_code, t.name] as const),
+  ]);
   return (code: string) => `${names.get(code) ?? code} (${code})`;
+}
+
+/** Teams shared by several steps (ADR-0009): code, name and the steps they cover. */
+export function useTeams(plant: string | null) {
+  const teams = useQuery({
+    queryKey: ["teams", plant],
+    enabled: plant !== null,
+    queryFn: async () =>
+      (
+        await api.GET("/plants/{plant_code}/teams", {
+          params: { path: { plant_code: plant ?? "" } },
+        })
+      ).data ?? [],
+  });
+  return teams.data ?? [];
 }
 
 /** A period's name: "Whole data period", "August 2026" or "Week of Aug 3, 2026". */

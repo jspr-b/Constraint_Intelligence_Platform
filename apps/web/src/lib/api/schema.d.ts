@@ -653,6 +653,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Teams
+         * @description Teams shared by several steps (ADR-0009): code, name and steps; never who is in them.
+         */
+        get: operations["list_teams_plants__plant_code__teams_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/station-logins": {
         parameters: {
             query?: never;
@@ -1599,6 +1619,15 @@ export interface components {
              * @enum {string}
              */
             state: "done" | "todo" | "later";
+        };
+        /** TeamOut */
+        TeamOut: {
+            /** Name */
+            name: string;
+            /** Resource Codes */
+            resource_codes: string[];
+            /** Team Code */
+            team_code: string;
         };
         /** UserOut */
         UserOut: {
@@ -3048,6 +3077,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlantSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_teams_plants__plant_code__teams_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamOut"][];
                 };
             };
             /** @description Validation Error */

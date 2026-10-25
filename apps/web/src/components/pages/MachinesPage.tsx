@@ -8,7 +8,7 @@ import { ConstraintMarker, isMissing, MicroLabel, Panel, type FigureLike } from 
 import { api } from "@/lib/api/client";
 import { ConstraintBanner, useDetection } from "../ConstraintBanner";
 import { useDetails } from "../Details";
-import { useFacts, valueOf, type Fact, type Period } from "../diagnose";
+import { useFacts, useTeams, valueOf, type Fact, type Period } from "../diagnose";
 import { EmptyState } from "../EmptyState";
 import { Figure, HowCalculated } from "../Figure";
 import { PageHeader } from "../PageHeader";
@@ -109,6 +109,7 @@ export function MachinesPage() {
         })
       ).data ?? [],
   });
+  const teams = useTeams(plant);
   const resources = useQuery({
     queryKey: ["resources", plant],
     enabled: plant !== null,
@@ -157,7 +158,10 @@ export function MachinesPage() {
           )
         : t("periodWeek", { date: date(p.period_start_at) });
 
-  const names = new Map((resources.data ?? []).map((r) => [r.resource_code, r.name]));
+  const names = new Map([
+    ...(resources.data ?? []).map((r) => [r.resource_code, r.name] as const),
+    ...teams.map((team) => [team.team_code, team.name] as const),
+  ]);
   const label = (code: string) => `${names.get(code) ?? code} (${code})`;
   const byMachine = useMemo(() => {
     const out = new Map<string, Map<string, Fact>>();

@@ -223,3 +223,7 @@ def test_a_workshop_scan_export_is_recognised_and_imported(
             {"t": world.a},
         ).scalar_one()
     assert team == "FINISH-TEAM"
+    teams = it.get("/plants/PLANT-1/teams").json()
+    assert teams == [
+        {"team_code": "FINISH-TEAM", "name": "Finishing team", "resource_codes": ["FINISH", "PACK"]}
+    ]

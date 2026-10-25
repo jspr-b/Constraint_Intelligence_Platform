@@ -848,7 +848,9 @@
       "scrap_constraint_min": "Bottleneck minutes lost to scrap = units scrapped at or after the bottleneck × the bottleneck's work minutes per unit on that order.",
       "lost_constraint_h_total": "All hours the bottleneck lost = the sum of the causes (breakdowns, setups, waiting, blocked, breaks, maintenance, scrap).",
       "throughput_per_constraint_h": "Throughput per bottleneck hour = Σ (units × (sales price − truly variable cost)) ÷ Σ bottleneck work hours, over the orders the bottleneck finished in the period.",
-      "lost_throughput_eur_cents": "Lost throughput = bottleneck hours lost × throughput per bottleneck hour. Every hour lost at the bottleneck is output the plant never ships."
+      "lost_throughput_eur_cents": "Lost throughput = bottleneck hours lost × throughput per bottleneck hour. Every hour lost at the bottleneck is output the plant never ships.",
+      "job_throughput_per_constraint_h": "Throughput per bottleneck hour without product prices = each job's value minus its material cost, spread over the job's work at the bottleneck, ÷ the bottleneck work hours. A job whose product has a price uses that price. Jobs with a forgotten scan at the bottleneck are left out.",
+      "unfinished_start_share_pct": "Share of jobs started at this step whose finish was never scanned (a forgotten scan). Those jobs are left out of busy time and task times; 1% or more lowers confidence to medium, 10% or more to low."
     },
     "units": {
       "score": "points out of 100",
@@ -906,7 +908,16 @@
       "units_without_price": "Units without a price",
       "resource_code": "Machine",
       "throughput_eur_cents": "Throughput of those orders",
-      "units": "Units finished"
+      "units": "Units finished",
+      "from_products_eur_cents": "Money from jobs with a product price",
+      "from_job_values_eur_cents": "Money from job values (value − material)",
+      "jobs": "Jobs counted",
+      "jobs_without_value": "Jobs without a price or value",
+      "unfinished_start_pct": "Starts without a finish (forgotten scans)",
+      "starts_without_finish": "Starts without a finish",
+      "starts": "Jobs started",
+      "counted_in": "Counted in",
+      "path_from": "Path of each job taken from"
     },
     "noMachine": "no machine"
   },
@@ -1013,6 +1024,7 @@
       "material": "For {share}% of released orders the material arrived after the work was released.",
       "weak": "Confidence is lowered to {level} because some of the numbers behind the checks are less certain. Open them to see why.",
       "dataGap": "Confidence is lowered to medium because important data is missing. See Data quality for what to add.",
+      "teamCovers": "{team} is a team shared by several steps ({steps}): together they cannot work on more jobs than the team has people on shift. The team, not one bench, limits output.",
       "other": "See how it is worked out below.",
       "level": {
         "high": "high",

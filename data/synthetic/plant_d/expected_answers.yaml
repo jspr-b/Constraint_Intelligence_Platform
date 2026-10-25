@@ -6,17 +6,17 @@ utilisation_pct:
   LASER: 52.47
   PRESS: 27.45
   WELD-BENCH: 66.52
-  ASSY-BENCH: 44.89
+  ASSY-BENCH: 44.87
   FINISH: 62.4
   PACK: 31.3
-  FINISH-TEAM: 99.87
+  FINISH-TEAM: 99.52
 throughput_eur_cents_per_constraint_h:
   jobs: 75743.9
 lost_constraint_h_by_month:
   2026-07:
     breaks_h: 37.5
     setup_h: 0.0
-    starved_h: 9.792
+    starved_h: 11.138
     blocked_h: 0.0
     breakdowns_h: 0.0
     maintenance_h: 0.0
@@ -40,7 +40,7 @@ lost_constraint_h_by_month:
   2026-10:
     breaks_h: 26.25
     setup_h: 0.0
-    starved_h: 0.182
+    starved_h: 0.0
     blocked_h: 0.0
     breakdowns_h: 0.0
     maintenance_h: 0.0
@@ -184,3 +184,8 @@ constraint_covers:
 - FINISH
 - PACK
 forgotten_end_scan_share_pct: 4.06
+throughput_eur_cents_per_constraint_h_by_month:
+  2026-07: 75196.15
+  2026-08: 76179.13
+  2026-09: 75628.19
+  2026-10: 79354.52

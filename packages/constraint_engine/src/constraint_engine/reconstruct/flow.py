@@ -3,6 +3,9 @@
 Queue in front of a machine: from the order's arrival (scan/move at the machine's station)
 until its job starts there. Without scans, the previous job's end is used as arrival, so
 transport and queue time cannot be told apart.
+
+A job's steps follow its routing step numbers. Jobs without step numbers (ADR-0009) take the
+path from history: their steps in the order of their start times (``path_from_history``).
 """
 
 from bisect import bisect_right
@@ -25,6 +28,8 @@ class Flow:
     """order_id, from_resource, to_resource, from_seq, to_seq, end_min, arrived_min, start_min,
     transport_min, queue_min, setup_min, wait_min (= transport + queue + setup)."""
     has_scans: bool
+    path_from_history: bool = False
+    """True when some job's path came from its touchpoint times, not from step numbers."""
 
 
 def _arrivals(plant: LoadedPlant) -> dict[str, list[float]]:
@@ -50,7 +55,10 @@ def reconstruct_flow(plant: LoadedPlant, ops: Operations | None = None) -> Flow:
     arrivals = _arrivals(plant)
     setup_start = _setup_starts(ops)
     has_scans = bool(arrivals)
-    jobs = ops.jobs.sort("order_id", "operation_seq").iter_rows(named=True)
+    if ops.jobs.is_empty():
+        return Flow(pl.DataFrame(), pl.DataFrame(), has_scans)
+    history = ops.jobs["operation_seq"].null_count() > 0
+    jobs = ops.jobs.sort("order_id", "operation_seq", "start_at").iter_rows(named=True)
     by_order: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in jobs:
         by_order[str(row["order_id"])].append(row)
@@ -96,16 +104,17 @@ def reconstruct_flow(plant: LoadedPlant, ops: Operations | None = None) -> Flow:
                     }
                 )
             prev, prev_end = row, to_min(row["end_at"])  # type: ignore[arg-type]
-    return Flow(pl.DataFrame(stays), pl.DataFrame(transitions), has_scans)
+    return Flow(pl.DataFrame(stays), pl.DataFrame(transitions), has_scans, history)
 
 
-def wip(flow: Flow, resource_code: str) -> pl.DataFrame:
+def wip(flow: Flow, resource_code: str, covers: tuple[str, ...] = ()) -> pl.DataFrame:
     """Orders waiting in front of a machine over time: columns at_min, wip (step function).
+    For a team (``covers``): orders waiting in front of any of its steps.
 
     All arrivals and starts at the same moment are applied together, so a start and an
     arrival in the same minute never show a level that did not exist.
     """
-    stays = flow.queue_stays.filter(pl.col("resource_code") == resource_code)
+    stays = flow.queue_stays.filter(pl.col("resource_code").is_in(covers or (resource_code,)))
     change: dict[float, int] = defaultdict(int)
     for at in stays["arrived_min"]:
         change[at] += 1

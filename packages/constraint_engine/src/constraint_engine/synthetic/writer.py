@@ -309,7 +309,12 @@ def write_plant(result: SimResult, out: Path | str) -> Path:
     _capacity(result, root)
     _orders_and_events(result, root)
     answers = expected_answers(result).model_dump(mode="json")
-    for extra in ("constraint_type", "constraint_covers", "forgotten_end_scan_share_pct"):
+    for extra in (
+        "constraint_type",
+        "constraint_covers",
+        "forgotten_end_scan_share_pct",
+        "throughput_eur_cents_per_constraint_h_by_month",
+    ):
         if answers[extra] is None:
             del answers[extra]
     (root / "expected_answers.yaml").write_text(

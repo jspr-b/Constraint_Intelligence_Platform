@@ -2538,6 +2538,32 @@
         "title": "StepOut",
         "type": "object"
       },
+      "TeamOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "resource_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resource Codes",
+            "type": "array"
+          },
+          "team_code": {
+            "title": "Team Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team_code",
+          "name",
+          "resource_codes"
+        ],
+        "title": "TeamOut",
+        "type": "object"
+      },
       "UserOut": {
         "properties": {
           "email": {
@@ -6078,6 +6104,101 @@
           }
         },
         "summary": "Plant Summary",
+        "tags": [
+          "plants"
+        ]
+      }
+    },
+    "/plants/{plant_code}/teams": {
+      "get": {
+        "description": "Teams shared by several steps (ADR-0009): code, name and steps; never who is in them.",
+        "operationId": "list_teams_plants__plant_code__teams_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TeamOut"
+                  },
+                  "title": "Response List Teams Plants  Plant Code  Teams Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Teams",
         "tags": [
           "plants"
         ]

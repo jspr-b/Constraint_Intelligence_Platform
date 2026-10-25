@@ -5,9 +5,13 @@ available time, and available time into running + setup + blocked + starved. Not
 uses engine calculations, so tests against it are not circular.
 
 Steps with several positions, and teams, are counted in position-minutes (ADR-0009): every
-staffed position of a shift adds its minutes, and every job's work adds its own minutes.
+staffed position of a shift adds its minutes, and every job's work adds its own minutes, at
+most the staffed positions at that moment. A team member who finishes a job after the shift
+change (3 working while 2 are planned) is not counted twice: the extra minutes are not running
+time, and they never hide starved time elsewhere in the month.
 """
 
+from bisect import bisect_left
 from datetime import date, time
 from typing import Any
 
@@ -99,8 +103,19 @@ def pooled_truth(
         totals["break"] += n * total(brk)
         totals["maintenance"] += n * total(maint)
         totals["down"] += n * total(intersect(subtract(downs, brk + maint), part))
-    available = totals["shift"] - totals["break"] - totals["maintenance"] - totals["down"]
-    run = sum(e - s for s, e in (iv for seg in running for iv in intersect([seg], [window])))
+    run = starved = 0.0
+    segs = sorted(running)
+    starts = [a for a, _ in segs]
+    longest = max((b - a for a, b in segs), default=0.0)
+    for index, shift in result.shift_windows:
+        part = intersect([shift], [window])
+        if not part:
+            continue
+        open_time = subtract(subtract(subtract(part, breaks), cal.maintenance), downs)
+        lo, hi = part[0][0], part[-1][1]
+        near = segs[bisect_left(starts, lo - longest) : bisect_left(starts, hi)]
+        busy, idle = _capped(counts[index], near, open_time)
+        run, starved = run + busy, starved + idle
     values = {
         "shift_min": totals["shift"],
         "break_min": totals["break"],
@@ -109,10 +124,32 @@ def pooled_truth(
         "running_min": run,
         "setup_min": 0.0,
         "blocked_min": 0.0,
-        "starved_min": max(available - run, 0.0),
+        "starved_min": starved,
         "scrap_run_min": 0.0,
     }
     return {k: round(v, 3) for k, v in values.items()}
+
+
+def _capped(n: int, running: list[Interval], open_time: list[Interval]) -> tuple[float, float]:
+    """(busy, idle) position-minutes in ``open_time`` with ``n`` positions: busy is the jobs being
+    worked, at most ``n`` at a moment; idle is the staffed positions left over."""
+    marks: dict[float, int] = {}
+    for a, b in running:
+        marks[a] = marks.get(a, 0) + 1
+        marks[b] = marks.get(b, 0) - 1
+    for a, b in open_time:
+        marks.setdefault(a, 0)
+        marks.setdefault(b, 0)
+    busy = idle = 0.0
+    level, last = 0, None
+    for t in sorted(marks):
+        if last is not None and t > last:
+            inside = sum(min(b, t) - max(a, last) for a, b in open_time if a < t and b > last)
+            busy += min(level, n) * inside
+            idle += max(n - level, 0) * inside
+        level += marks[t]
+        last = t
+    return busy, idle
 
 
 def _step_truth(result: SimResult, code: str, window: Interval) -> dict[str, float]:

@@ -75,6 +75,18 @@ function ReasonText({ reason, label }: { reason: Reason; label: (code: string) =
       return <span>{t("weak", { level: t(`level.${String(v.level)}`) })}</span>;
     case "data_gap":
       return <span>{t("dataGap")}</span>;
+    case "team_covers":
+      return (
+        <span data-raw>
+          {t("teamCovers", {
+            team: machine("team"),
+            steps: String(v.steps)
+              .split(", ")
+              .map((code) => label(code))
+              .join(", "),
+          })}
+        </span>
+      );
     default:
       return <span>{t("other")}</span>;
   }

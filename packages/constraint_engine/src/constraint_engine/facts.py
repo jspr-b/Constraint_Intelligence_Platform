@@ -15,10 +15,17 @@ the whole data period (``all``), a local-time month or an ISO week. Families:
 - ``queue``: median and P90 time orders wait in front of the machine
 - ``wip``: average and highest number of orders waiting in front of the machine
 - ``task_time``: median and P90 work minutes per unit per operation (whole period only)
+- ``scan_gap``: share of starts with no finish (forgotten scans), only where there are any; it
+  lowers the confidence of the step's utilisation by a registered rule
+
+Steps with several positions and teams count their states in position-minutes (ADR-0009); a
+team is a subject like a step, and its queue is the orders waiting in front of its steps.
 
 Days (``period_kind`` ``day``) carry only ``state`` facts: the machine's timeline.
 """
 
+from bisect import bisect_left
+from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
@@ -31,7 +38,7 @@ from constraint_engine.formulas.registry import Calc, Resolved, formula
 from constraint_engine.intervals import Interval, total
 from constraint_engine.io.plant_loader import LoadedPlant
 from constraint_engine.reconstruct.capacity import machine_oee
-from constraint_engine.reconstruct.durations import pair_operations, task_times
+from constraint_engine.reconstruct.durations import NO_END, Operations, pair_operations, task_times
 from constraint_engine.reconstruct.flow import Flow, reconstruct_flow, wip
 from constraint_engine.reconstruct.states import (
     STATES,
@@ -41,7 +48,7 @@ from constraint_engine.reconstruct.states import (
     machine_states,
     period_windows,
 )
-from constraint_engine.reconstruct.timeline import from_min, stops_by_reason
+from constraint_engine.reconstruct.timeline import from_min, stops_by_reason, to_min
 
 PeriodKind = str
 """``all``, ``month`` or ``week``."""
@@ -99,8 +106,10 @@ def state_min(
     minutes: float,
     period: Period,
     blocked_missing: Missing | None,
+    pooled: bool = False,
 ) -> Calc:
-    """Without scans, blocked time is Missing and hidden inside starved (medium confidence)."""
+    """Without scans, blocked time is Missing and hidden inside starved (medium confidence).
+    For steps with positions and teams the minutes are position-minutes."""
 
     def compute(i: Resolved) -> float | Missing:
         if state == "blocked" and blocked_missing is not None:
@@ -114,7 +123,11 @@ def state_min(
         cap = Confidence.MEDIUM
     return _with_period(
         Calc(
-            inputs={"resource_code": resource_code, "state": state},
+            inputs={
+                "resource_code": resource_code,
+                "state": state,
+                **({"counted_in": "position-minutes"} if pooled else {}),
+            },
             compute=compute,
             confidence_cap=cap,
         ),
@@ -128,7 +141,7 @@ def state_min(
     "utilisation = (running + setup) ÷ (shift − breaks − maintenance − breakdowns − unknown) × 100",
     unit="pct",
 )
-def utilisation(states: dict[str, Figure], period: Period) -> Calc:
+def utilisation(states: dict[str, Figure], period: Period, gap: Figure | None = None) -> Calc:
     def compute(i: Resolved) -> float | Missing:
         available = (
             float(i["shift_min"])
@@ -142,9 +155,12 @@ def utilisation(states: dict[str, Figure], period: Period) -> Calc:
         return round(100 * (float(i["running_min"]) + float(i["setup_min"])) / available, 2)
 
     keys = ("shift", "break", "maintenance", "down", UNKNOWN, "running", "setup")
+    inputs: dict[str, Figure] = {f"{k}_min": states[k] for k in keys}
+    if gap is not None:
+        inputs["unfinished_start_pct"] = gap  # its confidence carries the scan-gap rule
     return _with_period(
         Calc(
-            inputs={f"{k}_min": states[k] for k in keys},
+            inputs=inputs,
             compute=compute,
             confidence_cap=_unknown_cap(states),
         ),
@@ -157,6 +173,47 @@ def _unknown_cap(states: dict[str, Figure]) -> Confidence:
     unknown = states[UNKNOWN].value
     return (
         Confidence.MEDIUM if isinstance(unknown, int | float) and unknown > 0 else Confidence.HIGH
+    )
+
+
+SCAN_GAP_MEDIUM_PCT = 1.0
+SCAN_GAP_LOW_PCT = 10.0
+
+
+@formula(
+    "unfinished_start_share_pct",
+    1,
+    "share of starts with no finish (a forgotten scan) = starts without a finish ÷ starts × 100; "
+    "such jobs are left out of busy time and task times; 1 % or more lowers confidence to "
+    "medium, 10 % or more to low",
+    unit="pct",
+)
+def unfinished_starts(resource_code: str, unfinished: int, starts: int, period: Period) -> Calc:
+    share = 100 * unfinished / starts if starts else 0.0
+
+    def compute(i: Resolved) -> float | Missing:
+        if not starts:
+            return Missing("starts", "no job started at the step in the period")
+        return round(share, 2)
+
+    cap = (
+        Confidence.LOW
+        if share >= SCAN_GAP_LOW_PCT
+        else Confidence.MEDIUM
+        if share >= SCAN_GAP_MEDIUM_PCT
+        else Confidence.HIGH
+    )
+    return _with_period(
+        Calc(
+            inputs={
+                "resource_code": resource_code,
+                "starts_without_finish": unfinished,
+                "starts": starts,
+            },
+            compute=compute,
+            confidence_cap=cap,
+        ),
+        period,
     )
 
 
@@ -221,22 +278,36 @@ def setup_share(states: dict[str, Figure], period: Period) -> Calc:
     )
 
 
-def _queue_inputs(resource_code: str, n: int, has_scans: bool) -> dict[str, str | int]:
-    return {
+def _queue_inputs(
+    resource_code: str, n: int, has_scans: bool, history: bool = False
+) -> dict[str, str | int]:
+    out: dict[str, str | int] = {
         "resource_code": resource_code,
         "orders_measured": n,
         "arrival_from": "scans at the station" if has_scans else "end of the previous step",
     }
+    if history:
+        out["path_from"] = "touchpoint times (no step numbers)"
+    return out
 
 
-def _wip_inputs(resource_code: str, has_scans: bool) -> dict[str, str | int]:
-    inputs = _queue_inputs(resource_code, 0, has_scans)
+def _wip_inputs(resource_code: str, has_scans: bool, history: bool) -> dict[str, str | int]:
+    inputs = _queue_inputs(resource_code, 0, has_scans, history)
     del inputs["orders_measured"]
     return inputs
 
 
-def _queue_cap(n: int, has_scans: bool) -> Confidence:
-    return Confidence.HIGH if has_scans and n >= 20 else Confidence.LOW
+def _wip_cap(has_scans: bool, history: bool) -> Confidence:
+    if not has_scans:
+        return Confidence.LOW
+    return Confidence.MEDIUM if history else Confidence.HIGH
+
+
+def _queue_cap(n: int, has_scans: bool, history: bool) -> Confidence:
+    """Without scans, or with few orders: low. A path from history: at most medium."""
+    if not (has_scans and n >= 20):
+        return Confidence.LOW
+    return Confidence.MEDIUM if history else Confidence.HIGH
 
 
 @formula(
@@ -246,7 +317,11 @@ def _queue_cap(n: int, has_scans: bool) -> Confidence:
     unit="min",
 )
 def queue_median(
-    resource_code: str, values: tuple[float, ...], has_scans: bool, period: Period
+    resource_code: str,
+    values: tuple[float, ...],
+    has_scans: bool,
+    period: Period,
+    history: bool = False,
 ) -> Calc:
     def compute(i: Resolved) -> float | Missing:
         if not values:
@@ -255,9 +330,9 @@ def queue_median(
 
     return _with_period(
         Calc(
-            inputs=_queue_inputs(resource_code, len(values), has_scans),
+            inputs=_queue_inputs(resource_code, len(values), has_scans, history),
             compute=compute,
-            confidence_cap=_queue_cap(len(values), has_scans),
+            confidence_cap=_queue_cap(len(values), has_scans, history),
         ),
         period,
     )
@@ -270,7 +345,11 @@ def queue_median(
     unit="min",
 )
 def queue_p90(
-    resource_code: str, values: tuple[float, ...], has_scans: bool, period: Period
+    resource_code: str,
+    values: tuple[float, ...],
+    has_scans: bool,
+    period: Period,
+    history: bool = False,
 ) -> Calc:
     def compute(i: Resolved) -> float | Missing:
         if not values:
@@ -279,9 +358,9 @@ def queue_p90(
 
     return _with_period(
         Calc(
-            inputs=_queue_inputs(resource_code, len(values), has_scans),
+            inputs=_queue_inputs(resource_code, len(values), has_scans, history),
             compute=compute,
-            confidence_cap=_queue_cap(len(values), has_scans),
+            confidence_cap=_queue_cap(len(values), has_scans, history),
         ),
         period,
     )
@@ -312,15 +391,17 @@ def _wip_levels(steps: pl.DataFrame, window: Interval) -> tuple[float, int]:
     "average number of orders waiting in front of the machine, weighted by time",
     unit="orders",
 )
-def wip_average(resource_code: str, average: float, has_scans: bool, period: Period) -> Calc:
+def wip_average(
+    resource_code: str, average: float, has_scans: bool, period: Period, history: bool = False
+) -> Calc:
     def compute(i: Resolved) -> float:
         return round(average, 3)
 
     return _with_period(
         Calc(
-            inputs=_wip_inputs(resource_code, has_scans),
+            inputs=_wip_inputs(resource_code, has_scans, history),
             compute=compute,
-            confidence_cap=Confidence.HIGH if has_scans else Confidence.LOW,
+            confidence_cap=_wip_cap(has_scans, history),
         ),
         period,
     )
@@ -332,15 +413,17 @@ def wip_average(resource_code: str, average: float, has_scans: bool, period: Per
     "highest number of orders waiting in front of the machine at one moment",
     unit="orders",
 )
-def wip_max(resource_code: str, peak: int, has_scans: bool, period: Period) -> Calc:
+def wip_max(
+    resource_code: str, peak: int, has_scans: bool, period: Period, history: bool = False
+) -> Calc:
     def compute(i: Resolved) -> int:
         return peak
 
     return _with_period(
         Calc(
-            inputs=_wip_inputs(resource_code, has_scans),
+            inputs=_wip_inputs(resource_code, has_scans, history),
             compute=compute,
-            confidence_cap=Confidence.HIGH if has_scans else Confidence.LOW,
+            confidence_cap=_wip_cap(has_scans, history),
         ),
         period,
     )
@@ -364,11 +447,13 @@ def periods(plant: LoadedPlant, states: dict[str, MachineStates]) -> list[Period
     return out
 
 
-def _machine_facts(code: str, ms: MachineStates, period: Period, flow: Flow) -> Iterator[Fact]:
+def _machine_facts(
+    code: str, ms: MachineStates, period: Period, flow: Flow, starts: "Starts"
+) -> Iterator[Fact]:
     minutes = ms.minutes(period.window)
     figs: dict[str, Figure] = {}
     for state in ("shift", *STATES, UNKNOWN):
-        figs[state] = state_min(code, state, minutes[state], period, ms.blocked_missing)
+        figs[state] = state_min(code, state, minutes[state], period, ms.blocked_missing, ms.pooled)
         yield Fact("state", code, f"{state}_min", period.kind, figs[state])
     if period.kind == "day":
         return
@@ -380,11 +465,17 @@ def _machine_facts(code: str, ms: MachineStates, period: Period, flow: Flow) -> 
             period.kind,
             state_share(figs[state], figs["shift"], period),
         )
-    yield Fact("utilisation", code, "utilisation_pct", period.kind, utilisation(figs, period))
+    codes = ms.covers or (code,)
+    finished, unfinished = starts.count(codes, period.window)
+    gap = None
+    if unfinished:
+        gap = unfinished_starts(code, unfinished, finished + unfinished, period)
+        yield Fact("scan_gap", code, "unfinished_start_pct", period.kind, gap)
+    yield Fact("utilisation", code, "utilisation_pct", period.kind, utilisation(figs, period, gap))
     yield Fact("setup_share", code, "setup_share_pct", period.kind, setup_share(figs, period))
 
     stays = (
-        flow.queue_stays.filter(pl.col("resource_code") == code)
+        flow.queue_stays.filter(pl.col("resource_code").is_in(codes))
         if not flow.queue_stays.is_empty()
         else flow.queue_stays
     )
@@ -399,17 +490,17 @@ def _machine_facts(code: str, ms: MachineStates, period: Period, flow: Flow) -> 
         code,
         "queue_median_min",
         period.kind,
-        queue_median(code, values, flow.has_scans, period),
+        queue_median(code, values, flow.has_scans, period, flow.path_from_history),
     )
     yield Fact(
         "queue",
         code,
         "queue_p90_min",
         period.kind,
-        queue_p90(code, values, flow.has_scans, period),
+        queue_p90(code, values, flow.has_scans, period, flow.path_from_history),
     )
     steps = (
-        wip(flow, code)
+        wip(flow, code, ms.covers)
         if not flow.queue_stays.is_empty()
         else pl.DataFrame(schema={"at_min": pl.Float64, "wip": pl.Int64})
     )
@@ -419,11 +510,41 @@ def _machine_facts(code: str, ms: MachineStates, period: Period, flow: Flow) -> 
         code,
         "wip_average_units",
         period.kind,
-        wip_average(code, average, flow.has_scans, period),
+        wip_average(code, average, flow.has_scans, period, flow.path_from_history),
     )
     yield Fact(
-        "wip", code, "wip_max_units", period.kind, wip_max(code, peak, flow.has_scans, period)
+        "wip",
+        code,
+        "wip_max_units",
+        period.kind,
+        wip_max(code, peak, flow.has_scans, period, flow.path_from_history),
     )
+
+
+class Starts:
+    """Job starts per step: finished, and without a finish (forgotten scans)."""
+
+    def __init__(self, ops: Operations) -> None:
+        self.finished: dict[str, list[float]] = defaultdict(list)
+        self.unfinished: dict[str, list[float]] = defaultdict(list)
+        for row in ops.jobs.iter_rows(named=True) if not ops.jobs.is_empty() else ():
+            self.finished[row["resource_code"]].append(to_min(row["start_at"]))
+        for u in ops.unpaired:
+            if u.missing.what == "end" and u.event.resource_code and u.missing.reason == NO_END:
+                self.unfinished[u.event.resource_code].append(to_min(u.event.at))
+        for lists in (self.finished, self.unfinished):
+            for v in lists.values():
+                v.sort()
+
+    def count(self, codes: tuple[str, ...], window: Interval) -> tuple[int, int]:
+        def n(lists: dict[str, list[float]]) -> int:
+            return sum(
+                bisect_left(lists[c], window[1]) - bisect_left(lists[c], window[0])
+                for c in codes
+                if c in lists
+            )
+
+        return n(self.finished), n(self.unfinished)
 
 
 def measured_facts(plant: LoadedPlant) -> list[Fact]:
@@ -431,11 +552,12 @@ def measured_facts(plant: LoadedPlant) -> list[Fact]:
     ops = pair_operations(plant)
     states = machine_states(plant, ops)
     flow = reconstruct_flow(plant, ops)
+    starts = Starts(ops)
     out: list[Fact] = []
     spans = periods(plant, states)
     for period in spans:
         for code in sorted(states):
-            out.extend(_machine_facts(code, states[code], period, flow))
+            out.extend(_machine_facts(code, states[code], period, flow, starts))
         if period.kind == "day":
             continue
         for code, m in sorted(machine_oee(plant, period.window, ops).items()):

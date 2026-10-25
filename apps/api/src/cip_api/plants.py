@@ -65,6 +65,30 @@ def list_resources(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> 
     return [ResourceOut.model_validate(r._mapping) for r in rows]
 
 
+class TeamOut(BaseModel):
+    team_code: str
+    name: str
+    resource_codes: list[str]
+    """The steps the team covers."""
+
+
+@router.get("/{plant_code}/teams", response_model=list[TeamOut])
+def list_teams(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> list[TeamOut]:
+    """Teams shared by several steps (ADR-0009): code, name and steps; never who is in them."""
+    ctx.check_plant(plant_code)
+    rows = ctx.db.execute(
+        text(
+            "SELECT team_code, name, resource_codes FROM teams WHERE plant_code = :p "
+            "ORDER BY team_code"
+        ),
+        {"p": plant_code},
+    )
+    return [
+        TeamOut(team_code=r.team_code, name=r.name, resource_codes=r.resource_codes.split(","))
+        for r in rows
+    ]
+
+
 @router.get("/{plant_code}/summary", response_model=PlantSummaryOut)
 def plant_summary(
     plant_code: str, ctx: Annotated[Ctx, Depends(require(page="data"))]

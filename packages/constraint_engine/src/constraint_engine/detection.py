@@ -12,6 +12,10 @@ Methods, each a registered formula with its own Figure:
   its work (the active period method); binding when it is so 75 % of the time or more.
 - ``starved_blocked``: the machine that is least often starved or blocked; binding when that is
   10 % of its shift time or less.
+
+Every step and every shared team is a candidate (ADR-0009). Steps with positions and teams are
+measured in position-minutes; for the active period method a step or team is active when all its
+staffed positions are busy. When a team is the answer, the detection names the steps it covers.
 """
 
 from collections.abc import Mapping, Sequence
@@ -73,6 +77,8 @@ class Detection:
     methods: tuple[MethodResult, ...] = field(default_factory=tuple)
     period_start_at: datetime | None = None
     period_end_at: datetime | None = None
+    covers: tuple[str, ...] = ()
+    """When the answer is a shared team: the steps it covers."""
 
 
 def _key(code: str, measure: str) -> str:
@@ -362,6 +368,7 @@ def detect(
             reasons.append(
                 Reason("queue_with_spare_time", {"machine": answer, "busy_pct": busy_pct or 0})
             )
+    covers: tuple[str, ...] = ()
     if internal:
         kind = "internal"
         reasons.append(
@@ -369,6 +376,9 @@ def detect(
                 "methods_agree", {"count": votes[answer], "total": len(METHODS), "machine": answer}
             )
         )
+        covers = states[answer].covers if answer in states else ()
+        if covers:
+            reasons.append(Reason("team_covers", {"team": answer, "steps": ", ".join(covers)}))
         for r in results:
             if r.resource_code != answer:
                 reasons.append(
@@ -415,6 +425,7 @@ def detect(
         methods=results,
         period_start_at=span[0],
         period_end_at=span[1],
+        covers=covers,
     )
 
 

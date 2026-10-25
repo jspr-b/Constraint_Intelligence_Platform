@@ -10,16 +10,23 @@ blocked machine shows low performance, and that is expected away from the constr
 - Quality Q = (units processed − scrap found at the machine) / units processed
 - OEE = A × Performance × Q
 - Effective capacity = P × A (hours the machine can really produce)
+
+Steps with several positions and steps covered by a team count P and stops in position-minutes
+(staffed positions × minutes, ADR-0009). A handmade step has no ideal speed without a standard
+time: its performance, and so its OEE, is Missing with that reason, never zero or a guess.
 """
 
+import math
 from dataclasses import dataclass
 
+from cip_schema.master import ResourceKind
 from cip_schema.transactional import EventType
 from constraint_engine.figure import Confidence, Figure, Missing
 from constraint_engine.formulas.registry import Calc, Resolved, formula
 from constraint_engine.intervals import Interval, intersect, total
 from constraint_engine.io.plant_loader import LoadedPlant
 from constraint_engine.reconstruct.durations import Operations, pair_operations
+from constraint_engine.reconstruct.positions import pooled_steps, step_positions, weighted_total
 from constraint_engine.reconstruct.timeline import machine_time, to_min
 
 
@@ -45,13 +52,20 @@ def availability(planned_min: float, stop_min: float) -> Calc:
     )
 
 
+NO_STANDARD = Missing(
+    "standard time",
+    "handmade step without a standard time: performance needs one; availability and quality "
+    "still count",
+)
+
+
 @formula(
     "oee_performance",
     1,
     "performance = Σ(ideal min per unit × units) ÷ (planned production − stops)",
     unit="ratio",
 )
-def performance(ideal_min: float, run_min: float, ideal_source: str) -> Calc:
+def performance(ideal_min: float | Missing, run_min: float, ideal_source: str) -> Calc:
     def compute(i: Resolved) -> float | Missing:
         run = float(i["run_time_min"])
         if run <= 0:
@@ -61,7 +75,7 @@ def performance(ideal_min: float, run_min: float, ideal_source: str) -> Calc:
     cap = Confidence.HIGH if ideal_source == "erp_standard" else Confidence.LOW
     return Calc(
         inputs={
-            "ideal_min": round(ideal_min, 3),
+            "ideal_min": ideal_min if isinstance(ideal_min, Missing) else round(ideal_min, 3),
             "run_time_min": round(run_min, 3),
             "ideal_source": ideal_source,
         },
@@ -135,23 +149,33 @@ def machine_oee(
     ops = ops or pair_operations(plant)
     times = machine_time(plant)
     ideal_std = _ideal(plant)
+    positions = step_positions(plant)
+    pooled = pooled_steps(plant, positions)
+    manual = {r.resource_code for r in plant.resources if r.kind is ResourceKind.MANUAL}
     w = [window] if window else None
     out = {}
     for code, mt in times.items():
-        planned = total(intersect(mt.production, w) if w else mt.production)
-        stops = total(intersect(mt.stops, w) if w else mt.stops)
+        if code in pooled:
+            span = window or (-math.inf, math.inf)
+            planned = weighted_total(mt.production, positions[code], span)
+            stops = weighted_total(mt.stops, positions[code], span)
+        else:
+            planned = total(intersect(mt.production, w) if w else mt.production)
+            stops = total(intersect(mt.stops, w) if w else mt.stops)
         jobs = (
             ops.jobs.filter(ops.jobs["resource_code"] == code)
             if not ops.jobs.is_empty()
             else ops.jobs
         )
         units, ideal_min, source = 0, 0.0, "erp_standard"
+        no_standard = False
         for row in jobs.iter_rows(named=True):
             if w and not (w[0][0] <= to_min(row["end_at"]) < w[0][1]):
                 continue
             qty = int(row["quantity_units"] or 0)
             std = ideal_std.get((row["sku"], code, row["operation_seq"]))
             if std is None:
+                no_standard = no_standard or code in manual
                 std, source = (row["work_min_per_unit"] or 0.0), "measured"
             units += qty
             ideal_min += std * qty
@@ -163,7 +187,7 @@ def machine_oee(
             and (not w or w[0][0] <= to_min(e.at) < w[0][1])
         )
         a = availability(planned, stops)
-        p = performance(ideal_min, planned - stops, source)
+        p = performance(NO_STANDARD if no_standard else ideal_min, planned - stops, source)
         q = quality(units, scrap)
         out[code] = MachineOee(code, a, p, q, oee(a, p, q), effective_capacity_h(planned, a))
     return out

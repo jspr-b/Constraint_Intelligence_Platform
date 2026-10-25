@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from constraint_engine.intervals import Interval, intersect, subtract, total
 from constraint_engine.synthetic.model import SimResult
-from constraint_engine.synthetic.truth import generator_log, pooled
+from constraint_engine.synthetic.truth import generator_log, month_windows, pooled
 
 BINDING_LOAD_PCT = 85.0
 """Below this utilisation everywhere, no machine is treated as binding (market-bound)."""
@@ -52,6 +52,7 @@ class ExpectedAnswers(_M):
     constraint_type: Literal["step", "team"] | None = None
     constraint_covers: list[str] | None = None
     forgotten_end_scan_share_pct: float | None = None
+    throughput_eur_cents_per_constraint_h_by_month: dict[str, float] | None = None
 
 
 def _utilisation(log: dict[str, Any]) -> dict[str, float]:
@@ -96,6 +97,25 @@ def _job_throughput_per_team_h(result: SimResult, team: str) -> float | None:
     minutes = sum(o.team_run_min for o in shipped)
     money = sum(o.quantity * (o.product.price_eur_cents - o.product.tvc_eur_cents) for o in shipped)
     return round(money / minutes * 60, 2) if minutes else None
+
+
+def _job_throughput_by_month(result: SimResult) -> dict[str, float]:
+    """Per month: jobs' value minus material, each spread over its team work, per team hour
+    worked in the month. All jobs that used the team count, shipped or not."""
+    out = {}
+    for month, window in month_windows(result).items():
+        money = minutes = 0.0
+        for o in result.orders:
+            worked = sum(e - s for s, e in o.team_segments)
+            if not worked:
+                continue
+            inside = sum(e - s for s, e in intersect(o.team_segments, [window]))
+            margin = o.quantity * (o.product.price_eur_cents - o.product.tvc_eur_cents)
+            money += margin * inside / worked
+            minutes += inside
+        if minutes:
+            out[month] = round(money / minutes * 60, 2)
+    return out
 
 
 def _forecast(result: SimResult) -> list[ForecastWeek]:
@@ -195,4 +215,9 @@ def _steps_extras(result: SimResult, log: dict[str, Any], top: str) -> dict[str,
         "constraint_type": "team" if top in teams else "step",
         "constraint_covers": teams[top]["steps"] if top in teams else None,
         "forgotten_end_scan_share_pct": round(100 * forgotten / scans, 2) if scans else None,
+        "throughput_eur_cents_per_constraint_h_by_month": (
+            _job_throughput_by_month(result)
+            if top in teams and not result.cfg.export.products
+            else None
+        ),
     }

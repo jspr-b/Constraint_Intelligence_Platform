@@ -32,22 +32,22 @@
           "break_min": 6615.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 28494.499,
+          "running_min": 28464.883,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 74970.0,
-          "starved_min": 39860.501
+          "starved_min": 39890.117
         },
         "2026-09": {
           "blocked_min": 0.0,
           "break_min": 6930.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 29493.393,
+          "running_min": 29490.626,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 78540.0,
-          "starved_min": 42116.607
+          "starved_min": 42119.374
         },
         "2026-10": {
           "blocked_min": 0.0,
@@ -66,11 +66,11 @@
         "break_min": 18900.0,
         "down_min": 0.0,
         "maintenance_min": 0.0,
-        "running_min": 87668.66,
+        "running_min": 87636.277,
         "scrap_run_min": 0.0,
         "setup_min": 0.0,
         "shift_min": 214200.0,
-        "starved_min": 107631.34
+        "starved_min": 107663.723
       }
     },
     "FINISH": {
@@ -381,18 +381,18 @@
           "break_min": 2250.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 22662.466,
+          "running_min": 22581.716,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 25500.0,
-          "starved_min": 587.534
+          "starved_min": 668.284
         },
         "2026-08": {
           "blocked_min": 0.0,
           "break_min": 4725.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 49072.607,
+          "running_min": 48825.0,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 53550.0,
@@ -403,7 +403,7 @@
           "break_min": 4950.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 51315.372,
+          "running_min": 51150.0,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 56100.0,
@@ -414,11 +414,11 @@
           "break_min": 1575.0,
           "down_min": 0.0,
           "maintenance_min": 0.0,
-          "running_min": 16264.068,
+          "running_min": 16275.0,
           "scrap_run_min": 0.0,
           "setup_min": 0.0,
           "shift_min": 17850.0,
-          "starved_min": 10.932
+          "starved_min": 0.0
         }
       },
       "steps": [
@@ -430,11 +430,11 @@
         "break_min": 13500.0,
         "down_min": 0.0,
         "maintenance_min": 0.0,
-        "running_min": 139314.513,
+        "running_min": 138831.716,
         "scrap_run_min": 0.0,
         "setup_min": 0.0,
         "shift_min": 153000.0,
-        "starved_min": 185.487
+        "starved_min": 668.284
       }
     }
   },

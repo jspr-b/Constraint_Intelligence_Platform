@@ -115,6 +115,10 @@ INSERT = text(
 )
 
 
+class NoEventsError(RuntimeError):
+    """The import has no touchpoints to calculate from."""
+
+
 def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
     """The job: reconstruct the import's data and replace the plant's facts. Returns the count."""
     from cip_api.detection import detect, store_detections  # detection.py reads this module
@@ -127,6 +131,9 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
                 {"i": import_id},
             ).one()
         plant = load_plant(import_dir(settings, tenant, plant_code, import_id) / "standard")
+        if not plant.events:
+            # Nothing to calculate from: fail, so the plant's previous numbers stay.
+            raise NoEventsError("the import's standard layout has no events")
         facts = measured_facts(plant)
         detections = detect(plant, facts, report)
         facts += loss_facts(plant, facts, detections)

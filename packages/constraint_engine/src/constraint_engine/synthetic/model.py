@@ -51,6 +51,8 @@ class SimOrder:
     shipped: float | None = None
     team_run_min: float = 0.0
     """Position-minutes this job used at steps covered by a team."""
+    team_segments: list[tuple[float, float]] = field(default_factory=list)
+    """When it used them (one position each)."""
 
 
 @dataclass
@@ -199,11 +201,12 @@ class Simulation:
         minutes: float,
         sink: list[Interval],
         on_start: Callable[[float], None] | None = None,
+        also: tuple[list[Interval], ...] = (),
     ) -> Generator[Any, Any, list[Interval]]:
         """Work ``minutes`` of machine time, pausing outside available time.
 
-        Each chunk is logged in ``sink`` when it starts, so work still in progress when the
-        history ends is counted too.
+        Each chunk is logged in ``sink`` (and in ``also``, e.g. a team's log) when it starts, so
+        work still in progress when the history ends is counted too.
         """
         avail = Availability(self.availability[code])
         segments: list[Interval] = []
@@ -220,6 +223,8 @@ class Simulation:
                 on_start(self.env.now)
             segments.append((self.env.now, self.env.now + chunk))
             sink.append(segments[-1])
+            for extra in also:
+                extra.append(segments[-1])
             yield self.env.timeout(chunk)
             remaining -= chunk
         return segments
@@ -293,14 +298,19 @@ class Simulation:
                     "operation_seq": (i + 1) * 10,
                     "quantity_units": qty,
                 }
+                also = (
+                    (self.team_logs[team.code].running, order.team_segments)
+                    if team is not None and member is not None
+                    else ()
+                )
                 segs = yield from self.consume(
                     step.resource,
                     run,
                     self.logs[step.resource].running,
                     on_start=partial(self._emit, "start", **common),
+                    also=also,
                 )
                 if team is not None and member is not None:
-                    self.team_logs[team.code].running.extend(segs)
                     order.team_run_min += sum(e - s for s, e in segs)
                     self.teams[team.code].release(member)
                 self._end_scan(step.resource, segs[-1][1], common)
