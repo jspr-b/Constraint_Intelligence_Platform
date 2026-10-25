@@ -18,7 +18,12 @@ import sys
 from pathlib import Path
 
 from cip_connectors.mapping import load_mapping
-from constraint_engine.quality.checklist import MINIMUM_SET, Requirement, parse_requirements
+from constraint_engine.quality.checklist import (
+    MINIMUM_SET,
+    OPTIONAL_SET,
+    Requirement,
+    parse_requirements,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / "docs" / "input-data.md"
@@ -30,39 +35,41 @@ START, END = "<!-- generated:columns -->", "<!-- /generated:columns -->"
 # number -> plain wording: what it is, in words a plant director uses.
 PLAIN: dict[int, str] = {
     1: "The plant: name and time zone.",
-    2: "Your stations or departments and which machines stand there.",
-    3: "Your machines and work centres, with the codes your ERP uses.",
-    4: "Which operations each machine can do, with the ERP standard times.",
+    2: "Your stations or departments and which steps are in them.",
+    3: "Your steps: machines, work centres and handmade benches, with the codes you use.",
+    4: "Which operations each step can do, with the ERP standard times.",
     5: "Products with sales price and truly variable cost (materials, bought parts, outsourcing; not labour).",
-    6: "Routings: the steps each product goes through, in order, per machine.",
+    6: "Routings: the steps each product goes through, in order.",
     7: "Setup families (e.g. colour groups) and changeover times between them.",
-    8: "Code lists: your machine codes, status codes, stop and scrap reasons.",
-    9: "Orders: the last 8–12 weeks and the open order book, with due dates.",
+    8: "Code lists: your step codes, status codes, stop and scrap reasons.",
+    9: "Jobs or orders: the last 8–12 weeks and the open order book, with due dates, and their value and material cost if you have them.",
     10: "A sales forecast beyond the open orders.",
     11: "When material is ready per order.",
-    12: "Start and finish bookings per order and machine, at least 8 weeks (MES or ERP hour bookings).",
-    13: "Machine stops with their reason.",
+    12: "The event log: start and finish per job and step, at least 8 weeks (MES, ERP hour bookings or scans at the bench).",
+    13: "Stops with their reason.",
     14: "Scrap: how many and at which step it was found.",
     15: "Scans when work arrives at or leaves a station.",
-    16: "Shift times per machine.",
-    17: "Breaks and shift changes, and whether a machine keeps running during them.",
-    18: "Planned maintenance per machine.",
+    16: "Shift times per step, with the number of staffed positions at handmade steps (a count, never who).",
+    17: "Breaks and shift changes, and whether a step keeps running during them.",
+    18: "Planned maintenance per step.",
     19: "Holidays and plant closures.",
-    20: "Overtime worked per machine per week (never per person).",
+    20: "Overtime worked per step per week (never per person).",
     21: "What extra capacity costs: overtime per hour, an extra shift, outsourcing.",
     22: "The baseline period and who in finance signs off the results.",
     23: "The subscription price.",
     24: "Email and role of the people who will use the platform.",
-    25: "A PIN per station screen (the screen belongs to the machine, not a person).",
+    25: "A PIN per station screen (the screen belongs to the step, not a person).",
     26: "Company sign-in details (Microsoft Entra ID via Keycloak).",
     27: "A scheduled export: SFTP drop or read-only database view.",
+    28: "Shared teams: which steps share people, and the team size per shift (a count, never who).",
 }
 
 TEXT: dict[str, str] = {
     "title": "Data checklist for a diagnostic",
-    "intro": "What we need from your plant to find what limits your output and what it costs. Exports from your ERP and MES are enough; we map your column names, you do not have to change them.",
-    "minimum": "Minimum to start: 5 exports and 1 sheet",
-    "minimum_note": "Plant, stations and machines (items 1–3) we fill in together at the kick-off.",
+    "intro": "What we need from your plant to find what limits your output and what it costs. Exports from your ERP, MES or spreadsheets are enough; we map your column names, you do not have to change them.",
+    "minimum": "Minimum to start: the event log, a steps list and a shift sheet",
+    "minimum_note": "That is enough to find your bottleneck and its lost hours. Plant and stations (items 1–2) we fill in together at the kick-off.",
+    "adds": "What each extra file adds",
     "should": "Also helpful: raises confidence, not required to start",
     "never": "Never needed: personal data",
     "never_text": "Employee names, badge numbers, who worked at which station, time per person, wages. If an export contains such columns, they are dropped while the file is read and never stored.",
@@ -77,12 +84,26 @@ TEXT: dict[str, str] = {
 
 
 MINIMUM_TITLES: dict[str, str] = {
-    "orders": "Orders",
-    "routings": "Routings and operations per machine",
+    "events": "Event log: start and finish per job and step (8+ weeks)",
+    "steps": "Steps list: machines and handmade steps",
+    "shifts": "Shift sheet: shifts with staffed positions, and team sizes when steps share people",
+    "orders": "Jobs with value and material cost",
     "products": "Products with price and truly variable cost",
-    "events": "Start and finish bookings (8+ weeks)",
-    "calendar": "Shifts, breaks and holidays (one sheet)",
+    "routings": "Routings and operations per step",
+    "breaks": "Breaks and shift changes",
+    "holidays": "Holidays and closures",
+    "teams": "Shared teams and their sizes per shift",
 }
+
+ADDS: dict[str, str] = {
+    "orders": "€ lost, late orders and on-time delivery",
+    "products": "€ per product and the best product mix",
+    "routings": "the planned path and standard times; higher confidence",
+    "breaks": "the stagger-breaks action",
+    "holidays": "the forecast",
+    "teams": "the capacity of steps that share people; send it with the shift sheet when steps share people",
+}
+"""Same words as the app (apps/web/messages/en.json, import.adds)."""
 
 
 def _plain(r: Requirement) -> str:
@@ -92,7 +113,7 @@ def _plain(r: Requirement) -> str:
 def checklist_md(reqs: list[Requirement]) -> str:
     t = TEXT
     by_number = {r.number: r for r in reqs}
-    minimum_numbers = {n for _k, ns in MINIMUM_SET for n in ns}
+    minimum_numbers = {n for _k, ns in (*MINIMUM_SET, *OPTIONAL_SET) for n in ns}
     out = [
         f"# {t['title']}",
         "",
@@ -107,7 +128,10 @@ def checklist_md(reqs: list[Requirement]) -> str:
         out.append(f"{i}. **{MINIMUM_TITLES[key]}** (#{', #'.join(map(str, numbers))})")
         for n in numbers:
             out.append(f"   - {_plain(by_number[n])}")
-    out += ["", t["minimum_note"], "", f"## {t['should']}", ""]
+    out += ["", t["minimum_note"], "", f"## {t['adds']}", ""]
+    for key, numbers in OPTIONAL_SET:
+        out.append(f"- **{MINIMUM_TITLES[key]}** (#{', #'.join(map(str, numbers))}): {ADDS[key]}")
+    out += ["", f"## {t['should']}", ""]
     for r in reqs:
         if r.level == "Should" and r.number not in minimum_numbers:
             out.append(f"- {_plain(r)} (#{r.number})")

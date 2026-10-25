@@ -50,12 +50,13 @@ def test_upload_preview_and_run(world: World, client_as: Callable[[str], TestCli
     done = it.get(f"/imports/{body['import_id']}").json()
     assert done["status"] == "done", done["error"]
     assert {m["key"]: m["status"] for m in done["minimum_set"]} == {
-        "orders": "ok",
-        "routings": "ok",
-        "products": "ok",
         "events": "ok",
-        "calendar": "check",  # plant_a lists no holidays: a person confirms there are none
+        "steps": "ok",
+        "shifts": "ok",
     }
+    optional = {m["key"]: m["status"] for m in done["optional_set"]}
+    assert optional["orders"] == optional["products"] == optional["routings"] == "ok"
+    assert optional["holidays"] == "check"  # plant_a lists no holidays: a person confirms
     assert done["report"]["import"]["dropped_columns"]["mes_events"] == ["Medewerker"]
     assert done["report"]["stored_rows"]["resources"] == 6
     with world.owner.connect() as conn:
@@ -167,33 +168,41 @@ def test_file_check_before_running(client_as: Callable[[str], TestClient]) -> No
     notes = by_name["notes.csv"]
     assert notes["recognised_as"] is None and notes["problem"] == "single_column"
     assert by_name["rooster.xlsx"]["problem"] == "unreadable_excel"
-    needed = {n["key"]: n["present"] for n in body["needed"]}
+    needed = {n["key"]: (n["present"], n["minimum"]) for n in body["needed"]}
     assert needed == {
-        "orders": True,
-        "routings": True,
-        "products": True,
-        "events": True,
-        "calendar": False,
+        "events": (True, True),
+        "steps": (True, True),
+        "shifts": (False, True),  # rooster.xlsx is unreadable
+        "orders": (True, False),
+        "products": (True, False),
+        "routings": (True, False),
     }
     assert "mes_events" in body["expected_files"]
 
 
-def test_an_import_without_products_or_routings_succeeds(
+def test_the_event_log_steps_and_shifts_are_enough_to_start(
     client_as: Callable[[str], TestClient],
 ) -> None:
-    """ADR-0009: steps, jobs and touchpoints are enough; products and routings add confidence."""
+    """ADR-0009: the event log, a steps list and a shift sheet are enough to start; jobs,
+    products and routings add euros and confidence, and getting started says so."""
     it = client_as("it")
-    keep = {"werkplekken.csv", "orders.csv", "mes_events.csv", "rooster.csv"}
+    keep = {"werkplekken.csv", "mes_events.csv", "rooster.csv"}
     files = [f for f in _files(EXPORT / "clean" / "csv") if f[1][0] in keep]
     body = it.post("/plants/PLANT-1/imports", files=files).json()
     assert it.post(f"/imports/{body['import_id']}/run").status_code == 202
     done = it.get(f"/imports/{body['import_id']}").json()
     assert done["status"] == "done", done["error"]
     stored = done["report"]["stored_rows"]
-    assert stored["resources"] == 6 and stored["events"] > 1000 and stored["orders"] > 0
-    assert "products" not in stored and "routings" not in stored
-    files_missing = done["report"]["quality"]["files_missing"]
-    assert "products.csv" not in files_missing and "routings.csv" not in files_missing
+    assert stored["resources"] == 6 and stored["events"] > 1000
+    assert not {"products", "routings", "orders"} & set(stored)
+    assert done["report"]["quality"]["files_missing"] == []
+    assert {m["status"] for m in done["minimum_set"]} == {"ok"}
+    optional = {m["key"]: m["status"] for m in done["optional_set"]}
+    assert optional["orders"] == optional["products"] == optional["routings"] == "missing"
+    onboarding = it.get("/onboarding").json()
+    check = next(s for s in onboarding["steps"] if s["key"] == "check")
+    assert check["state"] == "done" and check["detail"] == "optional"
+    assert {"orders", "products", "routings"} <= set(check["missing"])
 
 
 def test_a_workshop_scan_export_is_recognised_and_imported(
@@ -208,7 +217,14 @@ def test_a_workshop_scan_export_is_recognised_and_imported(
     assert all(f["recognised_as"] for f in body["files"])
     scans = next(s for s in body["sources"] if s["source"] == "scans")
     assert {c["name"]: c["status"] for c in scans["columns"]}["Operator"] == "not_imported"
-    assert {n["key"] for n in body["needed"]} >= {"orders", "events", "calendar"}
+    needed = {n["key"]: n["minimum"] for n in body["needed"] if n["present"]}
+    assert needed == {
+        "events": True,
+        "steps": True,
+        "shifts": True,
+        "orders": False,
+        "teams": False,
+    }
     assert all(n["sources"] for n in body["needed"])
 
     assert it.post(f"/imports/{body['import_id']}/run").status_code == 202

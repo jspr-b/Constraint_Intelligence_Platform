@@ -37,7 +37,6 @@ REQUIRED = (
     "plant.json",
     "stations.csv",
     "resources.csv",
-    "orders.csv",
     "events.csv",
     "calendar.csv",
 )

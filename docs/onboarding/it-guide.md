@@ -2,6 +2,8 @@
 
 For the plant's IT or ERP owner. It covers how your exports are mapped, how data gets in now and in the pilot, what the platform never does, and how logins work. It matches the Import, Connections and Users pages.
 
+**What to send:** to start, the event log, a steps list and a shift sheet; everything else adds euros, actions or confidence (`erp-export-guide.md`, `data-checklist.md`). The Import page says the same, per file.
+
 ## 1. How mapping works
 
 Your files keep their own column names. A **mapping** (one YAML file per source system) says, for every field of the standard data model, which of your columns fills it and how the value is converted. The generic mapping for a Dutch ERP + MES export is `packages/connectors/mappings/generic/mapping.yaml`; the columns it reads are listed in `erp-export-guide.md`.

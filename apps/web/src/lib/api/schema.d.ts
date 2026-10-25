@@ -1201,6 +1201,11 @@ export interface components {
             minimum_set: components["schemas"]["MinimumOut"][];
             /** Needed */
             needed: components["schemas"]["NeededOut"][];
+            /**
+             * Optional Set
+             * @default []
+             */
+            optional_set: components["schemas"]["MinimumOut"][];
             /** Plant Code */
             plant_code: string;
             /** Report */
@@ -1307,11 +1312,17 @@ export interface components {
         Money: "eur" | "hours";
         /**
          * NeededOut
-         * @description An export of the minimum diagnostic set and whether this upload has it.
+         * @description An export of the minimum diagnostic set (or an optional one) and whether this upload has
+         *     it.
          */
         NeededOut: {
             /** Key */
             key: string;
+            /**
+             * Minimum
+             * @default true
+             */
+            minimum: boolean;
             /** Present */
             present: boolean;
             /** Sources */

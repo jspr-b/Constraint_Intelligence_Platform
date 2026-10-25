@@ -4,7 +4,9 @@ The data the Constraint Intelligence Platform needs to operate, based on CLAUDE.
 
 Field names follow the conventions in CLAUDE.md: units in the name, times in UTC, money in integer EUR cents.
 
-**Need:** **Must** = required for the paid diagnostic · **Should** = pilot and daily use · **Later** = later pillars
+**Need:** **Must** = required to start the paid diagnostic · **Should** = raises confidence, adds euros or is needed for pilot and daily use · **Later** = later pillars
+
+A step is any place where work happens: a machine, a handmade bench, a check or packing (ADR-0009). A job is whatever moves through the steps (an order, batch or ticket).
 
 ## A. Plant structure (once, update when it changes)
 
@@ -12,18 +14,18 @@ Field names follow the conventions in CLAUDE.md: units in the name, times in UTC
 |---|---|---|---|---|---|
 | 1 | Plant | `plant_code`, `name`, `timezone_iana` | Plant setup | Must | Everything |
 | 2 | Stations | `station_code`, `name`, machines in it | Plant setup | Must | Plant flow, shift page, station screens |
-| 3 | Machines | `resource_code` (e.g. `PNT-01`), `name`, `station_code`, `parallel_units` | ERP work centres / setup | Must | Everything |
-| 4 | Operations per machine | `operation`, `resource_code`, ERP `standard_run_min_per_unit` and `standard_setup_min` (reference only), `alternative_resource_codes` | ERP routings | Must | Plant setup, load, alternatives |
-| 5 | Products | `sku`, `family`, `sales_price_eur_cents`, `truly_variable_cost_eur_cents` (materials, bought parts, outsourcing; not labour) | ERP + finance | Must | Every € figure |
-| 6 | Routings | `sku` → `operation_seq`, `operation`, `resource_code`, alternatives; second visits allowed | ERP | Must | Load, backlog, forecast |
+| 3 | Steps | `resource_code` (the plant's own short code, e.g. `PNT-01`, `WELD-BENCH`), `name`, `kind` (machine or handmade), `station_code`, `parallel_units` | ERP work centres, a steps list, or setup | Must | Everything |
+| 4 | Operations per step | `operation`, `resource_code`, ERP `standard_run_min_per_unit` and `standard_setup_min` (reference only), `alternative_resource_codes` | ERP routings | Should | Standard times (performance), load, alternatives |
+| 5 | Products | `sku`, `family`, `sales_price_eur_cents`, `truly_variable_cost_eur_cents` (materials, bought parts, outsourcing; not labour) | ERP + finance | Should | € per product (else from job value) |
+| 6 | Routings | `sku` → `operation_seq`, `operation`, `resource_code`, alternatives; second visits allowed | ERP | Should | Planned path (else from touchpoint times), load, forecast |
 | 7 | Setup families | colour/material family per product, changeover time between families | ERP or planner | Should | "Resequence setups" action |
-| 8 | Code tables | ERP machine codes → `resource_code`; status → event type; downtime and scrap reason codes | ERP/MES + mapping | Must | Import and mapping |
+| 8 | Code tables | ERP step codes → `resource_code`; status → event type; downtime and scrap reason codes | ERP/MES + mapping | Must | Import and mapping |
 
 ## B. Orders and demand (daily)
 
 | # | Data | Key fields | Source | Need | Used by |
 |---|---|---|---|---|---|
-| 9 | Orders: history + open order book | `order_id`, `sku`, `quantity_units`, `due_at`, `released_at`, `shipped_at`, `status` | ERP | Must · ≥ 8–12 weeks back and ahead | Backlog, late orders, on-time %, forecast |
+| 9 | Jobs (orders): history + open order book | `order_id`, `sku` (optional), `quantity_units`, `due_at`, `released_at`, `shipped_at`, `status`, `order_value_eur_cents` and `material_cost_eur_cents` (optional) | ERP | Should · ≥ 8–12 weeks back and ahead | € lost (from job value), late orders, on-time %, backlog, forecast |
 | 10 | Demand forecast beyond open orders | `sku`, `week`, `quantity_units` | Sales / ERP | Later | Forecast after the order book runs out |
 | 11 | Material availability | `order_id`, `material_ready_at` | ERP / MRP | Should | Detecting "material is the constraint" |
 
@@ -31,7 +33,7 @@ Field names follow the conventions in CLAUDE.md: units in the name, times in UTC
 
 | # | Data | Key fields | Source | Need | Used by |
 |---|---|---|---|---|---|
-| 12 | Operation events | `event_id`, `at`, `resource_code`, `order_id`, `operation_seq`, `event_type` (start, end, setup_start/end, down_start/end), `quantity_units` | MES, ERP hour bookings, or the station screen | Must · ≥ 8 weeks | Detection, task times, states, loss |
+| 12 | Event log (touchpoints) | `event_id`, `at`, `resource_code`, `order_id` (the job), `operation_seq` (optional), `event_type` (start, end, setup_start/end, down_start/end), `quantity_units` | MES, ERP hour bookings, scans at the bench, or the station screen | Must · ≥ 8 weeks | Detection, task times, states, lost hours |
 | 13 | Downtime reasons | `down_reason_code` per stop | MES / station screen | Should | Loss by cause, maintenance action |
 | 14 | Scrap | `scrap_units`, operation where found | MES / quality system | Should | Loss by cause, "inspect before constraint" action |
 | 15 | Move and scan events | `event_type` move/scan per station | MES / station screen | Later | Transitions and touchpoints views |
@@ -40,11 +42,12 @@ Field names follow the conventions in CLAUDE.md: units in the name, times in UTC
 
 | # | Data | Key fields | Source | Need | Used by |
 |---|---|---|---|---|---|
-| 16 | Shifts | start/end per machine per weekday | Roster / spreadsheet | Must | Capacity, calendar |
-| 17 | Breaks and shift changes | start/end per machine, whether covered | Roster | Must | "Stagger breaks" action |
-| 18 | Maintenance windows | planned start/end per machine | Maintenance plan | Should | "Move maintenance" action |
-| 19 | Holidays and closures | dates | HR / planning | Must | Forecast |
-| 20 | Overtime worked | `overtime_h` per machine per week | Time registration, per machine only | Should | "Overtime on non-constraints" signal |
+| 16 | Shifts with positions | start/end per step per shift, staffed `positions` (a count) for handmade steps | Roster / shift sheet | Must | Capacity, calendar |
+| 17 | Breaks and shift changes | start/end per step, whether covered | Roster | Should | "Stagger breaks" action |
+| 18 | Maintenance windows | planned start/end per step | Maintenance plan | Should | "Move maintenance" action |
+| 19 | Holidays and closures | dates | HR / planning | Should | Forecast |
+| 20 | Overtime worked | `overtime_h` per step per week | Time registration, per step only | Should | "Overtime on non-constraints" signal |
+| 28 | Shared teams | `team_code`, `name`, steps it covers; team size per shift (a count, never who) | Roster / shift sheet | Should | Capacity of steps that share people; a team as the bottleneck |
 
 ## E. Money for decisions and proof
 
@@ -69,15 +72,24 @@ Employee names, badge numbers, who worked at which station, time per person, wag
 
 ## Minimum to start a paid diagnostic
 
-5 exports + 1 sheet:
+1 event log + 1 steps list + 1 shift sheet:
 
-1. Orders (#9)
-2. Routings and operations per machine (#4, #6)
-3. Products with sales price and truly variable cost (#5)
-4. Operation events for at least 8 weeks (#12)
-5. Shifts, breaks and holidays (#16, #17, #19)
+1. Event log: start and finish per job and step, for at least 8 weeks (#12)
+2. Steps list: every step's code and name, machine or handmade (#3)
+3. Shift sheet: shifts per step, with staffed positions for handmade steps (#16), and team sizes when steps share people (#28)
 
-Machines and stations (#1–3) are filled in together during kick-off. Everything else raises confidence but is not required.
+That is enough to find the bottleneck and its lost hours. Each extra file adds something:
+
+| Add | What it adds |
+|---|---|
+| Jobs with value and material cost (#9) | € lost, late orders and on-time delivery |
+| Products with price and truly variable cost (#5) | € per product, best product mix |
+| Routings and operations per step (#4, #6) | the planned path and standard times; higher confidence |
+| Breaks (#17) | the "stagger breaks" action |
+| Holidays (#19) | the forecast |
+| Shared teams (#28) | capacity of steps that share people; send it with the shift sheet when steps share people, or a shared team can never be found |
+
+Plant and stations (#1–2) are filled in together during kick-off. Everything else raises confidence but is not required. Missing data is shown as missing, never filled in by guessing.
 
 ## How data comes in
 

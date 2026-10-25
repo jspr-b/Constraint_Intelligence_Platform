@@ -34,7 +34,12 @@ from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
 from cip_connectors.readers import choose_delimiter, decode, find_source, inspect_file
 from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError, load_plant
-from constraint_engine.quality.checklist import checklist, minimum_set, parse_requirements
+from constraint_engine.quality.checklist import (
+    OPTIONAL_SET,
+    checklist,
+    minimum_set,
+    parse_requirements,
+)
 from constraint_engine.quality.report import QualityReport, event_period_weeks, quality_report
 from constraint_engine.reconstruct.durations import pair_operations, task_times
 from constraint_engine.summary import record_count
@@ -104,11 +109,14 @@ class FileCheckOut(BaseModel):
 
 
 class NeededOut(BaseModel):
-    """An export of the minimum diagnostic set and whether this upload has it."""
+    """An export of the minimum diagnostic set (or an optional one) and whether this upload has
+    it."""
 
     key: str
     sources: list[str]
     present: bool
+    minimum: bool = True
+    """False for an export that adds euros, actions or confidence but is not needed to start."""
 
 
 FailedStep = Literal["read", "load", "check", "store"]
@@ -133,6 +141,8 @@ class ImportOut(BaseModel):
     sources: list[SourceOut]
     report: dict[str, Any] | None
     minimum_set: list[MinimumOut]
+    optional_set: list[MinimumOut] = []
+    """Exports that add euros, actions or confidence, with their status after the import."""
     error: str | None
     """Technical reason, ``<step>:<ExceptionType>``; for IT, folded away on the page."""
     failed_step: FailedStep | None = None
@@ -218,13 +228,19 @@ def preview(source_dir: Path, mapping: MappingSet) -> list[SourceOut]:
 
 
 MINIMUM_TARGETS = {
-    "orders": "orders",
-    "routings": "routings",
-    "products": "products",
     "events": "events",
-    "calendar": "calendar",
+    "steps": "resources",
+    "shifts": "calendar",
 }
 """Minimum diagnostic set (engine MINIMUM_SET keys) -> the standard table that must be filled."""
+
+OPTIONAL_TARGETS = {
+    "orders": "orders",
+    "products": "products",
+    "routings": "routings",
+    "teams": "teams",
+}
+"""Optional exports (engine OPTIONAL_SET keys that come from their own file) -> standard table."""
 
 
 @lru_cache
@@ -263,12 +279,13 @@ def check_file(path: Path, mapping: MappingSet) -> dict[str, Any]:
 
 def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
     out = []
-    for key, target in MINIMUM_TARGETS.items():
-        sources = sorted({t.source for t in mapping.tables if t.target == target})
-        if not sources:
-            continue  # this export format does not carry it (e.g. no products, ADR-0009)
-        present = any(f.readable and f.recognised_as in sources for f in files)
-        out.append(NeededOut(key=key, sources=sources, present=present))
+    for minimum, targets in ((True, MINIMUM_TARGETS), (False, OPTIONAL_TARGETS)):
+        for key, target in targets.items():
+            sources = sorted({t.source for t in mapping.tables if t.target == target})
+            if not sources:
+                continue  # this export format does not carry it (e.g. no products, ADR-0009)
+            present = any(f.readable and f.recognised_as in sources for f in files)
+            out.append(NeededOut(key=key, sources=sources, present=present, minimum=minimum))
     return out
 
 
@@ -290,6 +307,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
         sources=preview(folder, mapping) if folder.exists() else [],
         report=report,
         minimum_set=[MinimumOut(**m) for m in (report or {}).get("minimum_set", [])],
+        optional_set=[MinimumOut(**m) for m in (report or {}).get("optional_set", [])],
         error=row.error,
         failed_step=_failed_step(row.error),
         facts=fact_run(db, row.import_id),
@@ -528,6 +546,10 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 ],
                 "minimum_set": [
                     {**asdict(m), "numbers": list(m.numbers)} for m in minimum_set(items)
+                ],
+                "optional_set": [
+                    {**asdict(m), "numbers": list(m.numbers)}
+                    for m in minimum_set(items, OPTIONAL_SET)
                 ],
             }
             conn.execute(

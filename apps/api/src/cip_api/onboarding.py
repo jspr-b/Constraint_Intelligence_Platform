@@ -26,9 +26,11 @@ class StepOut(BaseModel):
     detail: str | None = None
     """Why a step is not done yet (``uploaded``, ``running``, ``failed``, ``calculating``,
     ``numbers_failed``, ``missing``), or for a
-    done ``check``, ``confirm``: items a person should confirm."""
+    done ``check``, ``confirm``: items a person should confirm, or ``optional``: files that would
+    add euros or confidence."""
     missing: list[str] = []
-    """For ``check``: the minimum-set items missing, or to confirm (keys such as ``orders``)."""
+    """For ``check``: the minimum-set items missing or to confirm, or the optional files not sent
+    (keys such as ``events`` or ``orders``)."""
 
 
 class OnboardingOut(BaseModel):
@@ -81,6 +83,12 @@ def _check_step(latest: Any) -> StepOut:
     if confirm:
         # Enough to diagnose; a person should still confirm these (e.g. no holidays listed).
         return StepOut(key="check", state="done", detail="confirm", missing=confirm)
+    optional = [
+        m["key"] for m in report.get("optional_set", []) if m["status"] in ("missing", "partial")
+    ]
+    if optional:
+        # Enough to diagnose; these would add euros, actions or confidence (ADR-0009).
+        return StepOut(key="check", state="done", detail="optional", missing=optional)
     return StepOut(key="check", state="done")
 
 

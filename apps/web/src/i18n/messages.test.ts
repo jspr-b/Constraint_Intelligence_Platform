@@ -56,10 +56,44 @@ describe("messages", () => {
         const target = /\n\s+target: (\w+)/.exec(table)?.[1] ?? "";
         expect(en.import.source[source as keyof typeof en.import.source], source).toBeTruthy();
         expect(en.model.tables[target as keyof typeof en.model.tables], target).toBeTruthy();
+        expect(en.import.unlocks[target as keyof typeof en.import.unlocks], target).toBeTruthy();
         for (const [, field] of table.matchAll(/\n\s{6}(\w+): \{/g))
           expect(en.model.fields[field as keyof typeof en.model.fields], field).toBeTruthy();
       }
     }
+  });
+
+  it("every minimum and optional export has a name, and every optional one says what it adds", () => {
+    const checklist = readFileSync(
+      join(
+        process.cwd(),
+        "..",
+        "..",
+        "packages",
+        "constraint_engine",
+        "src",
+        "constraint_engine",
+        "quality",
+        "checklist.py",
+      ),
+      "utf8",
+    );
+    const keysOf = (name: string) =>
+      [
+        ...(new RegExp(`${name}[^=]*= \\(([\\s\\S]*?)\\n\\)`).exec(checklist)?.[1] ?? "").matchAll(
+          /\("(\w+)", \(/g,
+        ),
+      ].map((m) => m[1] ?? "");
+    const minimum = keysOf("MINIMUM_SET");
+    const optional = keysOf("OPTIONAL_SET");
+    expect(minimum).toEqual(["events", "steps", "shifts"]);
+    expect(optional.length).toBeGreaterThan(3);
+    for (const key of [...minimum, ...optional]) {
+      expect(en.import.minimum[key as keyof typeof en.import.minimum], key).toBeTruthy();
+      expect(en.guide.items[key as keyof typeof en.guide.items], key).toBeTruthy();
+    }
+    for (const key of optional)
+      expect(en.import.adds[key as keyof typeof en.import.adds], key).toBeTruthy();
   });
 
   it("every glossary term has a name and a one-line explanation", () => {

@@ -120,15 +120,15 @@ def _operations(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
         return "missing", "no routings"
     steps = [s for r in p.routings for s in r.steps]
     alternatives = sum(1 for s in steps if s.alternative_resource_codes)
-    machines = len({s.resource_code for s in steps})
-    return "ok", f"{len(steps)} operations on {machines} machines, {alternatives} with alternatives"
+    codes = len({s.resource_code for s in steps})
+    return "ok", f"{len(steps)} operations on {codes} steps, {alternatives} with alternatives"
 
 
 def _scrap(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
     found = {e.resource_code for e in p.events if e.event_type is EventType.SCRAP}
     if not found:
         return "missing", "no scrap recorded"
-    return "ok", f"scrap found at {len(found)} machine(s)"
+    return "ok", f"scrap found at {len(found)} step(s)"
 
 
 def _moves(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
@@ -165,6 +165,13 @@ def _down_reasons(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
     return _share(sum(1 for e in stops if e.down_reason_code), len(stops), "stops with a reason")
 
 
+def _teams(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
+    if not p.teams:
+        return "check", "no shared teams listed (fine when no steps share people)"
+    sized = {s.team_code for s in p.team_shifts}
+    return _share(sum(1 for x in p.teams if x.team_code in sized), len(p.teams), "teams with sizes")
+
+
 def _code_tables(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
     return "n/a", "checked during import (unknown codes are rejected rows)"
 
@@ -172,7 +179,7 @@ def _code_tables(p: LoadedPlant, _: Requirement) -> tuple[str, str]:
 CHECKS: dict[int, Check] = {
     1: _plant,
     2: _count("stations", "stations"),
-    3: _count("resources", "machines"),
+    3: _count("resources", "steps"),
     4: _operations,
     5: _count("products", "products with price and truly variable cost"),
     6: _count("routings", "routings"),
@@ -188,14 +195,16 @@ CHECKS: dict[int, Check] = {
     17: _calendar("break"),
     18: _calendar("maintenance"),
     19: _calendar("holiday"),
-    20: _count("overtime", "machine-weeks of overtime"),
-    21: _count("capacity_costs", "machines with capacity costs"),
+    20: _count("overtime", "step-weeks of overtime"),
+    21: _count("capacity_costs", "steps with capacity costs"),
+    28: _teams,
 }
 
 
 def checklist(requirements: list[Requirement], plant: LoadedPlant) -> list[ChecklistItem]:
+    """One item per requirement, in item-number order."""
     items = []
-    for r in requirements:
+    for r in sorted(requirements, key=lambda r: r.number):
         if r.level == "Later":
             items.append(ChecklistItem(r, "n/a", "later"))
         elif r.number in CHECKS:
@@ -215,13 +224,22 @@ def to_markdown(items: list[ChecklistItem]) -> str:
 
 
 MINIMUM_SET: tuple[tuple[str, tuple[int, ...]], ...] = (
-    ("orders", (9,)),
-    ("routings", (4, 6)),
-    ("products", (5,)),
     ("events", (12,)),
-    ("calendar", (16, 17, 19)),
+    ("steps", (3,)),
+    ("shifts", (16,)),
 )
-"""The 5 exports + 1 sheet needed to start a diagnostic (docs/input-data.md), by item number."""
+"""The event log, steps list and shift sheet needed to start a diagnostic (docs/input-data.md,
+ADR-0009), by item number."""
+
+OPTIONAL_SET: tuple[tuple[str, tuple[int, ...]], ...] = (
+    ("orders", (9,)),
+    ("products", (5,)),
+    ("routings", (4, 6)),
+    ("breaks", (17,)),
+    ("holidays", (19,)),
+    ("teams", (28,)),
+)
+"""Files that add euros, actions or confidence but are not needed to start (docs/input-data.md)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -233,10 +251,14 @@ class MinimumItem:
     person to confirm (e.g. no holidays listed); otherwise partial."""
 
 
-def minimum_set(items: list[ChecklistItem]) -> list[MinimumItem]:
+def minimum_set(
+    items: list[ChecklistItem],
+    sets: tuple[tuple[str, tuple[int, ...]], ...] = MINIMUM_SET,
+) -> list[MinimumItem]:
+    """Roll item statuses up per export of ``sets`` (the minimum set by default)."""
     by_number = {i.requirement.number: i.status for i in items}
     out = []
-    for key, numbers in MINIMUM_SET:
+    for key, numbers in sets:
         statuses = [by_number.get(n, "missing") for n in numbers]
         if all(s == "ok" for s in statuses):
             status = "ok"

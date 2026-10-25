@@ -49,7 +49,7 @@ shows the answer when the numbers are calculated (about a minute).
 
 | Question | Answer |
 |---|---|
-| What data do you need? | The export checklist (`docs/onboarding/data-checklist.md`): machines, routings, orders, machine events, shift calendar. Files from your ERP and MES; no connection needed to start |
+| What data do you need? | To start: your event log (start and finish per job and step), a steps list and a shift sheet. Jobs with value add euros; products and routings raise confidence (`docs/onboarding/data-checklist.md`). Files from your ERP, MES or spreadsheets; no connection needed to start |
 | Do you track my people? | No. Columns with people in them are dropped on import and never stored. We measure machines and stations, never named employees |
 | How sure are you? | Every answer has a confidence, from how many checks agree and how complete the data is. The Data quality page says what would make it surer |
 | What if my data is messy? | Rows that do not fit are rejected with the reason and listed; gaps are shown, never filled in |

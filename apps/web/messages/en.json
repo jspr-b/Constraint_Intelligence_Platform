@@ -226,7 +226,7 @@
     "toSetup": "Go to plant setup"
   },
   "import": {
-    "headlineNone": "Upload your ERP and MES exports. Personal columns are dropped as the file is read.",
+    "headlineNone": "Upload your event log, steps list and shift sheet. Personal columns are dropped as the file is read.",
     "headlineDone": "{ok} of {total} minimum items fully met. Gaps lower confidence; they are never filled in by guessing.",
     "headline": {
       "uploaded": "Files uploaded. Check how the columns map, then run the import.",
@@ -264,13 +264,17 @@
     "personalNote": "Personal data: dropped on import, never stored",
     "missingColumns": "Columns we need but your file does not have: {columns}",
     "checkAfterRun": "The data checklist appears after the import has run.",
-    "minimumLabel": "Minimum to start a diagnostic · 5 exports + 1 sheet",
+    "minimumLabel": "Minimum to start a diagnostic · event log, steps list, shift sheet",
     "minimum": {
-      "orders": "Orders",
-      "routings": "Routings and operations per machine",
+      "events": "Event log: start and finish per job and step (8+ weeks)",
+      "steps": "Steps list: machines and handmade steps",
+      "shifts": "Shift sheet: shifts with staffed positions",
+      "orders": "Jobs with value and material cost",
       "products": "Products with price and truly variable cost",
-      "events": "Operation events (8+ weeks)",
-      "calendar": "Shifts, breaks and holidays"
+      "routings": "Routings and operations per step",
+      "breaks": "Breaks and shift changes",
+      "holidays": "Holidays and closures",
+      "teams": "Shared teams and their sizes per shift"
     },
     "itemStatus": {
       "ok": "OK",
@@ -286,16 +290,16 @@
     "colDetail": "Detail",
     "toDataQuality": "Open the data quality report",
     "howTitle": "How importing works",
-    "how1": "Upload the exports from your ERP and MES (CSV or Excel). Upload all files of one export together.",
+    "how1": "Upload the exports from your ERP, MES or spreadsheets (CSV or Excel). To start you need only three: the event log, the steps list and the shift sheet. Upload all files of one export together.",
     "how2": "Check each file here before anything is imported: is it readable, which export is it, how many rows and columns, and a preview of the first rows.",
     "how3": "Look at how your columns map to the standard model (step 2), then run the import. It runs in the background; this page updates by itself.",
     "how4": "See per file what was imported and what was rejected, with the reason and line numbers (step 3), and the data checklist.",
     "howPrivacy": "Columns with personal data (e.g. employee names) are dropped while a file is read: their values are never shown, imported or stored. The platform never writes anything back to your ERP.",
     "chooseFirst": "Choose one or more files first.",
-    "neededLabel": "Needed to start a diagnostic · 5 exports + 1 sheet",
+    "neededLabel": "Needed to start a diagnostic · 3 files",
     "neededPresent": "In this upload",
     "neededMissing": "Missing: upload {files}",
-    "neededNote": "You can run the import without them; missing exports lower confidence and are listed in the data checklist.",
+    "neededNote": "These three are enough to find your bottleneck and its lost hours. Without one of them the import still runs, but the answer cannot be found.",
     "colRecognised": "Recognised as",
     "colRows": "Rows",
     "colColumns": "Columns",
@@ -364,6 +368,34 @@
       "ready": "Your numbers are calculated for {start} to {end}.",
       "next": "Next: check your data",
       "failed": "Your data is imported, but we could not calculate your numbers from it. Run the import again. If that fails too, send IT the technical details below."
+    },
+    "optionalLabel": "Adds more · optional",
+    "optionalNote": "Not needed to start. Each one adds euros, actions or confidence; nothing is guessed when it is missing.",
+    "optionalMissing": "Not in this upload: {files}",
+    "optionalSetLabel": "What the optional files add",
+    "adds": {
+      "orders": "adds € lost, late orders and on-time delivery",
+      "products": "adds € per product and the best product mix",
+      "routings": "adds the planned path and standard times; raises confidence",
+      "breaks": "adds the stagger-breaks action",
+      "holidays": "adds the forecast",
+      "teams": "adds the capacity of steps that share people"
+    },
+    "unlocksLabel": "What it unlocks",
+    "unlocks": {
+      "events": "the bottleneck, busy time and lost hours",
+      "resources": "the steps of your plant",
+      "stations": "areas on the plant flow",
+      "calendar": "capacity per step: shifts, positions, breaks",
+      "orders": "€ lost from job value, late orders",
+      "products": "€ per product, setup families",
+      "routings": "the planned path and standard times",
+      "teams": "steps that share people",
+      "team_shifts": "team size per shift",
+      "changeovers": "the resequence-setups action",
+      "overtime": "the overtime signal",
+      "capacity_costs": "the cost side of overtime and extra shifts",
+      "outsourcing": "the outsourcing action"
     }
   },
   "setup": {
@@ -601,7 +633,7 @@
     },
     "upload": {
       "title": "Upload your exports",
-      "todo": "Upload the 5 exports and 1 sheet from your ERP or MES.",
+      "todo": "Upload your event log, steps list and shift sheet from your ERP, MES or spreadsheets.",
       "uploaded": "Files uploaded. Run the import to read them in.",
       "running": "The import is running. This page updates by itself.",
       "failed": "The last import failed. Open Import to see why.",
@@ -618,7 +650,8 @@
       "missing": "Still missing: {items}. Open Data quality to see how to add it.",
       "done": "Your data covers what a diagnosis needs.",
       "go": "Open Data quality",
-      "confirm": "Enough to start. Please confirm on Data quality: {items}."
+      "confirm": "Enough to start. Please confirm on Data quality: {items}.",
+      "optional": "Enough to start. Adding {items} adds euros or raises confidence; see Data quality."
     },
     "answer": {
       "title": "See your bottleneck",
@@ -628,11 +661,15 @@
       "go": "See the answer"
     },
     "items": {
-      "orders": "orders",
-      "routings": "routings",
-      "products": "products with prices",
       "events": "start and finish bookings",
-      "calendar": "shifts and holidays"
+      "steps": "the steps list",
+      "shifts": "shifts with positions",
+      "orders": "jobs with value",
+      "products": "products with prices",
+      "routings": "routings",
+      "breaks": "breaks",
+      "holidays": "holidays",
+      "teams": "shared teams"
     }
   },
   "readOnly": {
@@ -1045,7 +1082,7 @@
       "hours": "Bottleneck hours lost",
       "worth": "worth",
       "euros": "Lost throughput",
-      "noEuros": "Euros are not shown because your data has no sales prices. Add the products export (item master with sales price and truly variable cost) on Import to see them.",
+      "noEuros": "Euros are not shown because your data has no job values or sales prices. Add jobs with value and material cost, or products with sales price and truly variable cost, on Import to see them.",
       "biggest": "Biggest cause: {cause}",
       "causeHours": "Hours lost to {cause}",
       "cause": {
@@ -1080,7 +1117,7 @@
     "lostAbout": "It lost",
     "hoursInMonth": "of output time in {month}.",
     "hoursLabel": "Bottleneck hours lost",
-    "noEuros": "Euros are not shown because your data has no sales prices. Add the products export (item master with sales price and truly variable cost).",
+    "noEuros": "Euros are not shown because your data has no job values or sales prices. Add jobs with value and material cost, or products with sales price and truly variable cost.",
     "market": "No machine limits you: you could make more if you sold more.",
     "material": "No machine limits you: late material holds your output back. Get parts in on time and you can make more.",
     "busiest": "Even your busiest machine, {machine}, is busy only",
@@ -1146,7 +1183,7 @@
       "eur": "€",
       "h": "hours"
     },
-    "noEuros": "Shown in hours because your data has no sales prices. Add the products export to see euros.",
+    "noEuros": "Shown in hours because your data has no job values or sales prices. Add jobs with value, or products with prices, to see euros.",
     "chartLabel": "Lost at the bottleneck · {unit} · {by}",
     "legend": "Causes",
     "biggest": "biggest",
@@ -1215,7 +1252,7 @@
       "title": "Cost calculated",
       "waiting": "Calculated once the bottleneck is found.",
       "noBottleneck": "Nothing to cost: with no bottleneck, lost machine time costs no output.",
-      "noPrices": "Lost hours are calculated, but euros need sales prices. Add the products export (item master with prices).",
+      "noPrices": "Lost hours are calculated, but euros need job values or sales prices. Add jobs with value and material cost, or products with prices.",
       "goPrices": "Add prices on Import",
       "done": "Lost hours and euros per cause are calculated.",
       "doneHours": "Lost hours per cause are calculated (your role sees hours).",

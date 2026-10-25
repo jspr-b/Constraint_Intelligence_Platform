@@ -114,9 +114,10 @@ export function ImportPage() {
   const checks: FileCheck[] = latest?.files ?? [];
   const usable = checks.filter((f) => f.readable && f.recognised_as);
   const ignored = checks.filter((f) => !f.recognised_as);
-  const missing = (latest?.needed ?? []).filter((n) => !n.present);
+  const missing = (latest?.needed ?? []).filter((n) => !n.present && n.minimum !== false);
   const report = latest?.report?.import as ImportReport | undefined;
   const minimum = latest?.minimum_set ?? [];
+  const optional = latest?.optional_set ?? [];
   const checklist = (latest?.report?.checklist ?? []) as {
     number: number;
     data: string;
@@ -242,23 +243,56 @@ export function ImportPage() {
           {latest && (
             <Panel label={t("neededLabel")}>
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
-                {latest.needed.map((need) => (
-                  <li key={need.key} className="flex flex-wrap items-center justify-between gap-2">
-                    <span>
-                      <span aria-hidden="true">{need.present ? "●" : "○"}</span>{" "}
-                      {t(`minimum.${need.key}`)}
-                    </span>
-                    <span className={need.present ? "text-muted" : ""}>
-                      {need.present
-                        ? t("neededPresent")
-                        : t("neededMissing", {
-                            files: need.sources.map((s) => `${s}.csv`).join(", "),
-                          })}
-                    </span>
-                  </li>
-                ))}
+                {latest.needed
+                  .filter((need) => need.minimum !== false)
+                  .map((need) => (
+                    <li
+                      key={need.key}
+                      className="flex flex-wrap items-center justify-between gap-2"
+                    >
+                      <span>
+                        <span aria-hidden="true">{need.present ? "●" : "○"}</span>{" "}
+                        {t(`minimum.${need.key}`)}
+                      </span>
+                      <span className={need.present ? "text-muted" : ""}>
+                        {need.present
+                          ? t("neededPresent")
+                          : t("neededMissing", {
+                              files: need.sources.map((s) => `${s}.csv`).join(", "),
+                            })}
+                      </span>
+                    </li>
+                  ))}
               </ul>
               <p className="m-0 mt-2 text-xs text-muted">{t("neededNote")}</p>
+            </Panel>
+          )}
+          {latest && latest.needed.some((need) => need.minimum === false) && (
+            <Panel label={t("optionalLabel")}>
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+                {latest.needed
+                  .filter((need) => need.minimum === false)
+                  .map((need) => (
+                    <li
+                      key={need.key}
+                      className="flex flex-wrap items-center justify-between gap-2"
+                    >
+                      <span>
+                        <span aria-hidden="true">{need.present ? "●" : "○"}</span>{" "}
+                        {t(`minimum.${need.key}`)}{" "}
+                        <span className="text-muted">· {t(`adds.${need.key}`)}</span>
+                      </span>
+                      <span className="text-muted">
+                        {need.present
+                          ? t("neededPresent")
+                          : t("optionalMissing", {
+                              files: need.sources.map((s) => `${s}.csv`).join(", "),
+                            })}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+              <p className="m-0 mt-2 text-xs text-muted">{t("optionalNote")}</p>
             </Panel>
           )}
           <Panel
@@ -305,6 +339,12 @@ export function ImportPage() {
                             <td className={`${TD} font-mono text-xs`}>{f.name}</td>
                             <td className={TD}>
                               {f.recognised_as ? t(`source.${f.recognised_as}`) : "—"}
+                              {f.feeds.length > 0 && (
+                                <span className="block text-xs text-muted">
+                                  {t("unlocksLabel")}:{" "}
+                                  {f.feeds.map((feed) => t(`unlocks.${feed}`)).join("; ")}
+                                </span>
+                              )}
                             </td>
                             <td className={`${TD} text-xs`}>
                               {f.readable ? (
@@ -611,6 +651,24 @@ export function ImportPage() {
                   ))}
                 </ul>
               </Panel>
+              {optional.length > 0 && (
+                <Panel label={t("optionalSetLabel")}>
+                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {optional.map((m) => (
+                      <li key={m.key} className="flex items-center justify-between gap-3 text-sm">
+                        <span>
+                          {t(`minimum.${m.key}`)}{" "}
+                          <span className="text-muted">· {t(`adds.${m.key}`)}</span>
+                        </span>
+                        <span>
+                          <span aria-hidden="true">{GLYPH[m.status] ?? "·"}</span>{" "}
+                          {t(`itemStatus.${m.status}`)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Panel>
+              )}
               <Panel label={t("checklistLabel")} status={<span>{t("checklistNote")}</span>}>
                 <table className="w-full border-collapse text-sm">
                   <thead>

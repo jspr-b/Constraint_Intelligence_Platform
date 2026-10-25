@@ -86,18 +86,20 @@ def test_roles_that_cannot_set_up_learn_who_can(sign_in: Callable[..., TestClien
     assert body["setup_contacts"] == ["it@a.example.test"]
 
 
-def _report(*statuses: str) -> SimpleNamespace:
-    keys = ["orders", "routings", "products", "events", "calendar"]
+def _report(*statuses: str, optional: dict[str, str] | None = None) -> SimpleNamespace:
+    keys = ["events", "steps", "shifts"]
     minimum = [{"key": k, "status": s} for k, s in zip(keys, statuses, strict=False)]
-    return SimpleNamespace(status="done", report=json.dumps({"minimum_set": minimum}))
+    extra = [{"key": k, "status": s} for k, s in (optional or {}).items()]
+    report = {"minimum_set": minimum, "optional_set": extra}
+    return SimpleNamespace(status="done", report=json.dumps(report))
 
 
 @pytest.mark.parametrize(
     ("statuses", "state", "detail", "items"),
     [
-        (("ok",) * 5, "done", None, []),
-        (("ok", "ok", "ok", "ok", "check"), "done", "confirm", ["calendar"]),
-        (("ok", "partial", "ok", "missing", "check"), "todo", "missing", ["routings", "events"]),
+        (("ok",) * 3, "done", None, []),
+        (("ok", "ok", "check"), "done", "confirm", ["shifts"]),
+        (("missing", "partial", "ok"), "todo", "missing", ["events", "steps"]),
     ],
 )
 def test_check_step_is_done_when_enough_is_there_and_names_what_to_confirm(
@@ -105,6 +107,14 @@ def test_check_step_is_done_when_enough_is_there_and_names_what_to_confirm(
 ) -> None:
     step = _check_step(_report(*statuses))
     assert (step.state, step.detail, step.missing) == (state, detail, items)
+
+
+def test_check_step_names_optional_files_that_add_euros_but_not_holidays_to_confirm() -> None:
+    optional = {"orders": "missing", "products": "missing", "holidays": "check", "breaks": "ok"}
+    step = _check_step(_report("ok", "ok", "ok", optional=optional))
+    assert (step.state, step.detail, step.missing) == ("done", "optional", ["orders", "products"])
+    plant_a = {"orders": "ok", "products": "ok", "holidays": "check", "teams": "check"}
+    assert _check_step(_report("ok", "ok", "ok", optional=plant_a)).detail is None
 
 
 @pytest.mark.parametrize(

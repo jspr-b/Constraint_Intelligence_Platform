@@ -1326,6 +1326,14 @@
             "title": "Needed",
             "type": "array"
           },
+          "optional_set": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MinimumOut"
+            },
+            "title": "Optional Set",
+            "type": "array"
+          },
           "plant_code": {
             "title": "Plant Code",
             "type": "string"
@@ -1646,11 +1654,16 @@
         "type": "string"
       },
       "NeededOut": {
-        "description": "An export of the minimum diagnostic set and whether this upload has it.",
+        "description": "An export of the minimum diagnostic set (or an optional one) and whether this upload has\nit.",
         "properties": {
           "key": {
             "title": "Key",
             "type": "string"
+          },
+          "minimum": {
+            "default": true,
+            "title": "Minimum",
+            "type": "boolean"
           },
           "present": {
             "title": "Present",

@@ -74,6 +74,9 @@ export function GettingStarted({ view, onHide }: { view: View; onHide: () => voi
     if (s.key === "check" && s.detail === "confirm") {
       return t("check.confirm", { items: s.missing.map((m) => t(`items.${m}`)).join(", ") });
     }
+    if (s.key === "check" && s.detail === "optional") {
+      return t("check.optional", { items: s.missing.map((m) => t(`items.${m}`)).join(", ") });
+    }
     if (s.state === "done") {
       return s.key === "plant"
         ? t("plant.done", { plant: o.plant_name ?? "" })

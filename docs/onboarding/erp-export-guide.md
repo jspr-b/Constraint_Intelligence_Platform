@@ -4,16 +4,19 @@ For the plant's IT or ERP owner. It says which exports a diagnostic needs, what 
 
 ## What to export
 
-| # | Export | Typical source in an ERP/MES | Period | Format |
-|---|---|---|---|---|
-| 1 | Machines / work centres (`werkplekken`) | Work centre or resource master data | Current | CSV or Excel |
-| 2 | Products (`artikelen`) with sales price and truly variable cost | Item master + price list; variable cost from costing (materials, bought parts, outsourcing; not labour) | Current | CSV or Excel |
-| 3 | Routings with operations per machine (`bewerkingen`) | Routing / operation master | Current, all active products | CSV or Excel |
-| 4 | Orders (`orders`) | Production or sales orders, open and closed | Last 8–12 weeks + open order book | CSV or Excel |
-| 5 | Operation events (`mes_events`) | MES start/finish/stop bookings, or ERP hour bookings per operation | At least 8 weeks | CSV or Excel |
-| 6 | Shifts, breaks, holidays (`rooster`) | Roster or a spreadsheet per machine | Same period + next weeks | CSV or Excel |
+To start, three exports are enough: the event log, a steps list and a shift sheet. Every other export adds euros, actions or confidence (`data-checklist.md` lists what each adds).
 
-Exports 1–6 are the minimum. These raise confidence but are not needed to start: overtime per machine and week (`overuren`), capacity costs (`capaciteitskosten`), changeover times between setup families (`omsteltijden`), outsourcing prices (`uitbesteding`).
+| # | Export | Typical source in an ERP/MES | Period | Format | Need |
+|---|---|---|---|---|---|
+| 1 | Event log: start and finish per job and step (`mes_events`, or `scans` from a scan export) | MES start/finish/stop bookings, ERP hour bookings per operation, or scans at the bench | At least 8 weeks | CSV or Excel | Minimum |
+| 2 | Steps list: machines, work centres and handmade benches (`werkplekken`, or `workstations`) | Work centre or resource master data, or a spreadsheet | Current | CSV or Excel | Minimum |
+| 3 | Shift sheet: shifts per step, staffed positions at handmade steps (`rooster`, or `shift_plan`) | Roster or a spreadsheet per step | Same period + next weeks | CSV or Excel | Minimum |
+| 4 | Jobs or orders with value and material cost (`orders`, or `jobs`) | Production or sales orders, open and closed | Last 8–12 weeks + open order book | CSV or Excel | Adds € lost, late orders |
+| 5 | Products with sales price and truly variable cost (`artikelen`) | Item master + price list; variable cost from costing (materials, bought parts, outsourcing; not labour) | Current | CSV or Excel | Adds € per product |
+| 6 | Routings with operations per step (`bewerkingen`) | Routing / operation master | Current, all active products | CSV or Excel | Adds the planned path and standard times |
+| 7 | Shared teams and team sizes per shift (`teams`, `team_plan`) | Roster | Same period | CSV or Excel | Adds capacity of steps that share people |
+
+Breaks and holidays usually come in the shift sheet; breaks add the stagger-breaks action and holidays the forecast. These also raise confidence but are not needed to start: overtime per step and week (`overuren`), capacity costs (`capaciteitskosten`), changeover times between setup families (`omsteltijden`), outsourcing prices (`uitbesteding`).
 
 ## Format
 
@@ -21,7 +24,7 @@ Exports 1–6 are the minimum. These raise confidence but are not needed to star
 - First row: column names. One row per record. No totals or blank title rows.
 - CSV with `;` as separator and `,` as decimal point is fine (Dutch Excel default); so is `.xlsx`.
 - Dates and times as your system writes them (e.g. `13-10-2026 07:15`); tell us the format once. Times are local plant time; we convert to UTC.
-- Codes as they are in your system (machine codes, status codes, stop reasons). We translate them with code tables; an unknown code becomes a rejected row with its reason, never a guess.
+- Codes as they are in your system (step codes, status codes, stop reasons). We translate them with code tables; an unknown code becomes a rejected row with its reason, never a guess.
 - Money in euros with decimals (e.g. `980,00`).
 
 ## What not to export
