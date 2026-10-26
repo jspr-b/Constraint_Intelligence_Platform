@@ -791,6 +791,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry
+         * @description Calculate the plant's numbers again, e.g. after a failed or stuck calculation.
+         */
+        post: operations["retry_plants__plant_code__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/resources": {
         parameters: {
             query?: never;
@@ -900,6 +920,26 @@ export interface paths {
          * @description Teams shared by several steps (ADR-0009): code, name and steps; never who is in them.
          */
         get: operations["list_teams_plants__plant_code__teams_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/refresh-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Refresh Status
+         * @description Every plant the signed-in role may see, with where its numbers are.
+         */
+        get: operations["refresh_status_refresh_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1949,6 +1989,37 @@ export interface components {
             values: {
                 [key: string]: string | number;
             };
+        };
+        /**
+         * RefreshOut
+         * @description Where a plant's numbers are, for the banner on every page.
+         */
+        RefreshOut: {
+            /** Data Age Days */
+            data_age_days: number | null;
+            /** Last Event At */
+            last_event_at: string | null;
+            /** Numbers At */
+            numbers_at: string | null;
+            /** Old After Days */
+            old_after_days: number;
+            /** Plant Code */
+            plant_code: string;
+            /** Plant Name */
+            plant_name: string;
+            /** Problem */
+            problem: ("no_events" | "did_not_finish" | "error") | null;
+            /** Reason */
+            reason: ("import" | "fix" | "delete" | "setup" | "calendar" | "retry") | null;
+            /** Requested At */
+            requested_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "none" | "calculating" | "ready" | "failed";
+            /** Timezone Iana */
+            timezone_iana: string;
         };
         /** RejectedRowOut */
         RejectedRowOut: {
@@ -3830,6 +3901,41 @@ export interface operations {
             };
         };
     };
+    retry_plants__plant_code__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefreshOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_resources_plants__plant_code__resources_get: {
         parameters: {
             query?: never;
@@ -4113,6 +4219,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TeamOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_status_refresh_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefreshOut"][];
                 };
             };
             /** @description Validation Error */

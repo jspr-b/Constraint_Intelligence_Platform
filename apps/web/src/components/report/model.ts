@@ -77,6 +77,9 @@ export interface ReportInput {
   formulaText: (figure: FigureLike) => string;
   inputLines: (figure: FigureLike) => string[];
   madeAt: Date;
+  /** When the numbers in the report were calculated; pending while a newer change is still
+   * being recalculated (ADR-0010 point 10). */
+  numbers?: { at: string; pending: boolean };
 }
 
 const CAUSES = ["breakdowns", "setup", "starved", "blocked", "breaks", "maintenance", "scrap"];
@@ -270,6 +273,18 @@ export function buildReport(input: ReportInput): Report {
       page: t("figure.pages.import"),
     });
     data.push([text(t("report.importOf", { date: when }))]);
+    if (input.numbers) {
+      const at = new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        hourCycle: "h23",
+      }).format(new Date(input.numbers.at));
+      data.push([
+        text(
+          `${t("report.numbersAt", { date: at })}${input.numbers.pending ? ` ${t("report.numbersPending")}` : ""}`,
+        ),
+      ]);
+    }
     if (q.event_period_start_at && q.event_period_end_at) {
       const line: Line = [
         text(

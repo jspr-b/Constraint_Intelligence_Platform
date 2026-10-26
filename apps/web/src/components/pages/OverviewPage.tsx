@@ -70,13 +70,13 @@ export function OverviewPage() {
         {t("noImport")} <Link href="/import">{t("toImport")}</Link>
       </EmptyState>
     );
-  } else if (run?.status === "calculating") {
+  } else if (run?.status === "calculating" && !run.finished_at) {
     state = (
       <p role="status" className="m-0 text-sm">
         {t("calculating")}
       </p>
     );
-  } else if (run?.status === "failed") {
+  } else if (run?.status === "failed" && !run.finished_at) {
     state = (
       <p role="alert" className="m-0 text-sm text-bad">
         {t("failed")} <Link href="/import">{t("toImport")}</Link>
@@ -113,7 +113,7 @@ export function OverviewPage() {
     <div className="flex flex-col gap-4">
       {header}
       {state}
-      {found && run?.status === "ready" && (
+      {found && run?.finished_at && (
         <section
           aria-label={t("answerLabel")}
           className="flex flex-col gap-3 rounded-panel border border-line-strong bg-surface p-5"
@@ -198,7 +198,7 @@ export function OverviewPage() {
           </p>
         </section>
       )}
-      {internal && run?.status === "ready" && causes.length > 0 && month && (
+      {internal && run?.finished_at && causes.length > 0 && month && (
         <Panel label={t("causesLabel", { month: periodName(month) })}>
           <ol className="m-0 flex flex-col gap-2 p-0 pl-5 text-sm">
             {causes.map((c) => {
@@ -237,7 +237,7 @@ export function OverviewPage() {
           </p>
         </Panel>
       )}
-      {found && run?.status === "ready" && (
+      {found && run?.finished_at && (
         <Panel label={t("evidenceLabel")}>
           <ul className="m-0 flex flex-col gap-1 p-0 pl-5 text-sm">
             <li>

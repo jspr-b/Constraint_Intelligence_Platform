@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     """Uploaded exports and their standard layout, per tenant and plant (gitignored)."""
     max_upload_mb: int = 100
     run_jobs_inline: bool = False
+    refresh_timeout_min: int = 10
+    """A recalculation still running after this long counts as failed: the page offers a retry."""
+    data_old_after_days: int = 7
+    """From this age (days since the newest touchpoint) pages ask for new events."""
     """Run jobs in the request instead of a worker (tests only)."""
 
     def db_url(self, as_owner: bool = False) -> str:

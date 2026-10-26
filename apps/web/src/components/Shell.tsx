@@ -16,6 +16,7 @@ import { GettingStarted, useOnboarding } from "./GettingStarted";
 import { RoleSwitch, SignOut, ThemeToggle } from "./HeaderControls";
 import { NavRail } from "./NavRail";
 import { Problems } from "./Problems";
+import { RefreshBanner } from "./RefreshBanner";
 import { ViewContext } from "./ViewContext";
 
 function ApiStatus() {
@@ -156,6 +157,7 @@ export function Shell({
               <ViewContext value={view}>
                 <Problems />
                 {view.preview && <PreviewBanner view={view} />}
+                {!station && <RefreshBanner view={view} />}
                 {showGuide && <GettingStarted view={view} onHide={() => choose("hidden")} />}
                 {body}
               </ViewContext>

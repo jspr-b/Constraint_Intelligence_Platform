@@ -1573,7 +1573,9 @@
     "pointsAtNone": "{none}. Evidence:",
     "fixedLabel": "Rows fixed in the app",
     "fixedLead": "rows were fixed, left out or removed in the app; the numbers above use them, and the uploaded files are unchanged:",
-    "fixed": "{what} — {reason} ({by})."
+    "fixed": "{what} — {reason} ({by}).",
+    "numbersAt": "Numbers calculated on {date} from the data in use then: the imports, rows fixed in the app, Setup and Calendar.",
+    "numbersPending": "A newer change is not in this report yet: it is being recalculated."
   },
   "corrections": {
     "label": "Fixed in the app",
@@ -1596,5 +1598,35 @@
     "note": "Your files are never changed: each fix sits next to the original. Fix it in your ERP too, so the next export is right.",
     "undo": "Undo",
     "undoOf": "Undo: {what}"
+  },
+  "refresh": {
+    "label": "Numbers and data age",
+    "calculating": "Recalculating the numbers for {plant} because {why} (since {since}).",
+    "keepsOld": "The pages keep showing the numbers from {at} until the new ones are ready; they update by themselves.",
+    "firstTime": "The pages show the numbers as soon as they are ready.",
+    "updated": "Numbers for {plant} updated at {at} because {why}.",
+    "failed": "The numbers for {plant} could not be recalculated after {why}.",
+    "older": "The pages still show the older numbers from {at}.",
+    "noNumbers": "There are no numbers to show yet.",
+    "askIt": "Ask your IT / ERP owner or planner to retry.",
+    "retry": "Retry now",
+    "problem": {
+      "no_events": "The data in use has no touchpoints left to calculate with.",
+      "did_not_finish": "The calculation did not finish in time.",
+      "error": "The calculation stopped with an error."
+    },
+    "reason": {
+      "import": "a new import ran",
+      "fix": "rows were fixed in the app",
+      "delete": "an import was deleted",
+      "setup": "the plant setup changed",
+      "calendar": "the calendar changed",
+      "retry": "a retry was asked for"
+    },
+    "old": "The newest data for {plant} is from {date}, {days, plural, one {# day} other {# days}} ago.",
+    "upload": "Upload new events to see the plant as it is now.",
+    "askExport": "Ask your IT / ERP owner for a new export.",
+    "oldMany": "The data is more than {days} days old for: {plants}.",
+    "oldOne": "{plant} (newest {date})"
   }
 }

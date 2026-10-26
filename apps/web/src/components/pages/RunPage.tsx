@@ -130,7 +130,7 @@ export function RunPage() {
       href: "/import",
       go: t("data.goImport"),
     };
-  } else if (!run || run.status === "calculating") {
+  } else if (!run || (run.status === "calculating" && !run.finished_at)) {
     numbers = {
       key: "numbers",
       state: "running",
@@ -138,7 +138,7 @@ export function RunPage() {
       href: "/import",
       go: t("data.goImport"),
     };
-  } else if (run.status === "failed") {
+  } else if (run.status === "failed" && !run.finished_at) {
     numbers = {
       key: "numbers",
       state: "failed",

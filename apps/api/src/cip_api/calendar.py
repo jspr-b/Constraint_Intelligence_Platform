@@ -17,6 +17,7 @@ from cip_api.auth.sessions import audit
 from cip_api.corrections import record_removal
 from cip_api.db.plant_store import key_text
 from cip_api.errors import ApiProblem
+from cip_api.refresh import DataChanged
 from cip_api.tenancy import Ctx, require
 
 router = APIRouter(tags=["capacity calendar"])
@@ -221,7 +222,8 @@ def _log(ctx: Ctx, action: str, target: str, detail: str = "") -> None:
 
 
 @router.post("/plants/{plant_code}/calendar/windows", response_model=WindowOut, status_code=201)
-def add_window(plant_code: str, body: WindowIn, ctx: Edit) -> WindowOut:
+def add_window(plant_code: str, body: WindowIn, ctx: Edit, changed: DataChanged) -> WindowOut:
+    changed(ctx, plant_code, "calendar")
     body = body.in_zone(ZoneInfo(_plant(ctx, plant_code)))
     _machine(ctx, plant_code, body.resource_code)
     row = ctx.db.execute(
@@ -251,8 +253,11 @@ def add_window(plant_code: str, body: WindowIn, ctx: Edit) -> WindowOut:
 
 
 @router.patch("/plants/{plant_code}/calendar/windows/{window_id}", response_model=WindowOut)
-def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> WindowOut:
+def set_covered(
+    plant_code: str, window_id: int, body: CoveredIn, ctx: Edit, changed: DataChanged
+) -> WindowOut:
     """Mark a break as covered: someone keeps the machine running during the break."""
+    changed(ctx, plant_code, "calendar")
     _plant(ctx, plant_code)
     row = ctx.db.execute(
         text(
@@ -275,8 +280,11 @@ def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> 
 
 
 @router.delete("/plants/{plant_code}/calendar/windows/{window_id}", status_code=204)
-def delete_window(plant_code: str, window_id: int, ctx: Edit, reason: str | None = None) -> None:
+def delete_window(
+    plant_code: str, window_id: int, ctx: Edit, changed: DataChanged, reason: str | None = None
+) -> None:
     """Delete a calendar row. One from an upload needs a reason and stays out of rebuilds."""
+    changed(ctx, plant_code, "calendar")
     _plant(ctx, plant_code)
     found = ctx.db.execute(
         text(
@@ -306,8 +314,9 @@ def delete_window(plant_code: str, window_id: int, ctx: Edit, reason: str | None
 
 
 @router.put("/plants/{plant_code}/overtime", response_model=OvertimeOut)
-def put_overtime(plant_code: str, body: OvertimeIn, ctx: Edit) -> OvertimeOut:
+def put_overtime(plant_code: str, body: OvertimeIn, ctx: Edit, changed: DataChanged) -> OvertimeOut:
     """Overtime worked on one machine in one ISO week (never per person)."""
+    changed(ctx, plant_code, "calendar")
     _plant(ctx, plant_code)
     _machine(ctx, plant_code, body.resource_code)
     ctx.db.execute(

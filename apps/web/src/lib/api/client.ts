@@ -40,9 +40,14 @@ const pathOf = (url: string) => new URL(url, "http://x").pathname.replace(/^\/ap
 /** Typed client for the platform API, generated from apps/api/openapi.json. Same-origin proxy. */
 export const api = createClient<paths>({ baseUrl: "/api", credentials: "same-origin" });
 
+/** Sent after every saved change, so the refresh banner looks for the recalculation at once. */
+export const DATA_CHANGED = "cip:data-changed";
+
 // A failed read must never look like "no data yet": throw, so the page says it failed.
 api.use({
   async onResponse({ request, response }) {
+    if (request.method !== "GET" && response.ok && typeof window !== "undefined")
+      window.dispatchEvent(new Event(DATA_CHANGED));
     if (request.method !== "GET" || response.status < 500) return undefined;
     const body: unknown = await response
       .clone()

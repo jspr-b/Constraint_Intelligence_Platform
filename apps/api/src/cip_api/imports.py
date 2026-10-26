@@ -879,11 +879,19 @@ def map_import(folder: Path, plant: dict[str, Any], fixes: Fixes | None = None) 
     Returns the connector report. The marker holds the stamp of the fixes it was mapped with.
     """
     mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
-    standard = folder / "standard"
-    if standard.exists():
-        shutil.rmtree(standard)
-    report = import_export(folder / "source", mapping, standard, plant=plant, fixes=fixes)
-    (standard / ID_RULE).write_text(fixes_digest(fixes))
+    # Mapped into a folder of its own, then swapped in: the preview (API) and the run (worker)
+    # may map the same upload at once, and neither may delete the files the other writes.
+    fresh = folder / f".standard-{uuid.uuid4().hex}"
+    report = import_export(folder / "source", mapping, fresh, plant=plant, fixes=fixes)
+    (fresh / ID_RULE).write_text(fixes_digest(fixes))
+    old = folder / f".old-{uuid.uuid4().hex}"
+    with contextlib.suppress(FileNotFoundError):
+        (folder / "standard").rename(old)
+    try:
+        fresh.rename(folder / "standard")
+    except OSError:  # the other one swapped its own in meanwhile: same files, keep that
+        shutil.rmtree(fresh, ignore_errors=True)
+    shutil.rmtree(old, ignore_errors=True)
     return report
 
 

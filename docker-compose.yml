@@ -12,6 +12,8 @@ x-app-env: &app-env
   CIP_DB_PORT: "5432"
   CIP_REDIS_HOST: redis
   CIP_REDIS_PORT: "6379"
+  # Minutes before a recalculation counts as stuck and is offered for a retry.
+  CIP_REFRESH_TIMEOUT_MIN: ${CIP_REFRESH_TIMEOUT_MIN:-10}
 
 services:
   db:

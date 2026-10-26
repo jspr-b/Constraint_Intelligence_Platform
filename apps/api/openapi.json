@@ -2889,6 +2889,134 @@
         "title": "ReasonOut",
         "type": "object"
       },
+      "RefreshOut": {
+        "description": "Where a plant's numbers are, for the banner on every page.",
+        "properties": {
+          "data_age_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Age Days"
+          },
+          "last_event_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event At"
+          },
+          "numbers_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numbers At"
+          },
+          "old_after_days": {
+            "title": "Old After Days",
+            "type": "integer"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "plant_name": {
+            "title": "Plant Name",
+            "type": "string"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_events",
+                  "did_not_finish",
+                  "error"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "import",
+                  "fix",
+                  "delete",
+                  "setup",
+                  "calendar",
+                  "retry"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          },
+          "status": {
+            "enum": [
+              "none",
+              "calculating",
+              "ready",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone_iana": {
+            "title": "Timezone Iana",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plant_code",
+          "plant_name",
+          "timezone_iana",
+          "status",
+          "reason",
+          "requested_at",
+          "numbers_at",
+          "problem",
+          "last_event_at",
+          "data_age_days",
+          "old_after_days"
+        ],
+        "title": "RefreshOut",
+        "type": "object"
+      },
       "RejectedRowOut": {
         "properties": {
           "code": {
@@ -7616,6 +7744,97 @@
         ]
       }
     },
+    "/plants/{plant_code}/refresh": {
+      "post": {
+        "description": "Calculate the plant's numbers again, e.g. after a failed or stuck calculation.",
+        "operationId": "retry_plants__plant_code__refresh_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry",
+        "tags": [
+          "refresh"
+        ]
+      }
+    },
     "/plants/{plant_code}/resources": {
       "get": {
         "description": "Steps of a plant, with their kind and positions (for pickers and labels; the Plant setup\npage manages them).",
@@ -8429,6 +8648,92 @@
         "summary": "List Teams",
         "tags": [
           "plants"
+        ]
+      }
+    },
+    "/refresh-status": {
+      "get": {
+        "description": "Every plant the signed-in role may see, with where its numbers are.",
+        "operationId": "refresh_status_refresh_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RefreshOut"
+                  },
+                  "title": "Response Refresh Status Refresh Status Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Status",
+        "tags": [
+          "refresh"
         ]
       }
     },

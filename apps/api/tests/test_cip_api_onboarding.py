@@ -3,6 +3,7 @@
 import json
 import uuid
 from collections.abc import Callable, Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -129,5 +130,13 @@ def test_check_step_names_optional_files_that_add_euros_but_not_holidays_to_conf
 def test_upload_step_waits_for_the_numbers(
     facts_status: str | None, state: str, detail: str | None
 ) -> None:
-    step = _upload_step(SimpleNamespace(status="done", facts_status=facts_status))
+    step = _upload_step(SimpleNamespace(status="done", facts_status=facts_status, numbers_at=None))
     assert (step.state, step.detail) == (state, detail)
+
+
+@pytest.mark.parametrize("facts_status", ["calculating", "failed"])
+def test_a_recalculation_keeps_the_upload_step_done(facts_status: str) -> None:
+    """Numbers exist from before: the banner on every page explains the recalculation."""
+    numbers_at = datetime(2026, 10, 26, 13, 0, tzinfo=UTC)
+    latest = SimpleNamespace(status="done", facts_status=facts_status, numbers_at=numbers_at)
+    assert _upload_step(latest).state == "done"

@@ -49,7 +49,8 @@ class OnboardingOut(BaseModel):
 def _latest_import(ctx: Ctx, plant_code: str) -> Any:
     return ctx.db.execute(
         text(
-            "SELECT i.status, i.report, f.status AS facts_status FROM imports i "
+            "SELECT i.status, i.report, f.status AS facts_status, "
+            "f.finished_at AS numbers_at FROM imports i "
             "LEFT JOIN fact_runs f ON f.import_id = i.import_id "
             "WHERE i.plant_code = :p AND i.status <> 'deleted' ORDER BY i.created_at DESC LIMIT 1"
         ),
@@ -61,8 +62,9 @@ def _upload_step(latest: Any) -> StepOut:
     if latest is None:
         return StepOut(key="upload", state="todo")
     if latest.status == "done":
-        # The import is stored; the step is done once its numbers are calculated.
-        if latest.facts_status == "ready":
+        # The import is stored; the step is done once its numbers are calculated. A later
+        # recalculation (ADR-0010 point 10) keeps it done: the banner on every page tells.
+        if latest.facts_status == "ready" or latest.numbers_at is not None:
             return StepOut(key="upload", state="done")
         if latest.facts_status == "calculating":
             return StepOut(key="upload", state="todo", detail="calculating")

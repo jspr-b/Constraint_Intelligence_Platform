@@ -203,13 +203,13 @@ export function ReportPage() {
         {to("noImport")} <Link href="/import">{to("toImport")}</Link>
       </EmptyState>
     );
-  } else if (run?.status === "calculating") {
+  } else if (run?.status === "calculating" && !run.finished_at) {
     state = (
       <p role="status" className="m-0 text-sm">
         {to("calculating")}
       </p>
     );
-  } else if (run?.status === "failed") {
+  } else if (run?.status === "failed" && !run.finished_at) {
     state = (
       <p role="alert" className="m-0 text-sm text-bad">
         {to("failed")} <Link href="/import">{to("toImport")}</Link>
@@ -231,7 +231,7 @@ export function ReportPage() {
     (!internal && busy.isPending);
   const plantName = plants?.find((p) => p.plant_code === plant)?.name ?? plant ?? "";
   const report =
-    found && run?.status === "ready" && !loading && plant
+    found && run?.finished_at && !loading && plant
       ? buildReport({
           plantCode: plant,
           plantName,
@@ -255,6 +255,9 @@ export function ReportPage() {
           formulaText: (f: FigureLike) => formulaText(f),
           inputLines: (f: FigureLike) => inputLines(f),
           madeAt,
+          ...(run?.finished_at
+            ? { numbers: { at: run.finished_at, pending: run.status !== "ready" } }
+            : {}),
         })
       : null;
 

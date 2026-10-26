@@ -223,7 +223,7 @@ def delete_import(
     _take_out(ctx.db, row)
     _forget(ctx, row)
     if row.status == "done":
-        rebuild_and_refresh(settings, ctx, row.plant_code, background)
+        rebuild_and_refresh(settings, ctx, row.plant_code, background, "delete")
     audit(
         ctx.db,
         tenant,

@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from sqlalchemy import Connection, text
 
 from cip_api.auth.roles import Money
-from cip_api.auth.sessions import tenant_conn
+from cip_api.auth.sessions import app_engine, tenant_conn
 from cip_api.db.plant_store import load_plant_from_db
 from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut, MissingOut, money_out
@@ -58,15 +58,31 @@ def fact_run(conn: Connection, import_id: uuid.UUID) -> FactRunOut | None:
     return FactRunOut.model_validate(dict(row._mapping)) if row else None
 
 
-def start_facts(conn: Connection, tenant: uuid.UUID, plant_code: str, import_id: uuid.UUID) -> None:
-    """Mark the import's numbers as calculating (in the caller's transaction)."""
+Reason = Literal["import", "fix", "delete", "setup", "calendar", "retry"]
+MAX_ROUNDS = 5
+
+
+def start_facts(
+    conn: Connection,
+    tenant: uuid.UUID,
+    plant_code: str,
+    import_id: uuid.UUID,
+    reason: Reason = "import",
+) -> None:
+    """Ask for the plant's numbers to be calculated again (in the caller's transaction).
+
+    Every data change raises ``requested_gen``; the stored numbers stay shown until the new
+    ones are ready. ``finished_at`` keeps the time of the numbers shown (ADR-0010 point 10).
+    """
     conn.execute(
         text(
-            "INSERT INTO fact_runs (tenant_id, import_id, plant_code) VALUES (:t, :i, :p) "
+            "INSERT INTO fact_runs (tenant_id, import_id, plant_code, reason, requested_gen) "
+            "VALUES (:t, :i, :p, :r, 1) "
             "ON CONFLICT (tenant_id, import_id) DO UPDATE SET status = 'calculating', "
-            "started_at = now(), finished_at = NULL, error = NULL"
+            "started_at = now(), requested_at = now(), error = NULL, reason = :r, "
+            "requested_gen = fact_runs.requested_gen + 1"
         ),
-        {"t": tenant, "i": import_id, "p": plant_code},
+        {"t": tenant, "i": import_id, "p": plant_code, "r": reason},
     )
 
 
@@ -74,9 +90,76 @@ def queue_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> 
     """Run the calculation now (inline jobs, tests) or in a worker."""
     if settings.run_jobs_inline:
         with contextlib.suppress(Exception):  # the failure is recorded on the fact run
-            compute_facts(settings, tenant, import_id)
+            refresh_plant(settings, tenant, import_id)
     else:
         enqueue("compute_facts", str(tenant), str(import_id))
+
+
+def _pending(
+    settings: Settings, tenant: uuid.UUID, plant_code: str
+) -> tuple[uuid.UUID, int] | None:
+    """The newest request of the plant that is not calculated yet; older ones are covered by it
+    (latest wins), so they are closed."""
+    with tenant_conn(settings, tenant) as conn:
+        rows = conn.execute(
+            text(
+                "SELECT f.import_id, f.requested_gen FROM fact_runs f "
+                "JOIN imports i ON i.import_id = f.import_id "
+                "WHERE f.plant_code = :p AND f.requested_gen > f.done_gen "
+                "ORDER BY i.created_at DESC"
+            ),
+            {"p": plant_code},
+        ).all()
+        for older in rows[1:]:
+            conn.execute(
+                text(
+                    "UPDATE fact_runs SET done_gen = requested_gen, status = 'ready', "
+                    "finished_at = coalesce(finished_at, now()) WHERE import_id = :i"
+                ),
+                {"i": older.import_id},
+            )
+    return (rows[0].import_id, rows[0].requested_gen) if rows else None
+
+
+def refresh_plant(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
+    """The job: calculate the plant's numbers until no request is waiting. One at a time per
+    plant (a database lock): a request that arrives meanwhile is picked up by the running one,
+    so changes close together lead to one more calculation, never two at once."""
+    with tenant_conn(settings, tenant) as conn:
+        plant_code = conn.execute(
+            text("SELECT plant_code FROM fact_runs WHERE import_id = :i"), {"i": import_id}
+        ).scalar_one()
+    key = f"facts:{tenant}:{plant_code}"
+    count = rounds = 0
+    while True:
+        with app_engine(settings.db_url()).connect() as lock:
+            if not lock.execute(
+                text("SELECT pg_try_advisory_lock(hashtext(:k))"), {"k": key}
+            ).scalar_one():
+                return count  # the running calculation picks this request up
+            try:
+                for _ in range(MAX_ROUNDS):  # a failure that cannot even be recorded stops here
+                    if (pending := _pending(settings, tenant, plant_code)) is None:
+                        break
+                    with contextlib.suppress(Exception):  # recorded on the fact run
+                        count = compute_facts(settings, tenant, *pending)
+            finally:
+                lock.execute(text("SELECT pg_advisory_unlock(hashtext(:k))"), {"k": key})
+                lock.commit()
+        # A request made just before the lock was released: run again.
+        rounds += 1
+        if rounds >= MAX_ROUNDS or _pending_peek(settings, tenant, plant_code) is None:
+            return count
+
+
+def _pending_peek(settings: Settings, tenant: uuid.UUID, plant_code: str) -> int | None:
+    with tenant_conn(settings, tenant) as conn:
+        return conn.execute(
+            text(
+                "SELECT 1 FROM fact_runs WHERE plant_code = :p AND requested_gen > done_gen LIMIT 1"
+            ),
+            {"p": plant_code},
+        ).scalar_one_or_none()
 
 
 def _version(formula_id: str) -> int:
@@ -137,8 +220,12 @@ class NoEventsError(RuntimeError):
     """The import has no touchpoints to calculate from."""
 
 
-def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> int:
-    """The job: read the plant from the database and replace its facts. Returns the count."""
+def compute_facts(
+    settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID, gen: int | None = None
+) -> int:
+    """Read the plant from the database and replace its facts in one transaction, so the
+    previous numbers stay until the new ones are ready. Returns the count. ``gen`` is the
+    request this answers; a newer request keeps the run calculating."""
     from cip_api.detection import detect, store_detections  # detection.py reads this module
 
     try:
@@ -171,13 +258,17 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
             store_detections(conn, tenant, plant_code, import_id, detections)
             conn.execute(
                 text(
-                    "UPDATE fact_runs SET status = 'ready', finished_at = :now, error = NULL, "
-                    "period_start_at = :s, period_end_at = :e WHERE import_id = :i"
+                    "UPDATE fact_runs SET finished_at = :now, error = NULL, "
+                    "period_start_at = :s, period_end_at = :e, "
+                    "done_gen = coalesce(:g, requested_gen), status = CASE WHEN "
+                    "requested_gen <= coalesce(:g, requested_gen) THEN 'ready' ELSE status END "
+                    "WHERE import_id = :i"
                 ),
                 {
                     "now": datetime.now(UTC),
                     "s": whole.period_start_at if whole else None,
                     "e": whole.period_end_at if whole else None,
+                    "g": gen,
                     "i": import_id,
                 },
             )
@@ -186,10 +277,11 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
         with tenant_conn(settings, tenant) as conn:
             conn.execute(
                 text(
-                    "UPDATE fact_runs SET status = 'failed', finished_at = :now, error = :e "
-                    "WHERE import_id = :i"
+                    "UPDATE fact_runs SET done_gen = coalesce(:g, requested_gen), error = :e, "
+                    "status = CASE WHEN requested_gen <= coalesce(:g, requested_gen) "
+                    "THEN 'failed' ELSE status END WHERE import_id = :i"
                 ),
-                {"now": datetime.now(UTC), "e": f"facts:{type(exc).__name__}", "i": import_id},
+                {"e": f"facts:{type(exc).__name__}", "g": gen, "i": import_id},
             )
         raise
 

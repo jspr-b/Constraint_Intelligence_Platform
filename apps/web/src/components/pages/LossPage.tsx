@@ -120,13 +120,13 @@ export function LossPage() {
         {t("noImport")} <Link href="/import">{t("toImport")}</Link>
       </EmptyState>
     );
-  } else if (run?.status === "calculating") {
+  } else if (run?.status === "calculating" && !run.finished_at) {
     state = (
       <p role="status" className="m-0 text-sm">
         {t("calculating")}
       </p>
     );
-  } else if (run?.status === "failed") {
+  } else if (run?.status === "failed" && !run.finished_at) {
     state = (
       <p role="alert" className="m-0 text-sm text-bad">
         {t("failed")} <Link href="/import">{t("toImport")}</Link>
@@ -179,7 +179,7 @@ export function LossPage() {
       {header}
       <p className="m-0 max-w-3xl text-sm">{t.rich("intro", termTags)}</p>
       {state}
-      {internal && run?.status === "ready" && (
+      {internal && run?.finished_at && (
         <>
           {toggle}
           {!eurOk && totalEur && totalEur.figure.unit === "eur_cents" && (

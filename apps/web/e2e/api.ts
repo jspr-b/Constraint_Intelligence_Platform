@@ -77,6 +77,8 @@ export async function stubApi(page: Page, stub: Stub = {}): Promise<void> {
       },
     }),
   );
+  // Every page asks where the numbers are; nothing to say unless a test stubs it.
+  await page.route("**/api/refresh-status", (route) => route.fulfill({ json: [] }));
   await page.route("**/api/access", (route) =>
     route.fulfill({
       json: {
@@ -354,7 +356,9 @@ export async function stubPages(
         run: {
           status: overrides.factsStatus ?? "ready",
           started_at: "2026-10-13T07:16:00Z",
-          finished_at: "2026-10-13T07:17:00Z",
+          // The first calculation: no earlier numbers to keep showing.
+          finished_at:
+            (overrides.factsStatus ?? "ready") === "ready" ? "2026-10-13T07:17:00Z" : null,
           period_start_at: "2026-07-20T04:00:00Z",
           period_end_at: "2026-10-09T20:00:00Z",
           error: null,
@@ -374,7 +378,11 @@ export async function stubPages(
     route.fulfill({
       json: {
         plant_code: "PLANT-A",
-        run: { ...RUN_READY, status },
+        run: {
+          ...RUN_READY,
+          status,
+          finished_at: status === "ready" ? RUN_READY.finished_at : null,
+        },
         import_id: "i1",
         detections: status !== "ready" ? [] : stubDetections(kind, params.get("period_start_at")),
       },

@@ -20,6 +20,7 @@ from cip_api.auth.sessions import audit
 from cip_api.corrections import record_removal
 from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut
+from cip_api.refresh import DataChanged
 from cip_api.tenancy import Ctx, require
 from cip_schema.types import ResourceCode
 from constraint_engine.figure import Missing
@@ -347,7 +348,10 @@ def _log(ctx: Ctx, action: str, target: str, detail: Any = "") -> None:
 
 
 @router.put("/plants/{plant_code}/stations/{station_code}", response_model=SetupOut)
-def put_station(plant_code: str, station_code: str, body: StationIn, ctx: Edit) -> SetupOut:
+def put_station(
+    plant_code: str, station_code: str, body: StationIn, ctx: Edit, changed: DataChanged
+) -> SetupOut:
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     code = _code(station_code)
     ctx.db.execute(
@@ -364,7 +368,10 @@ def put_station(plant_code: str, station_code: str, body: StationIn, ctx: Edit) 
 
 
 @router.put("/plants/{plant_code}/resources/{resource_code}", response_model=SetupOut)
-def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edit) -> SetupOut:
+def put_resource(
+    plant_code: str, resource_code: str, body: ResourceIn, ctx: Edit, changed: DataChanged
+) -> SetupOut:
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     code = _step_code(resource_code)
     station = ctx.db.execute(
@@ -399,9 +406,10 @@ def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edi
 
 @router.delete("/plants/{plant_code}/resources/{resource_code}", response_model=SetupOut)
 def delete_resource(
-    plant_code: str, resource_code: str, ctx: Edit, reason: str | None = None
+    plant_code: str, resource_code: str, ctx: Edit, changed: DataChanged, reason: str | None = None
 ) -> SetupOut:
     """Remove a step. One from an upload needs a reason and stays out of later rebuilds."""
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     login = ctx.db.execute(
         text("SELECT 1 FROM station_logins WHERE plant_code = :p AND resource_code = :r"),
@@ -436,9 +444,10 @@ def delete_resource(
 
 @router.delete("/plants/{plant_code}/stations/{station_code}", response_model=SetupOut)
 def delete_station(
-    plant_code: str, station_code: str, ctx: Edit, reason: str | None = None
+    plant_code: str, station_code: str, ctx: Edit, changed: DataChanged, reason: str | None = None
 ) -> SetupOut:
     """Remove a station without steps. One from an upload needs a reason (ADR-0010)."""
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     station = ctx.db.execute(
         text(
@@ -466,7 +475,10 @@ def delete_station(
 
 
 @router.put("/plants/{plant_code}/changeovers", response_model=SetupOut)
-def put_changeover(plant_code: str, body: ChangeoverIn, ctx: Edit) -> SetupOut:
+def put_changeover(
+    plant_code: str, body: ChangeoverIn, ctx: Edit, changed: DataChanged
+) -> SetupOut:
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     ctx.db.execute(
         text(
@@ -496,8 +508,9 @@ def put_changeover(plant_code: str, body: ChangeoverIn, ctx: Edit) -> SetupOut:
 
 @router.put("/plants/{plant_code}/capacity-costs/{resource_code}", response_model=SetupOut)
 def put_capacity_cost(
-    plant_code: str, resource_code: str, body: CapacityCostIn, ctx: Edit
+    plant_code: str, resource_code: str, body: CapacityCostIn, ctx: Edit, changed: DataChanged
 ) -> SetupOut:
+    changed(ctx, plant_code, "setup")
     _exists(ctx, plant_code)
     ctx.db.execute(
         text(

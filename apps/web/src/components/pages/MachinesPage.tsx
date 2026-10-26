@@ -224,7 +224,7 @@ export function MachinesPage() {
     <PageHeader
       page="machines"
       headline={
-        run?.status !== "ready" ? undefined : found ? (
+        !run?.finished_at ? undefined : found ? (
           <span data-raw>
             {bottleneck ? t("headlineConstraint", { name: label(bottleneck) }) : t("headlineNone")}
           </span>
@@ -281,13 +281,13 @@ export function MachinesPage() {
         {t("noImport")} <Link href="/import">{t("toImport")}</Link>
       </EmptyState>
     );
-  } else if (run?.status === "calculating") {
+  } else if (run?.status === "calculating" && !run.finished_at) {
     state = (
       <p role="status" className="m-0 text-sm">
         {t("calculating")}
       </p>
     );
-  } else if (run?.status === "failed") {
+  } else if (run?.status === "failed" && !run.finished_at) {
     state = (
       <p role="alert" className="m-0 text-sm text-bad">
         {t("failed")} <Link href="/import">{t("toImport")}</Link>
@@ -322,7 +322,7 @@ export function MachinesPage() {
       {header}
       <p className="m-0 max-w-3xl text-sm">{t.rich("intro", termTags)}</p>
       {state}
-      {found && run?.status === "ready" && (
+      {found && run?.finished_at && (
         <ConstraintBanner
           detection={found}
           label={label}
@@ -330,7 +330,7 @@ export function MachinesPage() {
           loss={loss.data?.facts ?? []}
         />
       )}
-      {rows.length > 0 && run?.status === "ready" && (
+      {rows.length > 0 && run?.finished_at && (
         <Panel label={t("tableLabel", { period: periodName(chosen) })}>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
@@ -399,7 +399,7 @@ export function MachinesPage() {
           </p>
         </Panel>
       )}
-      {open && run?.status === "ready" && (
+      {open && run?.finished_at && (
         <MachineDetail
           plant={plant ?? ""}
           code={open}

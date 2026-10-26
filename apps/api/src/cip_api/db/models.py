@@ -439,6 +439,15 @@ class FactRun(Base):
     period_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[str | None] = mapped_column(Text)
     """Technical cause when failed (``step:ExceptionType``); never shown as the main message."""
+    reason: Mapped[str] = mapped_column(String(16), nullable=False, server_default="import")
+    """What changed: import, fix, delete, setup, calendar or retry (shown on every page)."""
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    requested_gen: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    """Raised by every change; changes close together are calculated once (latest wins)."""
+    done_gen: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    """The request the stored numbers answer; below ``requested_gen`` means one is waiting."""
 
 
 class Fact(Base):

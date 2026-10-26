@@ -24,8 +24,9 @@ from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
 from cip_api.db.plant_store import merge_imports, rebuild_plant_data, row_fixes
 from cip_api.errors import ApiProblem
-from cip_api.facts import queue_facts, start_facts
+from cip_api.facts import Reason
 from cip_api.imports import choose_mapping, import_dir, kept_imports, refresh_quality
+from cip_api.refresh import refresh_after_change
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 from cip_connectors.excel import read_xlsx
@@ -168,7 +169,11 @@ def _rule(code: str | None, mapping: MappingSet) -> str:
 
 
 def rebuild_and_refresh(
-    settings: Settings, ctx: Ctx, plant_code: str, background: BackgroundTasks
+    settings: Settings,
+    ctx: Ctx,
+    plant_code: str,
+    background: BackgroundTasks,
+    reason: Reason = "fix",
 ) -> None:
     """Rebuild the plant from its kept imports and corrections, then recalculate its numbers
     (after this request commits, so the calculation reads the rebuilt plant)."""
@@ -176,16 +181,7 @@ def rebuild_and_refresh(
     merged = merge_imports(kept_imports(settings, ctx.db, tenant, plant_code, NO_IMPORT))
     rebuild_plant_data(ctx.db, tenant, plant_code, merged)
     refresh_quality(settings, ctx.db, tenant, plant_code)
-    latest = ctx.db.execute(
-        text(
-            "SELECT import_id FROM imports WHERE plant_code = :p AND status = 'done' "
-            "ORDER BY created_at DESC LIMIT 1"
-        ),
-        {"p": plant_code},
-    ).scalar_one_or_none()
-    if latest is not None:
-        start_facts(ctx.db, tenant, plant_code, latest)
-        background.add_task(queue_facts, settings, tenant, latest)
+    refresh_after_change(settings, ctx, plant_code, reason, background)
 
 
 def _trial(folder: Path, mapping: MappingSet, fixes: Fixes) -> ImportReport:
@@ -373,7 +369,14 @@ def undo_correction(
         f"correction:{correction_id}",
         f"{found.file or found.target} {found.line or ''}".strip(),
     )
-    rebuild_and_refresh(settings, ctx, found.plant_code, background)
+    undone: Reason = (
+        "fix"
+        if found.action != "remove"
+        else "calendar"
+        if found.target == "calendar_windows"
+        else "setup"
+    )
+    rebuild_and_refresh(settings, ctx, found.plant_code, background, undone)
     return _out(
         ctx.db.execute(text(f"{SELECT} WHERE c.correction_id = :c"), {"c": correction_id}).one()
     )

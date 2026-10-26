@@ -116,6 +116,10 @@ CATALOG: dict[str, tuple[int, str]] = {
         "This import already ran: its results show what it changed.",
     ),
     "import_not_found": (404, "This import no longer exists. The page will refresh."),
+    "refresh_needs_import": (
+        409,
+        "This plant has no import in use, so there is nothing to calculate. Upload exports first.",
+    ),
     "import_already_deleted": (409, "This import is already deleted. The page will refresh."),
     "facts_calculating": (
         409,
