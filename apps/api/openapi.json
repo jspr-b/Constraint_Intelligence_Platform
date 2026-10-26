@@ -842,6 +842,9 @@
           "report_stop",
           "edit_setup_calendar",
           "import_run_diagnostic",
+          "fix_rows",
+          "delete_import",
+          "delete_plant_data",
           "sign_off_value",
           "manage_logins",
           "change_access"
@@ -2892,6 +2895,17 @@
       "RefreshOut": {
         "description": "Where a plant's numbers are, for the banner on every page.",
         "properties": {
+          "changed_by_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By Role"
+          },
           "data_age_days": {
             "anyOf": [
               {
@@ -3007,6 +3021,7 @@
           "timezone_iana",
           "status",
           "reason",
+          "changed_by_role",
           "requested_at",
           "numbers_at",
           "problem",
@@ -6783,7 +6798,7 @@
     },
     "/plants/{plant_code}/data": {
       "delete": {
-        "description": "Delete every import, file and row of a plant (IT only, the plant code typed to confirm).\nThe plant itself, its accounts and station logins stay; the history keeps a line per\nimport.",
+        "description": "Delete every import, file and row of a plant (IT by default, the plant code typed).\nThe plant itself, its accounts and station logins stay; the history keeps a line per\nimport.",
         "operationId": "delete_plant_data_plants__plant_code__data_delete",
         "parameters": [
           {

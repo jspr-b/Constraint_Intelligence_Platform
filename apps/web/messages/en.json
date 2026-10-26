@@ -213,7 +213,10 @@
       "release_expedite": "Release and expedite orders",
       "report_stop": "Report a stop and its reason",
       "edit_setup_calendar": "Edit plant setup and capacity calendar",
-      "import_run_diagnostic": "Import data and run the diagnostic",
+      "import_run_diagnostic": "Upload, replace and run imports",
+      "fix_rows": "Fix rows in the app (and undo a fix)",
+      "delete_import": "Delete an import",
+      "delete_plant_data": "Delete all data of a plant",
       "sign_off_value": "Sign off measured value",
       "manage_logins": "Manage logins (IT only)",
       "change_access": "Change access (COO only)"
@@ -529,7 +532,6 @@
       "next": "Next",
       "page": "Rows {from}–{to} of {total}",
       "note": "Fix a value or leave a row out. Every fix keeps the original, the reason, the role and the time; undo puts the original back. Numbers that use fixed rows say so when you click them.",
-      "readOnly": "Your role sees the rejected rows and their fixes but cannot change them. Ask IT or the planner to fix a row.",
       "code": {
         "not_a_datetime": "The date and time cannot be read. It must look like {example}.",
         "not_a_number": "This is not a number.",
@@ -878,8 +880,12 @@
       "import_run_diagnostic": "upload or run imports",
       "edit_setup_calendar": "change it",
       "manage_logins": "manage logins",
-      "change_access": "change access"
-    }
+      "change_access": "change access",
+      "fix_rows": "fix rows in the app",
+      "delete_import": "delete imports",
+      "delete_plant_data": "delete all data of a plant"
+    },
+    "whoCanDo": "{roles} can {action}"
   },
   "preview": {
     "banner": "You are previewing what {role} sees.",
@@ -1627,6 +1633,9 @@
     "upload": "Upload new events to see the plant as it is now.",
     "askExport": "Ask your IT / ERP owner for a new export.",
     "oldMany": "The data is more than {days} days old for: {plants}.",
-    "oldOne": "{plant} (newest {date})"
+    "oldOne": "{plant} (newest {date})",
+    "by": " (by {role})",
+    "numbersFrom": "{plant}: numbers from {at}, after {why}.",
+    "newest": "Newest data from {date}."
   }
 }

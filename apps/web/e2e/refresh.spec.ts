@@ -10,6 +10,7 @@ function refresh(over: Record<string, unknown>): Record<string, unknown> {
     timezone_iana: "Europe/Amsterdam",
     status: "ready",
     reason: "calendar",
+    changed_by_role: "planner",
     requested_at: "2026-10-26T13:03:00Z",
     numbers_at: NUMBERS_AT,
     problem: null,
@@ -104,7 +105,7 @@ test("a stuck recalculation is explained and IT retries it", async ({ page }) =>
   await page.goto("/main");
   const banner = page.getByRole("region", { name: "Numbers and data age" });
   await expect(banner.getByRole("alert")).toContainText(
-    "could not be recalculated after the calendar changed. The calculation did not finish in time.",
+    "could not be recalculated after the calendar changed (by Planner). The calculation did not finish in time.",
   );
   await expect(banner).toContainText("still show the older numbers from Oct 26, 13:50");
   await banner.getByRole("button", { name: "Retry now" }).click();

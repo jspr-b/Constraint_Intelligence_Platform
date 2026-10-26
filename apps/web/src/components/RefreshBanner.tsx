@@ -95,6 +95,7 @@ function PlantLine({
   single: boolean;
 }) {
   const t = useTranslations("refresh");
+  const troles = useTranslations("roles");
   const locale = useLocale();
   const at = (iso: string | null | undefined) =>
     iso
@@ -112,7 +113,10 @@ function PlantLine({
       new Date(iso),
     );
   const plant = p.plant_name;
-  const why = p.reason ? t(`reason.${p.reason}`) : t("reason.import");
+  const role = p.changed_by_role;
+  const by =
+    role && role !== "system" && troles.has(role) ? t("by", { role: troles(role as "it") }) : "";
+  const why = `${p.reason ? t(`reason.${p.reason}`) : t("reason.import")}${by}`;
   const canRetry = view.decisions.has("import_run_diagnostic") && !view.preview;
   const canImport = view.decisions.has("import_run_diagnostic") && !view.preview;
   const lines = [];
@@ -151,6 +155,13 @@ function PlantLine({
     lines.push(
       <p key="ready" role="status" className="m-0">
         ✓ {t("updated", { plant, why, at: at(p.numbers_at) })}
+      </p>,
+    );
+  } else if (p.status === "ready" && p.numbers_at) {
+    lines.push(
+      <p key="from" className="m-0 text-muted">
+        {t("numbersFrom", { plant, why, at: at(p.numbers_at) })}{" "}
+        {p.last_event_at && !isOld(p) && t("newest", { date: day(p.last_event_at) })}
       </p>,
     );
   }

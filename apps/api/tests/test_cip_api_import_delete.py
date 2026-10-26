@@ -177,7 +177,7 @@ def test_all_data_of_a_plant_is_deleted_by_it_with_the_typed_code(
     waiting = _upload(it, CASES / "split" / "upload_2", run=False)
     planner = _client(world, tmp_path, "planner")
     refused = planner.delete("/plants/PLANT-1/data?confirm=PLANT-1")
-    assert refused.status_code == 403 and refused.json()["code"] == "plant_delete_it_only"
+    assert refused.status_code == 403 and refused.json()["code"] == "decision_not_allowed"
     typo = it.delete("/plants/PLANT-1/data?confirm=PLANT-2")
     assert typo.status_code == 422 and "Nothing was deleted" in typo.json()["message"]
     assert _events(world) == 3545

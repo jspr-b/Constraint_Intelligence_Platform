@@ -448,6 +448,8 @@ class FactRun(Base):
     """Raised by every change; changes close together are calculated once (latest wins)."""
     done_gen: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     """The request the stored numbers answer; below ``requested_gen`` means one is waiting."""
+    requested_by: Mapped[str | None] = mapped_column(String(64))
+    """Who made the last change that asked for new numbers (``user:<id>``); shown as a role."""
 
 
 class Fact(Base):

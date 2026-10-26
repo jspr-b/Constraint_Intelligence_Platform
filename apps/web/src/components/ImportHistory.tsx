@@ -27,7 +27,7 @@ export function ImportHistory({
   imports: ImportOut[];
   shown: string | undefined;
   onOpen: (id: string) => void;
-  /** IT and the planner delete imports (the import_run_diagnostic decision). */
+  /** Roles with the delete_import decision (planner and IT by default). */
   canDelete: boolean;
   onDeleted: (id: string) => void;
 }) {

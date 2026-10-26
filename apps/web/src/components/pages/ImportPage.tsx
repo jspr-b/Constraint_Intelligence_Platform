@@ -59,7 +59,8 @@ export function ImportPage() {
   const queries = useQueryClient();
   const picker = usePlant();
   const { plant } = picker;
-  const canRun = (view?.decisions.has("import_run_diagnostic") ?? false) && view?.preview === false;
+  const can = (d: string) => (view?.decisions.has(d) ?? false) && view?.preview === false;
+  const canRun = can("import_run_diagnostic");
   const files = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -244,14 +245,16 @@ export function ImportPage() {
         </ol>
         <p className="m-0 mt-2 text-muted">{t("howPrivacy")}</p>
       </details>
-      {!canRun && <ReadOnlyNote decision="import_run_diagnostic" />}
+      <ReadOnlyNote
+        decisions={["import_run_diagnostic", "fix_rows", "delete_import", "delete_plant_data"]}
+      />
       {plant && (imports.data?.length ?? 0) > 0 && (
         <ImportHistory
           plant={plant}
           imports={imports.data ?? []}
           shown={latest?.import_id}
           onOpen={setSelected}
-          canDelete={canRun}
+          canDelete={can("delete_import")}
           onDeleted={(id) => id === selected && setSelected(null)}
         />
       )}
@@ -764,7 +767,7 @@ export function ImportPage() {
                 <RejectedRows
                   importId={latest.import_id}
                   plant={plant}
-                  canFix={canRun && latest.status === "done"}
+                  canFix={can("fix_rows") && latest.status === "done"}
                 />
               )}
               <Panel label={t("minimumLabel")}>
@@ -851,7 +854,7 @@ export function ImportPage() {
           )}
         </TabPanel>
       </Tabs>
-      {plant && view?.role === "it" && !view.preview && (imports.data?.length ?? 0) > 0 && (
+      {plant && can("delete_plant_data") && (imports.data?.length ?? 0) > 0 && (
         <DeletePlantData plant={plant} onDeleted={() => setSelected(null)} />
       )}
     </div>

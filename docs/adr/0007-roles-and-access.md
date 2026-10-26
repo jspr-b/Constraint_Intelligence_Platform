@@ -34,10 +34,15 @@ CLAUDE.md names five users (plant director, COO, planner, shift lead, IT). The m
 | Release and expedite orders | Planner, shift lead |
 | Report a stop and its reason | Shift lead, station |
 | Edit plant setup and capacity calendar | Planner, IT |
-| Import data and run the diagnostic | Planner, IT |
+| Import data and run the diagnostic (upload, replace files, run) | Planner, IT |
+| Fix rows in the app (and undo a fix) | Planner, IT |
+| Delete an import | Planner, IT |
+| Delete all data of a plant | IT |
 | Sign off measured value | Director, COO |
 | Manage logins | IT only |
 | Change access | COO only |
+
+The three import rights after the first were split off in CI0004 (ADR-0010) so the COO can, for example, leave fixing rows to IT only. A refused action names the roles that may do it now, and the page shows the same instead of the button.
 
 **Separation:** the COO decides visibility and decisions; IT manages accounts. Every access and account change is audit-logged.
 

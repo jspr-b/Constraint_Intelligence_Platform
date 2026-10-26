@@ -41,22 +41,34 @@ export const DECISIONS: Record<string, string[]> = {
     "release_expedite",
     "edit_setup_calendar",
     "import_run_diagnostic",
+    "fix_rows",
+    "delete_import",
   ],
   shift_lead: ["release_expedite", "report_stop"],
   station: ["report_stop"],
-  it: ["edit_setup_calendar", "import_run_diagnostic", "manage_logins"],
+  it: [
+    "edit_setup_calendar",
+    "import_run_diagnostic",
+    "fix_rows",
+    "delete_import",
+    "delete_plant_data",
+    "manage_logins",
+  ],
 };
 
 export interface Stub {
   role?: string;
   /** Pages per role in the COO's access matrix; default all. */
   pages?: Partial<Record<string, string[]>>;
+  /** Decisions per role, as the COO changed them; default ADR-0007. */
+  decisions?: Partial<Record<string, string[]>>;
 }
 
 /** Stub the platform API in the browser: signed in as `role`, with the given access matrix. */
 export async function stubApi(page: Page, stub: Stub = {}): Promise<void> {
   const role = stub.role ?? "coo";
   const pagesOf = (r: string) => stub.pages?.[r] ?? PAGES;
+  const decisionsOf = (r: string) => stub.decisions?.[r] ?? DECISIONS[r];
   await page.route("**/api/health", (route) =>
     route.fulfill({ json: { status: "ok", db: "ok", redis: "ok" } }),
   );
@@ -73,7 +85,7 @@ export async function stubApi(page: Page, stub: Stub = {}): Promise<void> {
         pages: pagesOf(role),
         money: "eur",
         plants: "all",
-        decisions: DECISIONS[role],
+        decisions: decisionsOf(role),
       },
     }),
   );
@@ -90,7 +102,7 @@ export async function stubApi(page: Page, stub: Stub = {}): Promise<void> {
           pages: pagesOf(r),
           money: "eur",
           plants: "all",
-          decisions: DECISIONS[r],
+          decisions: decisionsOf(r),
         })),
         locked_pages: {},
         locked_decisions: [],

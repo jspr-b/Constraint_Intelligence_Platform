@@ -16,7 +16,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy import Connection, text
 
-from cip_api.auth.roles import Role
+from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
 from cip_api.corrections import NO_IMPORT, rebuild_and_refresh
 from cip_api.db.plant_store import TABLES, load_plant_from_db, merge_imports, rebuild_plant_data
@@ -24,7 +24,6 @@ from cip_api.errors import ApiProblem
 from cip_api.imports import (
     ListChangeOut,
     PreviewWarningOut,
-    Run,
     _row,
     import_dir,
     kept_imports,
@@ -34,6 +33,8 @@ from cip_api.tenancy import Ctx, require
 from constraint_engine.io.compare import compare_plants
 
 router = APIRouter(tags=["imports"])
+Delete = Annotated[Ctx, Depends(require(page="import", decision=Decision.DELETE_IMPORT))]
+DeleteAll = Annotated[Ctx, Depends(require(page="import", decision=Decision.DELETE_PLANT_DATA))]
 
 OWN_ROWS = ("corrections", "facts", "detections", "fact_runs")
 """Tables whose rows belong to one import and go with it."""
@@ -207,7 +208,7 @@ def _forget(ctx: Ctx, row: Any) -> None:
 @router.delete("/imports/{import_id}", status_code=204)
 def delete_import(
     import_id: uuid.UUID,
-    ctx: Run,
+    ctx: Delete,
     settings: Annotated[Settings, Depends(get_settings)],
     background: BackgroundTasks,
 ) -> Response:
@@ -243,16 +244,14 @@ def delete_import(
 def delete_plant_data(
     plant_code: str,
     confirm: str,
-    ctx: Annotated[Ctx, Depends(require(page="import"))],
+    ctx: DeleteAll,
     settings: Annotated[Settings, Depends(get_settings)],
     background: BackgroundTasks,
 ) -> Response:
-    """Delete every import, file and row of a plant (IT only, the plant code typed to confirm).
+    """Delete every import, file and row of a plant (IT by default, the plant code typed).
     The plant itself, its accounts and station logins stay; the history keeps a line per
     import."""
     ctx.check_plant(plant_code)
-    if ctx.principal.role != Role.IT:
-        raise ApiProblem("plant_delete_it_only")
     if (
         ctx.db.execute(
             text("SELECT 1 FROM plants WHERE plant_code = :p"), {"p": plant_code}

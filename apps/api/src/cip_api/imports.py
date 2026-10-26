@@ -1033,7 +1033,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 f"import:{import_id}",
                 f"{sum(stored.values())} rows stored",
             )
-            start_facts(conn, tenant, row.plant_code, import_id)
+            start_facts(conn, tenant, row.plant_code, import_id, actor=row.actor)
     except Exception as exc:  # recorded for the page; values from the files never appear here
         with tenant_conn(settings, tenant) as conn:
             conn.execute(

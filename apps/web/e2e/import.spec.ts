@@ -271,3 +271,40 @@ test("IT deletes all data of a plant only with the plant code typed", async ({ p
   await dialog.getByRole("button", { name: "Delete everything" }).click();
   await expect(dialog).toBeHidden();
 });
+
+test("the director sees the imports without change buttons, and who can change them", async ({
+  page,
+}) => {
+  await stubApi(page, { role: "plant_director" });
+  await page.goto("/import");
+  await expect(
+    page.getByText(
+      "Plant director can see this but not upload or run imports, fix rows in the app, delete imports, delete all data of a plant. Planner, IT / ERP owner can upload or run imports, fix rows in the app, delete imports; IT / ERP owner can delete all data of a plant.",
+    ),
+  ).toBeVisible();
+  const history = page.getByRole("region", { name: "Import history" });
+  await expect(history.getByRole("row").nth(1)).toBeVisible();
+  await expect(history.getByRole("button", { name: /^Delete/ })).toHaveCount(0);
+  await expect(page.getByText("Delete all data of this plant")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Run import/ })).toHaveCount(0);
+});
+
+test("when the COO leaves fixing rows to IT, the planner sees why and who can", async ({
+  page,
+}) => {
+  const planner = ["import_run_diagnostic", "delete_import", "edit_setup_calendar"];
+  await stubApi(page, { role: "planner", decisions: { planner } });
+  await page.route("**/api/imports/i1/rejected-rows?*", (route) =>
+    route.fulfill({ json: REJECTED }),
+  );
+  await page.goto("/import");
+  await page.getByRole("tab", { name: /data checklist/i }).click();
+  const panel = page.getByRole("region", { name: "Rejected rows" });
+  await expect(panel).toContainText("LAS9");
+  await expect(panel.getByRole("button", { name: /^Fix line/ })).toHaveCount(0);
+  await expect(panel).toContainText(
+    "Planner can see this but not fix rows in the app. IT / ERP owner can.",
+  );
+  const history = page.getByRole("region", { name: "Import history" });
+  await expect(history.getByRole("button", { name: /^Delete the upload of/ })).not.toHaveCount(0);
+});

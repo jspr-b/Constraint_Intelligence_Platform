@@ -18,6 +18,7 @@ from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
 from cip_api.errors import ApiProblem
 from cip_api.facts import Reason, queue_facts, start_facts
+from cip_api.imports import _role_of
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 
@@ -46,7 +47,7 @@ def refresh_after_change(
     if latest is None:
         return
     tenant = ctx.principal.tenant_id
-    start_facts(ctx.db, tenant, plant_code, latest, reason)
+    start_facts(ctx.db, tenant, plant_code, latest, reason, ctx.principal.actor)
     background.add_task(queue_facts, settings, tenant, latest)
 
 
@@ -81,6 +82,8 @@ class RefreshOut(BaseModel):
     """none: no import in use yet. failed includes a calculation that did not finish in time."""
     reason: Reason | None
     """What changed, for 'Recalculating because the calendar changed'."""
+    changed_by_role: str | None
+    """The role that made that change (never a name): 'by the Planner'."""
     requested_at: datetime | None
     numbers_at: datetime | None
     """When the numbers on the pages were calculated; older than the data while recalculating
@@ -103,7 +106,7 @@ def plant_refresh(settings: Settings, db: Connection, plant_code: str) -> Refres
     ).one()
     run = db.execute(
         text(
-            "SELECT f.status, f.reason, f.requested_at, f.error FROM fact_runs f "
+            "SELECT f.status, f.reason, f.requested_at, f.error, f.requested_by FROM fact_runs f "
             "JOIN imports i ON i.import_id = f.import_id "
             "WHERE f.plant_code = :p AND i.status = 'done' ORDER BY i.created_at DESC LIMIT 1"
         ),
@@ -127,6 +130,7 @@ def plant_refresh(settings: Settings, db: Connection, plant_code: str) -> Refres
         timezone_iana=plant.timezone_iana,
         status=status,
         reason=run.reason if run else None,
+        changed_by_role=_role_of(db, run.requested_by) if run and run.requested_by else None,
         requested_at=run.requested_at if run else None,
         numbers_at=numbers_at,
         problem=problem,

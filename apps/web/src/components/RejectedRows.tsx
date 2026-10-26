@@ -8,6 +8,7 @@ import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Count } from "./Figure";
 import { FIELD, Field, FormDialog } from "./FormDialog";
+import { ReadOnlyNote } from "./ReadOnlyNote";
 
 type RejectedRow = components["schemas"]["RejectedRowOut"];
 
@@ -280,7 +281,11 @@ export function RejectedRows({
           </Button>
         </div>
       )}
-      <p className="m-0 mt-2 text-xs text-muted">{canFix ? t("note") : t("readOnly")}</p>
+      {canFix ? (
+        <p className="m-0 mt-2 text-xs text-muted">{t("note")}</p>
+      ) : (
+        <ReadOnlyNote decision="fix_rows" />
+      )}
     </Panel>
   );
 }

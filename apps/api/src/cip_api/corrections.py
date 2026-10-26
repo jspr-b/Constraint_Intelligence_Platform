@@ -37,7 +37,7 @@ from cip_connectors.readers import SourceTable, read_csv
 
 router = APIRouter(tags=["corrections"])
 View = Annotated[Ctx, Depends(require())]
-Fix = Annotated[Ctx, Depends(require(page="import", decision=Decision.IMPORT_RUN_DIAGNOSTIC))]
+Fix = Annotated[Ctx, Depends(require(page="import", decision=Decision.FIX_ROWS))]
 NO_IMPORT = uuid.UUID(int=0)
 """No running import: the rebuild uses the kept imports as they are."""
 

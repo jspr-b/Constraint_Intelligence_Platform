@@ -14,7 +14,7 @@ from fastapi import Depends, Header, Request
 from sqlalchemy import Connection
 
 from cip_api.auth.access import Access, load_access
-from cip_api.auth.roles import Decision, Plants, Role
+from cip_api.auth.roles import DECISION_ACTION, ROLE_LABEL, Decision, Plants, Role
 from cip_api.auth.sessions import COOKIE, Principal, find_session, tenant_conn
 from cip_api.errors import ApiProblem
 from cip_api.settings import Settings, get_settings
@@ -78,6 +78,18 @@ class Ctx:
             raise ApiProblem("own_plant_only")
 
 
+def refusal(db: Connection, decision: Decision) -> ApiProblem:
+    """'Your role cannot delete imports. Ask IT / ERP owner or Planner; the COO decides who
+    may.' Names the roles that hold the decision in this tenant now (no dead ends)."""
+    holders = [ROLE_LABEL[r] for r in Role if decision in load_access(db, r).decisions]
+    who = (
+        f"Ask {' or '.join(holders)}; the COO decides who may"
+        if holders
+        else "No role may at the moment; ask the COO, who decides who may"
+    )
+    return ApiProblem("decision_not_allowed", action=DECISION_ACTION[decision], who=who)
+
+
 def require(page: str | None = None, decision: Decision | None = None) -> Callable[..., Ctx]:
     """Endpoint dependency: the role must be allowed to open ``page`` and take ``decision``."""
 
@@ -89,7 +101,7 @@ def require(page: str | None = None, decision: Decision | None = None) -> Callab
         if page is not None and page not in access.pages:
             raise ApiProblem("page_not_allowed")
         if decision is not None and decision not in access.decisions:
-            raise ApiProblem("decision_not_allowed")
+            raise refusal(db, decision)
         return Ctx(principal, access, db)
 
     return dependency

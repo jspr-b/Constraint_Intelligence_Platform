@@ -642,7 +642,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Plant Data
-         * @description Delete every import, file and row of a plant (IT only, the plant code typed to confirm).
+         * @description Delete every import, file and row of a plant (IT by default, the plant code typed).
          *     The plant itself, its accounts and station logins stay; the history keeps a line per
          *     import.
          */
@@ -1316,7 +1316,7 @@ export interface components {
          * Decision
          * @enum {string}
          */
-        Decision: "accept_exploit_subordinate" | "approve_elevate" | "release_expedite" | "report_stop" | "edit_setup_calendar" | "import_run_diagnostic" | "sign_off_value" | "manage_logins" | "change_access";
+        Decision: "accept_exploit_subordinate" | "approve_elevate" | "release_expedite" | "report_stop" | "edit_setup_calendar" | "import_run_diagnostic" | "fix_rows" | "delete_import" | "delete_plant_data" | "sign_off_value" | "manage_logins" | "change_access";
         /** DecisionIn */
         DecisionIn: {
             /** Allowed */
@@ -1995,6 +1995,8 @@ export interface components {
          * @description Where a plant's numbers are, for the banner on every page.
          */
         RefreshOut: {
+            /** Changed By Role */
+            changed_by_role: string | null;
             /** Data Age Days */
             data_age_days: number | null;
             /** Last Event At */

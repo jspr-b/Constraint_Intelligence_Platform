@@ -92,6 +92,7 @@ def test_a_calendar_edit_recalculates_without_a_button(
     director = _client(world, settings, "plant_director")
     seen = _status(director)
     assert (seen["status"], seen["reason"], seen["problem"]) == ("ready", "calendar", None)
+    assert seen["changed_by_role"] == "planner"
     assert seen["last_event_at"] and seen["data_age_days"] is not None
     assert seen["old_after_days"] == settings.data_old_after_days
 

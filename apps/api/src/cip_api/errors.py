@@ -34,7 +34,7 @@ CATALOG: dict[str, tuple[int, str]] = {
     # Access
     "own_plant_only": (403, "Your role sees its own plant only."),
     "page_not_allowed": (403, "Your role may not open this page. The COO decides access."),
-    "decision_not_allowed": (403, "Your role may not do this. The COO decides who may."),
+    "decision_not_allowed": (403, "Your role cannot {action}. {who}."),
     "unknown_page": (422, "This page does not exist."),
     "page_locked": (409, "This page cannot be turned off for this role: it is its start page."),
     "decision_locked": (409, "This decision always stays with its role and cannot be moved."),
@@ -125,10 +125,6 @@ CATALOG: dict[str, tuple[int, str]] = {
         409,
         "The numbers of this plant are being calculated. Wait until they are done (the page "
         "updates), then delete.",
-    ),
-    "plant_delete_it_only": (
-        403,
-        "Only IT can delete all data of a plant. Ask IT, or delete single imports here.",
     ),
     "plant_delete_confirm": (
         422,

@@ -68,6 +68,7 @@ def start_facts(
     plant_code: str,
     import_id: uuid.UUID,
     reason: Reason = "import",
+    actor: str | None = None,
 ) -> None:
     """Ask for the plant's numbers to be calculated again (in the caller's transaction).
 
@@ -76,13 +77,14 @@ def start_facts(
     """
     conn.execute(
         text(
-            "INSERT INTO fact_runs (tenant_id, import_id, plant_code, reason, requested_gen) "
-            "VALUES (:t, :i, :p, :r, 1) "
+            "INSERT INTO fact_runs "
+            "(tenant_id, import_id, plant_code, reason, requested_gen, requested_by) "
+            "VALUES (:t, :i, :p, :r, 1, :a) "
             "ON CONFLICT (tenant_id, import_id) DO UPDATE SET status = 'calculating', "
             "started_at = now(), requested_at = now(), error = NULL, reason = :r, "
-            "requested_gen = fact_runs.requested_gen + 1"
+            "requested_by = :a, requested_gen = fact_runs.requested_gen + 1"
         ),
-        {"t": tenant, "i": import_id, "p": plant_code, "r": reason},
+        {"t": tenant, "i": import_id, "p": plant_code, "r": reason, "a": actor},
     )
 
 

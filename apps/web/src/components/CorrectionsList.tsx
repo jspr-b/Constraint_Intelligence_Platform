@@ -69,8 +69,7 @@ export function CorrectionsList({ plant }: { plant: string }) {
   const corrections = useCorrections(plant);
   const text = useCorrectionText();
   const view = useView();
-  const canUndo =
-    (view?.decisions.has("import_run_diagnostic") ?? false) && view?.preview === false;
+  const canUndo = (view?.decisions.has("fix_rows") ?? false) && view?.preview === false;
   const queries = useQueryClient();
   const undo = useMutation({
     mutationFn: async (id: string) => {
