@@ -6,6 +6,14 @@ cd "$(git rev-parse --show-toplevel)"
 
 slug="$(basename "$PWD" | tr -c 'a-zA-Z0-9\n' '-' | tr 'A-Z' 'a-z')"
 
+# The main checkout keeps its own .env and the default ports; only linked worktrees get their own.
+if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ]; then
+  echo "setup: main checkout, .env left as it is"
+  uv sync --frozen
+  pnpm install --frozen-lockfile
+  exit 0
+fi
+
 # 1. .env: copy from the main checkout (never committed), else from .env.example.
 if [ ! -f .env ]; then
   for src in "${CIP_ENV_SOURCE:-}" "$HOME/Constraint_Intelligence_Platform/.env" \
