@@ -1607,7 +1607,7 @@
   },
   "refresh": {
     "label": "Numbers and data age",
-    "calculating": "Recalculating the numbers for {plant} because {why} (since {since}).",
+    "calculating": "Recalculating the numbers for {plant} because {why}, since {since}.",
     "keepsOld": "The pages keep showing the numbers from {at} until the new ones are ready; they update by themselves.",
     "firstTime": "The pages show the numbers as soon as they are ready.",
     "updated": "Numbers for {plant} updated at {at} because {why}.",

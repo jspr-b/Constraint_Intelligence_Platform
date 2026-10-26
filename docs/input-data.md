@@ -8,7 +8,7 @@ Field names follow the conventions in CLAUDE.md: units in the name, times in UTC
 
 A step is any place where work happens: a machine, a handmade bench, a check or packing (ADR-0009). A job is whatever moves through the steps (an order, batch or ticket).
 
-You can send exports more than once (ADR-0010): a new event log adds to what is there (an event already sent is counted once), and a new steps list, shift sheet or order list replaces the earlier one.
+You can send exports more than once (ADR-0010): a new event log adds to what is there (an event already sent is counted once), and a new steps list, shift sheet or order list replaces the earlier one. See "Sending data again, fixing and deleting" below.
 
 ## A. Plant structure (once, update when it changes)
 
@@ -102,3 +102,18 @@ Plant and stations (#1–2) are filled in together during kick-off. Everything e
 | 3. Live connections | ERP APIs, machine signals via OPC UA / MQTT | Later |
 
 All stages end in the same standard data model. Plants without MES or ERP hour bookings can use the station screen to capture start, done and stop events per machine.
+
+## Sending data again, fixing and deleting
+
+Your files are the source; the platform keeps every upload as a history you manage (ADR-0010).
+
+| What you do | What happens |
+|---|---|
+| Upload a new export (Import page) | Nothing changes until you run it. The page first shows what it will change: events added, events already there, lists replaced. |
+| Run it | A new event log **adds** to what is there; an event sent before counts once. A new steps list, shift sheet, order list or product list **replaces** the earlier one. The answer is recalculated by itself. |
+| Replace or add a file in an upload | Before the run the upload changes; after it, a **new version** takes the old one's place, and the old one stays in the history as *replaced*. |
+| Fix a row the import could not read | IT or the planner types the right value (or leaves the row out) with a reason. The file stays as sent; the fix is stored next to the original, with who and when, and can be undone. Data quality lists every fix, also as a CSV for the ERP owner. |
+| Delete an upload or import | Gone for good: its files, rows, fixes and numbers. One history line says who deleted it and when. The plant is rebuilt from the other uploads; a confirmation shows first what changes. IT can delete all data of a plant with the plant code typed. |
+| Change Plant setup or the Capacity calendar | The answer is recalculated by itself. |
+
+Every page shows a banner while the answer is recalculated, why, when the numbers are from, and how old the newest data is (older than 7 days: upload new events). By default IT and the planner upload, fix and delete; only IT deletes all data of a plant; the COO can change this on the Access page.

@@ -3,6 +3,11 @@
     uv run python scripts/demo_reset.py --empty   # tenant + IT account, no plant (live demo)
     uv run python scripts/demo_reset.py --loaded  # plants A, B, C and D imported through the API
 
+With ``--loaded`` plant A goes through the import lifecycle (ADR-0010) like a client would: two
+parts, a wrong cut replaced by the right file, a re-export with typing errors and one row fixed
+in the app, and a part sent twice by mistake and deleted. Every step has a known answer
+(data/synthetic/import_cases), so plant A ends with exactly the answer of its clean export.
+
 Only the demo tenant (fixed id) is deleted and recreated; other tenants are never touched.
 ``--loaded`` goes through the running API (sign in, add plant, upload, run), exactly like a client
 on the Import page, so it needs the stack up (``docker compose up -d --no-build``). Dev only.
@@ -15,6 +20,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import httpx
 from sqlalchemy import Engine, create_engine, text
@@ -84,8 +90,7 @@ def _check(response: httpx.Response, step: str) -> httpx.Response:
     return response
 
 
-def load_plant(client: httpx.Client, plant: DemoPlant, timeout_s: float = 180) -> str:
-    """Add the plant, upload its export and run the import, like a client on the Import page."""
+def _add_plant(client: httpx.Client, plant: DemoPlant) -> None:
     _check(
         client.post(
             "/plants",
@@ -97,22 +102,31 @@ def load_plant(client: httpx.Client, plant: DemoPlant, timeout_s: float = 180) -
         ),
         f"adding {plant.plant_code}",
     )
-    paths = sorted(plant.export_dir.glob("*.csv"))
+
+
+def _files(folder: Path, names: tuple[str, ...] | None = None) -> list[Any]:
+    paths = sorted(p for p in folder.glob("*.csv") if names is None or p.name in names)
     if not paths:
-        raise DemoError(f"no export files in {plant.export_dir}")
-    files = [("files", (p.name, p.read_bytes(), "text/csv")) for p in paths]
+        raise DemoError(f"no export files in {folder}")
+    return [("files", (p.name, p.read_bytes(), "text/csv")) for p in paths]
+
+
+def _upload(client: httpx.Client, plant: DemoPlant, folder: Path) -> str:
     upload = _check(
-        client.post(f"/plants/{plant.plant_code}/imports", files=files),
+        client.post(f"/plants/{plant.plant_code}/imports", files=_files(folder)),
         f"uploading {plant.plant_code}",
     )
-    import_id = upload.json()["import_id"]
-    _check(client.post(f"/imports/{import_id}/run"), f"starting the {plant.plant_code} import")
+    return str(upload.json()["import_id"])
+
+
+def _wait(client: httpx.Client, plant: DemoPlant, import_id: str, timeout_s: float) -> None:
+    """Until the import is in use and its numbers are calculated (or say why not)."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         state = _check(client.get(f"/imports/{import_id}"), "checking the import").json()
         facts = state.get("facts") or {}
         if state["status"] == "done" and facts.get("status") == "ready":
-            return str(import_id)
+            return
         if state["status"] == "failed":
             raise DemoError(f"the {plant.plant_code} import failed: {state.get('error')}")
         if facts.get("status") == "failed":
@@ -121,6 +135,73 @@ def load_plant(client: httpx.Client, plant: DemoPlant, timeout_s: float = 180) -
             )
         time.sleep(1)
     raise DemoError(f"the {plant.plant_code} import did not finish in {timeout_s:.0f} s")
+
+
+def _run(client: httpx.Client, plant: DemoPlant, import_id: str, timeout_s: float) -> str:
+    _check(client.post(f"/imports/{import_id}/run"), f"starting the {plant.plant_code} import")
+    _wait(client, plant, import_id, timeout_s)
+    return import_id
+
+
+def _ready(client: httpx.Client, plant: DemoPlant, timeout_s: float) -> None:
+    """Until the plant's automatic recalculation after a fix or a delete is done."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        status = _check(client.get("/refresh-status"), "checking the numbers").json()
+        mine = next((p for p in status if p["plant_code"] == plant.plant_code), None)
+        if mine and mine["status"] == "ready":
+            return
+        if mine and mine["status"] == "failed":
+            raise DemoError(f"the {plant.plant_code} numbers could not be recalculated")
+        time.sleep(1)
+    raise DemoError(f"the {plant.plant_code} numbers did not update in {timeout_s:.0f} s")
+
+
+def load_plant(client: httpx.Client, plant: DemoPlant, timeout_s: float = 180) -> str:
+    """Add the plant, upload its export and run the import, like a client on the Import page."""
+    _add_plant(client, plant)
+    return _run(client, plant, _upload(client, plant, plant.export_dir), timeout_s)
+
+
+FIX = {
+    "file": "mes_events.csv",
+    "line": 101,
+    "column": "Tijdstip",
+    "value": "20-07-2026 10:11",
+    "reason": "time typed wrong at the bench terminal",
+}
+"""The first typing error of import_cases/broken, fixed as its expected_answers.yaml says."""
+
+
+def load_plant_lifecycle(
+    client: httpx.Client, plant: DemoPlant, cases: Path, timeout_s: float = 180
+) -> str:
+    """Plant A as a client builds it up over time (ADR-0010); returns the import in use last.
+
+    1. Part 1 (weeks 1-6 and every list). 2. Part 2 cut wrong (weeks 4-12), then its file
+    replaced by the right one (weeks 7-12): a new version. 3. A full re-export with five typing
+    errors; one row fixed in the app. 4. Part 2 sent twice by mistake, then deleted.
+    """
+    _add_plant(client, plant)
+    _run(client, plant, _upload(client, plant, cases / "split" / "upload_1"), timeout_s)
+    wrong = _run(client, plant, _upload(client, plant, cases / "repeat" / "upload_2"), timeout_s)
+    right = _check(
+        client.post(f"/imports/{wrong}/files", files=_files(cases / "split" / "upload_2")),
+        f"replacing the {plant.plant_code} event file",
+    ).json()["import_id"]
+    _run(client, plant, str(right), timeout_s)
+    export = _run(client, plant, _upload(client, plant, cases / "broken" / "upload_1"), timeout_s)
+    _check(client.post(f"/imports/{export}/corrections", json=FIX), "fixing a row")
+    _ready(client, plant, timeout_s)
+    twice = _run(client, plant, _upload(client, plant, cases / "split" / "upload_2"), timeout_s)
+    deadline = time.monotonic() + timeout_s
+    while (gone := client.delete(f"/imports/{twice}")).status_code == 409 and (
+        gone.json().get("code") == "facts_calculating" and time.monotonic() < deadline
+    ):
+        time.sleep(1)  # nothing is deleted while the numbers are calculated: wait
+    _check(gone, "deleting the upload sent twice")
+    _ready(client, plant, timeout_s)
+    return export
 
 
 def load_plants(api_url: str, folders: tuple[str, ...] = DEMO_PLANTS) -> list[str]:
@@ -136,7 +217,12 @@ def load_plants(api_url: str, folders: tuple[str, ...] = DEMO_PLANTS) -> list[st
             raise DemoError(
                 f"the API at {api_url} is not running: docker compose up -d --no-build"
             ) from exc
-        return [load_plant(client, demo_plant(f)) for f in folders]
+        return [
+            load_plant_lifecycle(client, demo_plant(f), SYNTHETIC / "import_cases")
+            if f == "plant_a"
+            else load_plant(client, demo_plant(f))
+            for f in folders
+        ]
 
 
 def env_hint(env_file: Path) -> str | None:

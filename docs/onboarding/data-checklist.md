@@ -2,7 +2,7 @@
 
 _Generated from docs/input-data.md by scripts/gen_onboarding.py. Do not edit by hand._
 
-What we need from your plant to find what limits your output and what it costs. Exports from your ERP, MES or spreadsheets are enough; we map your column names, you do not have to change them.
+What we need from your plant to find what limits your output and what it costs. Exports from your ERP, MES or spreadsheets are enough; we map your column names, you do not have to change them. Send new exports whenever you have them: new events are added (sent twice counts once), new lists replace the old ones, and the answer is recalculated by itself. A row the import cannot read can be fixed in the app; your file stays as you sent it.
 
 ## Minimum to start: the event log, a steps list and a shift sheet
 

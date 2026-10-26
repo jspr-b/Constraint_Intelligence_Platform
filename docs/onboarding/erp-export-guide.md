@@ -27,6 +27,10 @@ Breaks and holidays usually come in the shift sheet; breaks add the stagger-brea
 - Codes as they are in your system (step codes, status codes, stop reasons). We translate them with code tables; an unknown code becomes a rejected row with its reason, never a guess.
 - Money in euros with decimals (e.g. `980,00`).
 
+## Sending new data
+
+Send the event log again whenever you have new weeks; events already sent count once, so overlapping periods are fine. Send a steps list, shift sheet or order list again when it changes; the new one replaces the old one. A wrong file can be replaced, a row the import cannot read can be fixed in the app (the file stays as you sent it), and an upload can be deleted. `it-guide.md` says what each does.
+
 ## What not to export
 
 Leave out employee names, badge numbers, who worked where and time per person. If an export contains such a column anyway (e.g. `Medewerker`), it is dropped while the file is read and never stored.

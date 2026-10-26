@@ -1,4 +1,4 @@
-# Demo script: 12 minutes, four plants, four lessons
+# Demo script: 12 minutes, four plants, four lessons (+3 on data over time)
 
 For a plant director, COO or planner in one meeting. Synthetic plants only; every number on
 screen is calculated from the plant's own (made-up) export and opens its calculation.
@@ -8,6 +8,7 @@ screen is calculated from the plant's own (made-up) export and opens its calcula
 ```
 bash scripts/build_images.sh && docker compose up -d --no-build && bash scripts/check_images.sh
 uv run python scripts/demo_reset.py --loaded   # plants A, B, C and D, imported like a client would
+                                               # (plant A over time: see "Your data over time")
 ```
 
 - Sign in at http://localhost:53000/login with `it@demo.example`. Switch the role (top right) to
@@ -42,6 +43,25 @@ uv run python scripts/demo_reset.py --loaded   # plants A, B, C and D, imported 
 | 10–11 | Plant picker → D | "A workshop: a laser and a press, then welding, assembly, finishing and packing by hand, with one team shared by finishing and packing. We know no products and no routings, only when each job passed each step and how many people were on shift. The bottleneck is the finishing team: not one bench, the team." |
 | 11–12 | Steps, then click **€62,560** | "Handmade steps count in positions: three benches, three times the time. Some finish scans were forgotten; we leave those jobs out and say so, which is why we are fairly sure, not sure. The euros come from each job's value minus its material." |
 
+## Your data over time (3 more minutes, when they ask "and next month?")
+
+`--loaded` builds plant A the way a client does over weeks (ADR-0010), and still ends at the same
+answer (€169,041 in September 2026), because every step has a known answer:
+
+1. Part 1: weeks 1–6 and every list.
+2. Part 2 cut wrong (weeks 4–12), then its event file replaced by the right one (weeks 7–12): a new version; the old one stays in the history as *replaced*.
+3. A full re-export with five typing errors; one row fixed in the app, with a reason.
+4. Part 2 sent twice by mistake, then deleted.
+
+| Min | Click | Say |
+|---|---|---|
+| 12–13 | Import, plant A: Import history | "Your files are the source. Every upload stays in the history: who sent it, which weeks, how many events were new. Events sent twice count once. A wrong file is replaced, not edited; a mistake is deleted for good, with one line that says who deleted it and when." |
+| 13–14 | Results and data checklist → Rejected rows | "Five rows could not be read. One was fixed here, with a reason; the file stays as it was sent. Data quality lists every fix, with who and when, as a CSV for your ERP owner." |
+| 14–15 | Capacity calendar (as planner) → add maintenance on Paint → Overview | "Change the calendar and the answer is recalculated by itself. The banner on every page says why and when, and how old your data is." |
+
+Do the calendar step on a copy of the demo (`--loaded` again afterwards): it changes plant A's
+answer.
+
 ## Live upload (when they want to see their kind of file go in)
 
 `--empty`, then as IT: Getting started → 1. Add your plant (Plant setup) → 2. Upload your exports
@@ -56,9 +76,10 @@ shows the answer when the numbers are calculated (about a minute).
 | What data do you need? | To start: your event log (start and finish per job and step), a steps list and a shift sheet. Jobs with value add euros; products and routings raise confidence (`docs/onboarding/data-checklist.md`). Files from your ERP, MES or spreadsheets; no connection needed to start |
 | Do you track my people? | No. Columns with people in them are dropped on import and never stored. We measure steps and stations, never named employees |
 | How sure are you? | Every answer has a confidence, from how many checks agree and how complete the data is. The Data quality page says what would make it surer |
-| What if my data is messy? | Rows that do not fit are rejected with the reason and listed; gaps are shown, never filled in |
+| What if my data is messy? | Rows that do not fit are rejected with the reason and listed; IT or the planner can fix a row in the app (the original stays, with who, when and why) or send a new file. Gaps are shown, never filled in |
+| What if we send new data next week? | Upload it: events are added (sent twice counts once), lists replace the old ones, and the answer is recalculated by itself |
 | Does it change my ERP? | No. It only reads exports |
-| Where does my data go? | EU hosting, separate per customer, encrypted. On-premise is possible for defence and regulated plants |
+| Where does my data go? | Today the demo runs on this laptop. Planned: hosting in the EU, separate per customer, encrypted; on-premise for defence and regulated plants |
 | How long does a diagnostic take? | 4–8 weeks, starting from your first export; the first answer comes the day the export imports cleanly |
 | What does it cost? | A paid diagnostic, credited against the subscription; the subscription is anchored to the gain we measure |
 

@@ -66,7 +66,7 @@ PLAIN: dict[int, str] = {
 
 TEXT: dict[str, str] = {
     "title": "Data checklist for a diagnostic",
-    "intro": "What we need from your plant to find what limits your output and what it costs. Exports from your ERP, MES or spreadsheets are enough; we map your column names, you do not have to change them.",
+    "intro": "What we need from your plant to find what limits your output and what it costs. Exports from your ERP, MES or spreadsheets are enough; we map your column names, you do not have to change them. Send new exports whenever you have them: new events are added (sent twice counts once), new lists replace the old ones, and the answer is recalculated by itself. A row the import cannot read can be fixed in the app; your file stays as you sent it.",
     "minimum": "Minimum to start: the event log, a steps list and a shift sheet",
     "minimum_note": "That is enough to find your bottleneck and its lost hours. Plant and stations (items 1–2) we fill in together at the kick-off.",
     "adds": "What each extra file adds",

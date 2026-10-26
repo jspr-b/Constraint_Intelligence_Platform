@@ -36,6 +36,19 @@ All stages end in the same standard data model, so pages and calculations do not
 
 For stage 2 we will ask for: an SFTP account with write access to one folder (or a database user with `SELECT` on one view per export), the schedule, and the network route (IP allow-list or VPN). The platform only reads.
 
+### After the first upload
+
+| What you do | What happens |
+|---|---|
+| Upload a new export (Import page) | Nothing changes until you run it. The page first shows what it will change: events added, events already there, lists replaced. |
+| Run it | A new event log **adds** to what is there; an event sent before counts once. A new steps list, shift sheet, order list or product list **replaces** the earlier one. The answer is recalculated by itself. |
+| Replace or add a file in an upload | Before the run the upload changes; after it, a **new version** takes the old one's place, and the old one stays in the history as *replaced*. |
+| Fix a row the import could not read | IT or the planner types the right value (or leaves the row out) with a reason. The file stays as sent; the fix is stored next to the original, with who and when, and can be undone. Data quality lists every fix, also as a CSV for the ERP owner. |
+| Delete an upload or import | Gone for good: its files, rows, fixes and numbers. One history line says who deleted it and when. The plant is rebuilt from the other uploads; a confirmation shows first what changes. IT can delete all data of a plant with the plant code typed. |
+| Change Plant setup or the Capacity calendar | The answer is recalculated by itself. |
+
+Every page shows a banner while the answer is recalculated, why, when the numbers are from, and how old the newest data is (older than 7 days: upload new events). By default IT and the planner upload, fix and delete; only IT deletes all data of a plant; the COO can change this on the Access page.
+
 ## 3. What the platform never does
 
 - **No write-back.** It never changes data in your ERP or MES. Write-back is off and is not part of the pilot (shown as *Write-back to ERP: off* on Connections).

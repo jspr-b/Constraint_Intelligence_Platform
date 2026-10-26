@@ -56,7 +56,8 @@ test("the COO leaves fixing rows to IT; the planner sees why and who can", async
     name: "Planner may Fix rows in the app (and undo a fix)",
   });
   await expect(fix).toBeChecked();
-  await fix.uncheck();
+  // The box changes once the server has saved, so click and wait (uncheck() checks at once).
+  await fix.click();
   await expect(fix).not.toBeChecked();
 
   await signIn(page, "planner@e2e.example.test");
