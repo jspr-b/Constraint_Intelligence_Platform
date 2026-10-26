@@ -1,0 +1,11 @@
+﻿Werkplaatsrapport scans
+Geëxporteerd op 26-10-2026 08:15
+
+Workstation;Description;Area code;Area;Type;Positions
+LASER;Laser cutter;CUTTING;Cutting;Machine;1
+PRESS;Press brake;BENDING;Bending;Machine;1
+WELD-BENCH;Hand welding;WELDING;Welding;Handwork;3
+ASSY-BENCH;Hand assembly;ASSEMBLY;Assembly;Handwork;4
+FINISH;Finishing and check;FINISHING;Finishing and packing;Handwork;3
+PACK;Packing;FINISHING;Finishing and packing;Handwork;2
+Totaal;6 regels

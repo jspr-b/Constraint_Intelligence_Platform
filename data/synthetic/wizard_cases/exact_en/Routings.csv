@@ -1,0 +1,26 @@
+Item code,Step no,Operation,Resource,Alternative resource,Setup time (min),Run time per unit (min)
+B-40,10,Cut,SNIJ1,,,1.40
+B-40,20,Weld,LAS2,,,2.80
+B-40,30,Paint,LAK1,,20.00,6.80
+B-40,40,Assemble,MONT1,,,3.00
+B-40,50,Pack,INPAK1,,,0.50
+F-200,10,Cut,SNIJ1,,,2.40
+F-200,20,Weld,LAS1,LAS2,,9.00
+F-200,30,Paint,LAK1,,20.00,14.00
+F-200,40,Assemble,MONT1,,,6.00
+F-200,50,Pack,INPAK1,,,1.00
+H-12,10,Cut,SNIJ1,,,2.00
+H-12,20,Weld,LAS2,,,6.80
+H-12,30,Paint,LAK1,,20.00,9.30
+H-12,40,Assemble,MONT1,,,5.00
+H-12,50,Test,MONT1,,,1.00
+H-12,60,Mark,SNIJ1,,,0.80
+H-12,70,Pack,INPAK1,,,0.80
+C-3,10,Cut,SNIJ1,,,1.00
+C-3,20,Paint,LAK1,,20.00,3.80
+C-3,30,Assemble,MONT1,,,2.00
+C-3,40,Pack,INPAK1,,,0.50
+R-8,10,Cut,SNIJ1,,,1.20
+R-8,20,Weld,LAS1,,,3.00
+R-8,30,Grind,LAS2,,,3.20
+R-8,40,Pack,INPAK1,,,0.40

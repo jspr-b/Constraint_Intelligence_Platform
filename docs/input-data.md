@@ -72,6 +72,16 @@ You can send exports more than once (ADR-0010): a new event log adds to what is 
 
 Employee names, badge numbers, who worked at which station, time per person, wages per person. If an export contains them, the columns are dropped on import (CLAUDE.md hard constraint; Dutch Works Councils Act art. 27).
 
+## What the AI sees
+
+The mapping wizard (ADR-0011) recognises your files, columns and codes by rules first. Where rules are not enough it can ask an AI (Claude API) for a suggestion. The AI sees only:
+
+- file and column names,
+- reasons rows were rejected,
+- at most 5 anonymised example values per column.
+
+It never sees whole files, personal columns, numbers to calculate, or plant, company or account names. It may suggest column matches, what a code means and a plain explanation of a data problem; it never changes the flow or a number. Every AI suggestion is marked and confirmed by IT or the planner. Until the AI is connected (CLAUDE.md, "AI API: to connect") the wizard works on rules alone and says "AI not connected".
+
 ## Minimum to start a paid diagnostic
 
 1 event log + 1 steps list + 1 shift sheet:

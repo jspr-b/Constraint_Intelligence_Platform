@@ -1,0 +1,178 @@
+case: mes_us
+style: 'US-style MES export: month/day/year dates, English event words, a badge column'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_d
+plant_answer: data/synthetic/plant_d/expected_answers.yaml
+answer: plant_answer
+format:
+  delimiter: ','
+  decimal: .
+  datetime: '%m/%d/%Y %H:%M'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 0
+  totals_line_at_end: false
+  byte_order_mark: false
+files:
+  crew_schedule.csv:
+    role: team_shifts
+  crews.csv:
+    role: teams
+  labor_transactions.csv:
+    role: events
+  schedule.csv:
+    role: calendar
+  work_centers.csv:
+    role:
+    - resources
+    - stations
+  work_orders.csv:
+    role: orders
+columns:
+  crew_schedule.csv:
+    Crew: team_shifts.team_code
+    Begins: team_shifts.start_at
+    Ends: team_shifts.end_at
+    Crew size: team_shifts.positions
+  crews.csv:
+    Crew: teams.team_code
+    Crew Name: teams.name
+    Work Centers: teams.resource_codes
+  labor_transactions.csv:
+    Work Order: events.order_id
+    Work Center: events.resource_code
+    Dept: events.station_code
+    Transaction Time: events.at
+    Transaction: events.event_type
+    Quantity: events.quantity_units
+    Reason Code: events.down_reason_code
+    Badge: personal (dropped on read, never shown or sent)
+  schedule.csv:
+    Work Center: calendar.resource_code
+    Entry: calendar.kind
+    Begins: calendar.start_at
+    Ends: calendar.end_at
+    Crew slots: calendar.positions
+  work_centers.csv:
+    Work Center: resources.resource_code
+    Work Center Name: resources.name
+    Dept:
+    - resources.station_code
+    - stations.station_code
+    Dept Name: stations.name
+    Category: resources.kind
+    Stations: resources.parallel_units
+  work_orders.csv:
+    Work Order: orders.order_id
+    Quantity: orders.quantity_units
+    Due Date: orders.due_at
+    WO Status: orders.status
+    Released: orders.released_at
+    Completed: orders.shipped_at
+    Sales Value: orders.order_value_eur_cents
+    Material Cost: orders.material_cost_eur_cents
+code_tables:
+  step_kind:
+    Equipment: machine
+    Manual: manual
+  action:
+    Clock on: start
+    Clock off: end
+    Interrupted: down_start
+    Resumed: down_end
+    Received: scan
+    Dispatched: move
+  job_status:
+    Open: open
+    Released: released
+    In progress: in_progress
+    Shipped: shipped
+  window:
+    Shift: shift
+    Break: break
+    Maintenance: maintenance
+    Holiday: holiday
+flow:
+  jobs: 1718
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    - FINISH
+    - PACK
+    jobs: 1099
+    share_pct: 64.0
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    - FINISH
+    - PACK
+    jobs: 402
+    share_pct: 23.4
+    rework: false
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    jobs: 132
+    share_pct: 7.7
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    jobs: 49
+    share_pct: 2.9
+    rework: false
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    - FINISH
+    jobs: 23
+    share_pct: 1.3
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    - FINISH
+    jobs: 11
+    share_pct: 0.6
+    rework: false
+  other_routes_jobs: 2
+  arrows:
+  - from: ASSY-BENCH
+    to: FINISH
+    jobs: 1122
+    share_of_leaving_pct: 100.0
+  - from: FINISH
+    to: PACK
+    jobs: 1501
+    share_of_leaving_pct: 100.0
+  - from: LASER
+    to: PRESS
+    jobs: 1256
+    share_of_leaving_pct: 73.1
+  - from: LASER
+    to: WELD-BENCH
+    jobs: 462
+    share_of_leaving_pct: 26.9
+  - from: PRESS
+    to: WELD-BENCH
+    jobs: 1256
+    share_of_leaving_pct: 100.0
+  - from: WELD-BENCH
+    to: ASSY-BENCH
+    jobs: 1254
+    share_of_leaving_pct: 75.2
+  - from: WELD-BENCH
+    to: FINISH
+    jobs: 413
+    share_of_leaving_pct: 24.8
+notes:
+- Month/day order is only certain from days above 12 (e.g. 07/20/2026).

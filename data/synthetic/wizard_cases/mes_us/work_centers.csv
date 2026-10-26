@@ -1,0 +1,7 @@
+Work Center,Work Center Name,Dept,Dept Name,Category,Stations
+LASER,Laser cutter,CUTTING,Cutting,Equipment,1
+PRESS,Press brake,BENDING,Bending,Equipment,1
+WELD-BENCH,Hand welding,WELDING,Welding,Manual,3
+ASSY-BENCH,Hand assembly,ASSEMBLY,Assembly,Manual,4
+FINISH,Finishing and check,FINISHING,Finishing and packing,Manual,3
+PACK,Packing,FINISHING,Finishing and packing,Manual,2

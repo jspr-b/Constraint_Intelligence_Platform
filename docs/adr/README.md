@@ -16,6 +16,7 @@ Every architecture decision is recorded here before it is implemented (CLAUDE.md
 | [0008](0008-flow-views.md) | Plant flow views | Proposed |
 | [0009](0009-steps-and-touchpoints.md) | Steps and touchpoints, not machines or products | Accepted |
 | [0010](0010-import-lifecycle.md) | Import lifecycle: a history the client manages | Accepted |
+| [0011](0011-mapping-wizard.md) | Mapping wizard: the app suggests, the client confirms | Accepted |
 
 ## Adding an ADR
 

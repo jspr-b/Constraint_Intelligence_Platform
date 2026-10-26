@@ -89,6 +89,7 @@ The plant is modelled as **steps and touchpoints**, not machines or products (AD
 - Products and routings are optional: they add euros, standard times and confidence. Without them a job's path comes from its touchpoint times, and euros from job value minus material cost.
 - `Plant`, `Resource`, `Routing`, `Operation`, `Order`, `Product`, `Team`.
 - Imports are a history the client manages (ADR-0010): files are the source, the event log adds and lists replace, fixed rows are corrections next to the original, deleting an import rebuilds from the rest, and every data change refreshes the answer. The engine reads the plant from the database.
+- Each plant's export is mapped by the mapping wizard (ADR-0011): the app recognises files, columns, codes and formats, asks only what it cannot work out, shows the flow found in the data for the client to correct and confirm, and remembers it per plant. The client confirms; the app never guesses silently.
 - `OperationEvent`: timestamped start/end/setup/downtime per job and step.
 - `ResourceState`: running, idle, starved, blocked, down, setup.
 - `CapacityCalendar`: shifts, maintenance, holidays per resource.
@@ -126,6 +127,18 @@ Build order: ingestion → data model → event reconstruction → detection →
 - Humans decide. No automatic execution until accuracy is proven per plant.
 - Log predicted vs actual gain for every action taken.
 - Start with zero-cost Exploit and Subordinate actions; Elevate needs more evidence.
+
+### AI API: to connect
+
+The wizard's AI code is built and tested with a fake client (ADR-0011). Until these are done it runs on rules only and shows "AI not connected". Tick each item when it is done.
+
+- [ ] Data processing agreement with Anthropic signed and its retention terms checked; EU/privacy check written down in `docs/adr/0005-privacy.md` before the key is set.
+- [ ] Key stored as the environment variable `CIP_ANTHROPIC_API_KEY` (in `.env`, which git ignores, or the host's secret store). Never in code, git, logs or the database.
+- [ ] Model id chosen from the claude-api reference at connect time (default `claude-sonnet-5-5`), set as `CIP_AI_MODEL`.
+- [ ] Cost limits set: `CIP_AI_MAX_EUR_PER_IMPORT` and `CIP_AI_MAX_EUR_PER_MONTH`; above a limit the wizard falls back to rules and says so.
+- [ ] Only allowed content is sent: file and column names, rejected-row reasons, at most 5 anonymised example values per column. Never whole files, personal columns, numbers to calculate, plant, company or account names. The test `test_ai_payload_is_privacy_limited` passes against the real client.
+- [ ] Tested on the wizard test exports (`data/synthetic/wizard_cases`): AI suggestions are marked "suggested by AI", confirmed by the client, and never change a flow or a number.
+- [ ] The "AI not connected" banner disappears once the key works; a wrong or expired key shows a plain message and the wizard keeps working on rules.
 
 ## Hard constraints
 

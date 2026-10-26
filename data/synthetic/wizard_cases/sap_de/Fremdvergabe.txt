@@ -1,0 +1,2 @@
+Vorgangstext	Preis je Stk
+Paint	18,00

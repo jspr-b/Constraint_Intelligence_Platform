@@ -1,0 +1,206 @@
+case: ridder_hours
+style: 'Ridder iQ-like hour bookings only: start date, start time and duration per job and step, no scans,
+  setups or stops'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_a
+plant_answer: data/synthetic/plant_a/expected_answers.yaml
+answer:
+  constraint: PNT-01
+  confidence: 'lower than high, and said in plain words: times come from hour bookings'
+  not_compared: 'lost euros and loss causes: bookings have no setups, stops or scans'
+format:
+  delimiter: ;
+  decimal: ','
+  datetime: '%d-%m-%Y %H:%M'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 0
+  totals_line_at_end: false
+  byte_order_mark: false
+files:
+  Artikelen.csv:
+    role: products
+  Bewerkingen.csv:
+    role: routings
+  Productieorders.csv:
+    role: orders
+  Rooster.csv:
+    role: calendar
+  Urenregistratie.csv:
+    role: hour_bookings
+  Werkplekken.csv:
+    role:
+    - resources
+    - stations
+columns:
+  Artikelen.csv:
+    Artikel: products.sku
+    Omschrijving: products.name
+    Productgroep: products.family
+    Kleurgroep: products.setup_family
+    Verkoopprijs: products.sales_price_eur_cents
+    Variabele kosten: products.truly_variable_cost_eur_cents
+  Bewerkingen.csv:
+    Artikel: routings.sku
+    Bewerking nr: routings.operation_seq
+    Bewerking: routings.operation
+    Werkplek: routings.resource_code
+    Alternatief: routings.alternative_resource_codes
+    Insteltijd (min): routings.standard_setup_min
+    Stuktijd (min): routings.standard_run_min_per_unit
+  Productieorders.csv:
+    Productieorder: orders.order_id
+    Artikel: orders.sku
+    Aantal: orders.quantity_units
+    Leverdatum: orders.due_at
+    Status: orders.status
+    Vrijgegeven: orders.released_at
+    Verzonden: orders.shipped_at
+    Materiaal gereed: orders.material_ready_at
+  Rooster.csv:
+    Werkplekcode: calendar.resource_code
+    Type: calendar.kind
+    Start: calendar.start_at
+    Einde: calendar.end_at
+    Overgenomen: calendar.covered
+  Urenregistratie.csv:
+    Productieorder: events.order_id
+    Bewerkingsnr: events.operation_seq
+    Werkplekcode: events.resource_code
+    Datum:
+      date part of: booking start
+    Begintijd:
+      time part of: booking start
+    Duur (min): booking duration_min
+    Gereed gemeld: events.quantity_units
+  Werkplekken.csv:
+    Werkplekcode: resources.resource_code
+    Werkplek: resources.name
+    Afdeling:
+    - resources.station_code
+    - stations.name
+    - stations.station_code
+code_tables:
+  resource:
+    SNIJ1: CUT-01
+    LAS1: WLD-01
+    LAS2: WLD-02
+    LAK1: PNT-01
+    MONT1: ASM-01
+    INPAK1: PCK-01
+  station:
+    Cutting: CUTTING
+    Welding cell: WELD-CELL
+    Paint: PAINT
+    Assembly: ASSEMBLY
+    Packing: PACKING
+  order_status:
+    Open: open
+    Vrijgegeven: released
+    In bewerking: in_progress
+    Verzonden: shipped
+  calendar_kind:
+    Dienst: shift
+    Pauze: break
+    Onderhoud: maintenance
+    Feestdag: holiday
+flow:
+  jobs: 482
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 120
+    share_pct: 24.9
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 101
+    share_pct: 21.0
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - WLD-02
+    - PCK-01
+    jobs: 76
+    share_pct: 15.8
+    rework: false
+  - steps:
+    - CUT-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 53
+    share_pct: 11.0
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - CUT-01
+    - PCK-01
+    jobs: 52
+    share_pct: 10.8
+    rework: true
+  - steps:
+    - CUT-01
+    jobs: 37
+    share_pct: 7.7
+    rework: false
+  other_routes_jobs: 43
+  arrows:
+  - from: ASM-01
+    to: CUT-01
+    jobs: 52
+    share_of_leaving_pct: 16.0
+  - from: ASM-01
+    to: PCK-01
+    jobs: 274
+    share_of_leaving_pct: 84.0
+  - from: CUT-01
+    to: PCK-01
+    jobs: 52
+    share_of_leaving_pct: 10.5
+  - from: CUT-01
+    to: PNT-01
+    jobs: 53
+    share_of_leaving_pct: 10.7
+  - from: CUT-01
+    to: WLD-01
+    jobs: 204
+    share_of_leaving_pct: 41.0
+  - from: CUT-01
+    to: WLD-02
+    jobs: 188
+    share_of_leaving_pct: 37.8
+  - from: PNT-01
+    to: ASM-01
+    jobs: 328
+    share_of_leaving_pct: 100.0
+  - from: WLD-01
+    to: PNT-01
+    jobs: 101
+    share_of_leaving_pct: 57.1
+  - from: WLD-01
+    to: WLD-02
+    jobs: 76
+    share_of_leaving_pct: 42.9
+  - from: WLD-02
+    to: PCK-01
+    jobs: 76
+    share_of_leaving_pct: 30.3
+  - from: WLD-02
+    to: PNT-01
+    jobs: 175
+    share_of_leaving_pct: 69.7
+notes: []

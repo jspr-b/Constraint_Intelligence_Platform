@@ -1,0 +1,3 @@
+Arbeitsplatz	Ueberstundensatz	Zusatzschicht
+1000-SCHW2	58,00	
+1000-LACK	62,50	2500,00

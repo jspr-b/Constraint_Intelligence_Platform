@@ -1,0 +1,180 @@
+case: messy
+style: 'Messy workshop export: report title lines above the header, a totals line at the end, a byte-order
+  mark, semicolons, and the plan tables together in one workbook'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_d
+plant_answer: data/synthetic/plant_d/expected_answers.yaml
+answer: plant_answer
+format:
+  delimiter: ;
+  decimal: .
+  datetime: '%Y-%m-%d %H:%M'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 3
+  totals_line_at_end: true
+  byte_order_mark: true
+files:
+  planning.xlsx#Rooster:
+    role: calendar
+  planning.xlsx#Teamrooster:
+    role: team_shifts
+  planning.xlsx#Teams:
+    role: teams
+  rapport_jobs.csv:
+    role: orders
+  rapport_scans.csv:
+    role: events
+  rapport_werkplekken.csv:
+    role:
+    - resources
+    - stations
+columns:
+  planning.xlsx#Rooster:
+    Workstation: calendar.resource_code
+    Type: calendar.kind
+    Start: calendar.start_at
+    End: calendar.end_at
+    Staffed: calendar.positions
+  planning.xlsx#Teamrooster:
+    Team: team_shifts.team_code
+    Start: team_shifts.start_at
+    End: team_shifts.end_at
+    Staffed: team_shifts.positions
+  planning.xlsx#Teams:
+    Team: teams.team_code
+    Name: teams.name
+    Workstations: teams.resource_codes
+  rapport_jobs.csv:
+    Job: orders.order_id
+    Qty: orders.quantity_units
+    Due: orders.due_at
+    Status: orders.status
+    Released: orders.released_at
+    Shipped: orders.shipped_at
+    Order value: orders.order_value_eur_cents
+    Material cost: orders.material_cost_eur_cents
+  rapport_scans.csv:
+    Job: events.order_id
+    Workstation: events.resource_code
+    Area code: events.station_code
+    Time: events.at
+    Action: events.event_type
+    Qty: events.quantity_units
+    Reason: events.down_reason_code
+    Operator: personal (dropped on read, never shown or sent)
+  rapport_werkplekken.csv:
+    Workstation: resources.resource_code
+    Description: resources.name
+    Area code:
+    - resources.station_code
+    - stations.station_code
+    Area: stations.name
+    Type: resources.kind
+    Positions: resources.parallel_units
+code_tables:
+  step_kind:
+    Machine: machine
+    Handwork: manual
+  action:
+    START: start
+    FINISH: end
+    STOP: down_start
+    RESTART: down_end
+    ARRIVE: scan
+    LEAVE: move
+  job_status:
+    Open: open
+    Released: released
+    In progress: in_progress
+    Shipped: shipped
+  window:
+    Shift: shift
+    Break: break
+    Maintenance: maintenance
+    Holiday: holiday
+flow:
+  jobs: 1718
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    - FINISH
+    - PACK
+    jobs: 1099
+    share_pct: 64.0
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    - FINISH
+    - PACK
+    jobs: 402
+    share_pct: 23.4
+    rework: false
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    jobs: 132
+    share_pct: 7.7
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    jobs: 49
+    share_pct: 2.9
+    rework: false
+  - steps:
+    - LASER
+    - PRESS
+    - WELD-BENCH
+    - ASSY-BENCH
+    - FINISH
+    jobs: 23
+    share_pct: 1.3
+    rework: false
+  - steps:
+    - LASER
+    - WELD-BENCH
+    - FINISH
+    jobs: 11
+    share_pct: 0.6
+    rework: false
+  other_routes_jobs: 2
+  arrows:
+  - from: ASSY-BENCH
+    to: FINISH
+    jobs: 1122
+    share_of_leaving_pct: 100.0
+  - from: FINISH
+    to: PACK
+    jobs: 1501
+    share_of_leaving_pct: 100.0
+  - from: LASER
+    to: PRESS
+    jobs: 1256
+    share_of_leaving_pct: 73.1
+  - from: LASER
+    to: WELD-BENCH
+    jobs: 462
+    share_of_leaving_pct: 26.9
+  - from: PRESS
+    to: WELD-BENCH
+    jobs: 1256
+    share_of_leaving_pct: 100.0
+  - from: WELD-BENCH
+    to: ASSY-BENCH
+    jobs: 1254
+    share_of_leaving_pct: 75.2
+  - from: WELD-BENCH
+    to: FINISH
+    jobs: 413
+    share_of_leaving_pct: 24.8
+notes:
+- The workbook sheets also have the title lines; the totals line is not a row.
+- Column names keep the plant's English names; the layout is what is messy.

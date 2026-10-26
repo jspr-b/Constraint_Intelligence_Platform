@@ -54,6 +54,7 @@ Every page shows a banner while the answer is recalculated, why, when the number
 - **No write-back.** It never changes data in your ERP or MES. Write-back is off and is not part of the pilot (shown as *Write-back to ERP: off* on Connections).
 - **No personal data from the floor.** No employee names, badge numbers, who worked where or time per person. Station screens sign in as the machine, not as a person.
 - **No guessed values.** Missing data is shown as missing, with its effect on confidence.
+- **No files to the AI.** The mapping wizard (ADR-0011) can ask an AI (Claude API) to suggest column matches, code meanings and plain explanations of data problems. It sees only file and column names, rejected-row reasons and at most 5 anonymised example values per column; never whole files, personal columns, numbers, or plant, company or account names. Every AI suggestion is marked and someone in your team confirms it. The AI is not connected yet: until it is, the wizard works on rules alone and says "AI not connected".
 
 ## 4. Logins and access
 

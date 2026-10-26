@@ -1,0 +1,264 @@
+case: sap_de
+style: 'SAP PP-like export in German: tab separated, date and time in two columns, decimal comma, own
+  work centre codes'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_c
+plant_answer: data/synthetic/plant_c/expected_answers.yaml
+answer: plant_answer
+format:
+  delimiter: tab
+  decimal: ','
+  datetime:
+    date: '%d.%m.%Y'
+    time: '%H:%M:%S'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 0
+  totals_line_at_end: false
+  byte_order_mark: false
+files:
+  AFKO_Auftraege.txt:
+    role: orders
+  AFRU_Rueckmeldungen.txt:
+    role: events
+  CRHD_Arbeitsplaetze.txt:
+    role:
+    - resources
+    - stations
+  Fremdvergabe.txt:
+    role: outsourcing
+  KAKO_Kapazitaet.txt:
+    role: calendar
+  Kostensaetze.txt:
+    role: capacity_costs
+  MARA_Material.txt:
+    role: products
+  PLPO_Arbeitsplan.txt:
+    role: routings
+  Ruestmatrix.txt:
+    role: changeovers
+  Ueberstunden.txt:
+    role: overtime
+columns:
+  AFKO_Auftraege.txt:
+    Auftrag: orders.order_id
+    Material: orders.sku
+    Auftragsmenge: orders.quantity_units
+    Liefertermin:
+      date part of: orders.due_at
+    Lieferzeit:
+      time part of: orders.due_at
+    Systemstatus: orders.status
+    Freigabe-Datum:
+      date part of: orders.released_at
+    Freigabe-Uhrzeit:
+      time part of: orders.released_at
+    Versand-Datum:
+      date part of: orders.shipped_at
+    Versand-Uhrzeit:
+      time part of: orders.shipped_at
+    Material-Datum:
+      date part of: orders.material_ready_at
+    Material-Uhrzeit:
+      time part of: orders.material_ready_at
+  AFRU_Rueckmeldungen.txt:
+    Arbeitsplatz: events.resource_code
+    Kostenstelle: events.station_code
+    Auftrag: events.order_id
+    Vorgang: events.operation_seq
+    Rueckmeldeart: events.event_type
+    Ist-Datum:
+      date part of: events.at
+    Ist-Uhrzeit:
+      time part of: events.at
+    Gutmenge: events.quantity_units
+    Ausschuss: events.scrap_units
+    Stoerursache: events.down_reason_code
+    Ausschussgrund: events.scrap_reason_code
+    Personalnummer: personal (dropped on read, never shown or sent)
+  CRHD_Arbeitsplaetze.txt:
+    Arbeitsplatz: resources.resource_code
+    Kurztext: resources.name
+    Kostenstelle:
+    - resources.station_code
+    - stations.name
+    - stations.station_code
+  Fremdvergabe.txt:
+    Vorgangstext: outsourcing.operation
+    Preis je Stk: outsourcing.price_eur_cents_per_unit
+  KAKO_Kapazitaet.txt:
+    Arbeitsplatz: calendar.resource_code
+    Art: calendar.kind
+    Beginn-Datum:
+      date part of: calendar.start_at
+    Beginn-Uhrzeit:
+      time part of: calendar.start_at
+    Ende-Datum:
+      date part of: calendar.end_at
+    Ende-Uhrzeit:
+      time part of: calendar.end_at
+    Uebernommen: calendar.covered
+  Kostensaetze.txt:
+    Arbeitsplatz: capacity_costs.resource_code
+    Ueberstundensatz: capacity_costs.overtime_eur_cents_per_h
+    Zusatzschicht: capacity_costs.extra_shift_eur_cents
+  MARA_Material.txt:
+    Material: products.sku
+    Materialkurztext: products.name
+    Warengruppe: products.family
+    Farbgruppe: products.setup_family
+    Verkaufspreis: products.sales_price_eur_cents
+    Variable Kosten: products.truly_variable_cost_eur_cents
+  PLPO_Arbeitsplan.txt:
+    Material: routings.sku
+    Vorgang: routings.operation_seq
+    Vorgangstext: routings.operation
+    Arbeitsplatz: routings.resource_code
+    Alternativ-Arbeitsplatz: routings.alternative_resource_codes
+    Ruestzeit (MIN): routings.standard_setup_min
+    Bearbeitungszeit je Stk (MIN): routings.standard_run_min_per_unit
+  Ruestmatrix.txt:
+    Arbeitsplatz: changeovers.resource_code
+    Von Farbe: changeovers.from_setup_family
+    Nach Farbe: changeovers.to_setup_family
+    Ruestzeit (MIN): changeovers.changeover_min
+  Ueberstunden.txt:
+    Arbeitsplatz: overtime.resource_code
+    Jahr: overtime.iso_year
+    KW: overtime.iso_week
+    Stunden: overtime.overtime_h
+code_tables:
+  resource:
+    1000-LASER: CUT-01
+    1000-SCHW1: WLD-01
+    1000-SCHW2: WLD-02
+    1000-LACK: PNT-01
+    1000-MONT: ASM-01
+    1000-VERP: PCK-01
+  station:
+    Cutting: CUTTING
+    Welding cell: WELD-CELL
+    Paint: PAINT
+    Assembly: ASSEMBLY
+    Packing: PACKING
+  event_status:
+    START: start
+    ENDE: end
+    RUEST_A: setup_start
+    RUEST_E: setup_end
+    STOER_A: down_start
+    STOER_E: down_end
+    AUSS: scrap
+    ANK: scan
+    ABG: move
+  order_status:
+    ERÖF: open
+    FREI: released
+    TRÜCK: in_progress
+    GLFT: shipped
+  calendar_kind:
+    Schicht: shift
+    Pause: break
+    Wartung: maintenance
+    Feiertag: holiday
+flow:
+  jobs: 445
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 109
+    share_pct: 24.5
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 94
+    share_pct: 21.1
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - WLD-02
+    - PCK-01
+    jobs: 81
+    share_pct: 18.2
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - CUT-01
+    - PCK-01
+    jobs: 62
+    share_pct: 13.9
+    rework: true
+  - steps:
+    - CUT-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 56
+    share_pct: 12.6
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-02
+    jobs: 20
+    share_pct: 4.5
+    rework: false
+  other_routes_jobs: 23
+  arrows:
+  - from: ASM-01
+    to: CUT-01
+    jobs: 62
+    share_of_leaving_pct: 19.3
+  - from: ASM-01
+    to: PCK-01
+    jobs: 259
+    share_of_leaving_pct: 80.7
+  - from: CUT-01
+    to: PCK-01
+    jobs: 62
+    share_of_leaving_pct: 12.6
+  - from: CUT-01
+    to: PNT-01
+    jobs: 56
+    share_of_leaving_pct: 11.4
+  - from: CUT-01
+    to: WLD-01
+    jobs: 182
+    share_of_leaving_pct: 37.1
+  - from: CUT-01
+    to: WLD-02
+    jobs: 191
+    share_of_leaving_pct: 38.9
+  - from: PNT-01
+    to: ASM-01
+    jobs: 321
+    share_of_leaving_pct: 100.0
+  - from: WLD-01
+    to: PNT-01
+    jobs: 95
+    share_of_leaving_pct: 54.0
+  - from: WLD-01
+    to: WLD-02
+    jobs: 81
+    share_of_leaving_pct: 46.0
+  - from: WLD-02
+    to: PCK-01
+    jobs: 81
+    share_of_leaving_pct: 32.1
+  - from: WLD-02
+    to: PNT-01
+    jobs: 171
+    share_of_leaving_pct: 67.9
+notes: []

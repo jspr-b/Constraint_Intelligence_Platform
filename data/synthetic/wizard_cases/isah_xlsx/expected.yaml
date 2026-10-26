@@ -1,0 +1,236 @@
+case: isah_xlsx
+style: 'Isah-like export: one Excel workbook with a sheet per table, real Excel dates and numbers, Dutch
+  names'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_b
+plant_answer: data/synthetic/plant_b/expected_answers.yaml
+answer: plant_answer
+format:
+  delimiter: ','
+  decimal: .
+  datetime: '%Y-%m-%d %H:%M'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 0
+  totals_line_at_end: false
+  byte_order_mark: false
+files:
+  isah_export.xlsx#Artikelen:
+    role: products
+  isah_export.xlsx#Bewerkingen:
+    role: routings
+  isah_export.xlsx#Capaciteit:
+    role: calendar
+  isah_export.xlsx#Machines:
+    role:
+    - resources
+    - stations
+  isah_export.xlsx#Omstellen:
+    role: changeovers
+  isah_export.xlsx#Overuren:
+    role: overtime
+  isah_export.xlsx#Productieorders:
+    role: orders
+  isah_export.xlsx#Tarieven:
+    role: capacity_costs
+  isah_export.xlsx#Terugmeldingen:
+    role: events
+  isah_export.xlsx#Uitbesteed:
+    role: outsourcing
+columns:
+  isah_export.xlsx#Artikelen:
+    Artikelcode: products.sku
+    Omschrijving: products.name
+    Artikelgroep: products.family
+    Lakgroep: products.setup_family
+    Verkoopprijs excl: products.sales_price_eur_cents
+    Kostprijs variabel: products.truly_variable_cost_eur_cents
+  isah_export.xlsx#Bewerkingen:
+    Artikelcode: routings.sku
+    Volgnr: routings.operation_seq
+    Omschrijving bewerking: routings.operation
+    Machinecode: routings.resource_code
+    Uitwijkmachine: routings.alternative_resource_codes
+    Insteltijd: routings.standard_setup_min
+    Bewerkingstijd per stuk: routings.standard_run_min_per_unit
+  isah_export.xlsx#Capaciteit:
+    Machinecode: calendar.resource_code
+    Soort: calendar.kind
+    Van: calendar.start_at
+    Tot: calendar.end_at
+    Overgenomen: calendar.covered
+  isah_export.xlsx#Machines:
+    Machinecode: resources.resource_code
+    Machine: resources.name
+    Kostenplaats:
+    - resources.station_code
+    - stations.name
+    - stations.station_code
+  isah_export.xlsx#Omstellen:
+    Machinecode: changeovers.resource_code
+    Van kleurgroep: changeovers.from_setup_family
+    Naar kleurgroep: changeovers.to_setup_family
+    Omsteltijd (min): changeovers.changeover_min
+  isah_export.xlsx#Overuren:
+    Machinecode: overtime.resource_code
+    Jaar: overtime.iso_year
+    Week: overtime.iso_week
+    Overuren: overtime.overtime_h
+  isah_export.xlsx#Productieorders:
+    Productieorder: orders.order_id
+    Artikelcode: orders.sku
+    Order aantal: orders.quantity_units
+    Gevraagde leverdatum: orders.due_at
+    Status: orders.status
+    Vrijgavedatum: orders.released_at
+    Afleverdatum: orders.shipped_at
+    Materiaal binnen: orders.material_ready_at
+  isah_export.xlsx#Tarieven:
+    Machinecode: capacity_costs.resource_code
+    Overwerk per uur: capacity_costs.overtime_eur_cents_per_h
+    Extra dienst: capacity_costs.extra_shift_eur_cents
+  isah_export.xlsx#Terugmeldingen:
+    Machinecode: events.resource_code
+    Kostenplaats: events.station_code
+    Productieorder: events.order_id
+    Volgnr: events.operation_seq
+    Meldingssoort: events.event_type
+    Datum tijd: events.at
+    Aantal goed: events.quantity_units
+    Aantal afkeur: events.scrap_units
+    Storingsoorzaak: events.down_reason_code
+    Afkeuroorzaak: events.scrap_reason_code
+    Personeelsnr: personal (dropped on read, never shown or sent)
+  isah_export.xlsx#Uitbesteed:
+    Bewerking: outsourcing.operation
+    Prijs per stuk: outsourcing.price_eur_cents_per_unit
+code_tables:
+  resource:
+    SNIJ1: CUT-01
+    LAS1: WLD-01
+    LAS2: WLD-02
+    LAK1: PNT-01
+    MONT1: ASM-01
+    INPAK1: PCK-01
+  station:
+    Cutting: CUTTING
+    Welding cell: WELD-CELL
+    Paint: PAINT
+    Assembly: ASSEMBLY
+    Packing: PACKING
+  event_status:
+    GESTART: start
+    GEREED: end
+    OMSTEL_START: setup_start
+    OMSTEL_EINDE: setup_end
+    STORING_START: down_start
+    STORING_EINDE: down_end
+    AFKEUR: scrap
+    AANKOMST: scan
+    VERTREK: move
+  order_status:
+    Open: open
+    Vrijgegeven: released
+    In bewerking: in_progress
+    Verzonden: shipped
+  calendar_kind:
+    Dienst: shift
+    Pauze: break
+    Onderhoud: maintenance
+    Feestdag: holiday
+flow:
+  jobs: 212
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 62
+    share_pct: 29.2
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - WLD-02
+    - PCK-01
+    jobs: 51
+    share_pct: 24.1
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - CUT-01
+    - PCK-01
+    jobs: 38
+    share_pct: 17.9
+    rework: true
+  - steps:
+    - CUT-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 36
+    share_pct: 17.0
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 25
+    share_pct: 11.8
+    rework: false
+  other_routes_jobs: 0
+  arrows:
+  - from: ASM-01
+    to: CUT-01
+    jobs: 38
+    share_of_leaving_pct: 23.6
+  - from: ASM-01
+    to: PCK-01
+    jobs: 123
+    share_of_leaving_pct: 76.4
+  - from: CUT-01
+    to: PCK-01
+    jobs: 38
+    share_of_leaving_pct: 15.2
+  - from: CUT-01
+    to: PNT-01
+    jobs: 36
+    share_of_leaving_pct: 14.4
+  - from: CUT-01
+    to: WLD-01
+    jobs: 76
+    share_of_leaving_pct: 30.4
+  - from: CUT-01
+    to: WLD-02
+    jobs: 100
+    share_of_leaving_pct: 40.0
+  - from: PNT-01
+    to: ASM-01
+    jobs: 161
+    share_of_leaving_pct: 100.0
+  - from: WLD-01
+    to: PNT-01
+    jobs: 25
+    share_of_leaving_pct: 32.9
+  - from: WLD-01
+    to: WLD-02
+    jobs: 51
+    share_of_leaving_pct: 67.1
+  - from: WLD-02
+    to: PCK-01
+    jobs: 51
+    share_of_leaving_pct: 33.8
+  - from: WLD-02
+    to: PNT-01
+    jobs: 100
+    share_of_leaving_pct: 66.2
+notes:
+- Dates and numbers are real Excel values, not text; order numbers are numbers.

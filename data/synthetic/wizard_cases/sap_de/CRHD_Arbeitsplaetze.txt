@@ -1,0 +1,7 @@
+Arbeitsplatz	Kurztext	Kostenstelle
+1000-LASER	Laser cutting	Cutting
+1000-SCHW1	Welding 1	Welding cell
+1000-SCHW2	Welding 2	Welding cell
+1000-LACK	Paint line	Paint
+1000-MONT	Assembly	Assembly
+1000-VERP	Packing	Packing

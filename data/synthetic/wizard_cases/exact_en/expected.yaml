@@ -1,0 +1,242 @@
+case: exact_en
+style: 'Exact Globe-like export in English: comma separated, ISO dates, decimal point'
+rule: ADR-0011. Derived from the plant's true mapping before the wizard exists; never edited.
+plant: plant_a
+plant_answer: data/synthetic/plant_a/expected_answers.yaml
+answer: plant_answer
+format:
+  delimiter: ','
+  decimal: .
+  datetime: '%Y-%m-%d %H:%M'
+  timezone: Europe/Amsterdam
+  title_lines_above_header: 0
+  totals_line_at_end: false
+  byte_order_mark: false
+files:
+  Changeovers.csv:
+    role: changeovers
+  Customers.csv:
+    role: not_used
+    reason: 'Customer list: not needed to find what limits output.'
+  Items.csv:
+    role: products
+  Overtime.csv:
+    role: overtime
+  ProductionOrders.csv:
+    role: orders
+  ResourceCosts.csv:
+    role: capacity_costs
+  Resources.csv:
+    role:
+    - resources
+    - stations
+  Roster.csv:
+    role: calendar
+  Routings.csv:
+    role: routings
+  ShopFloorEvents.csv:
+    role: events
+  Subcontracting.csv:
+    role: outsourcing
+columns:
+  Changeovers.csv:
+    Resource: changeovers.resource_code
+    From colour: changeovers.from_setup_family
+    To colour: changeovers.to_setup_family
+    Changeover (min): changeovers.changeover_min
+  Items.csv:
+    Item code: products.sku
+    Description: products.name
+    Item group: products.family
+    Colour group: products.setup_family
+    Sales price: products.sales_price_eur_cents
+    Variable cost: products.truly_variable_cost_eur_cents
+  Overtime.csv:
+    Resource: overtime.resource_code
+    Year: overtime.iso_year
+    Week: overtime.iso_week
+    Hours: overtime.overtime_h
+  ProductionOrders.csv:
+    Order number: orders.order_id
+    Item code: orders.sku
+    Quantity: orders.quantity_units
+    Delivery date: orders.due_at
+    Status: orders.status
+    Released on: orders.released_at
+    Delivered on: orders.shipped_at
+    Material available: orders.material_ready_at
+  ResourceCosts.csv:
+    Resource: capacity_costs.resource_code
+    Overtime rate: capacity_costs.overtime_eur_cents_per_h
+    Extra shift cost: capacity_costs.extra_shift_eur_cents
+  Resources.csv:
+    Resource: resources.resource_code
+    Description: resources.name
+    Department:
+    - resources.station_code
+    - stations.name
+    - stations.station_code
+  Roster.csv:
+    Resource: calendar.resource_code
+    Type: calendar.kind
+    From: calendar.start_at
+    To: calendar.end_at
+    Covered: calendar.covered
+  Routings.csv:
+    Item code: routings.sku
+    Step no: routings.operation_seq
+    Operation: routings.operation
+    Resource: routings.resource_code
+    Alternative resource: routings.alternative_resource_codes
+    Setup time (min): routings.standard_setup_min
+    Run time per unit (min): routings.standard_run_min_per_unit
+  ShopFloorEvents.csv:
+    Resource: events.resource_code
+    Department: events.station_code
+    Order number: events.order_id
+    Step no: events.operation_seq
+    Event: events.event_type
+    Timestamp: events.at
+    Good qty: events.quantity_units
+    Rejected qty: events.scrap_units
+    Breakdown code: events.down_reason_code
+    Reject code: events.scrap_reason_code
+    Employee: personal (dropped on read, never shown or sent)
+  Subcontracting.csv:
+    Operation: outsourcing.operation
+    Unit price: outsourcing.price_eur_cents_per_unit
+code_tables:
+  resource:
+    SNIJ1: CUT-01
+    LAS1: WLD-01
+    LAS2: WLD-02
+    LAK1: PNT-01
+    MONT1: ASM-01
+    INPAK1: PCK-01
+  station:
+    Cutting: CUTTING
+    Welding cell: WELD-CELL
+    Paint: PAINT
+    Assembly: ASSEMBLY
+    Packing: PACKING
+  event_status:
+    STARTED: start
+    FINISHED: end
+    SETUP BEGIN: setup_start
+    SETUP END: setup_end
+    BREAKDOWN: down_start
+    REPAIRED: down_end
+    REJECTED: scrap
+    ARRIVED: scan
+    DEPARTED: move
+  order_status:
+    Open: open
+    Released: released
+    In process: in_progress
+    Delivered: shipped
+  calendar_kind:
+    Shift: shift
+    Break: break
+    Maintenance: maintenance
+    Public holiday: holiday
+flow:
+  jobs: 482
+  rule: steps of a job in order of their start touchpoints; a restart at the same step is one visit; rework
+    is a step visited again later
+  routes:
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 120
+    share_pct: 24.9
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 101
+    share_pct: 21.0
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-01
+    - WLD-02
+    - PCK-01
+    jobs: 76
+    share_pct: 15.8
+    rework: false
+  - steps:
+    - CUT-01
+    - PNT-01
+    - ASM-01
+    - PCK-01
+    jobs: 53
+    share_pct: 11.0
+    rework: false
+  - steps:
+    - CUT-01
+    - WLD-02
+    - PNT-01
+    - ASM-01
+    - CUT-01
+    - PCK-01
+    jobs: 52
+    share_pct: 10.8
+    rework: true
+  - steps:
+    - CUT-01
+    jobs: 37
+    share_pct: 7.7
+    rework: false
+  other_routes_jobs: 43
+  arrows:
+  - from: ASM-01
+    to: CUT-01
+    jobs: 52
+    share_of_leaving_pct: 16.0
+  - from: ASM-01
+    to: PCK-01
+    jobs: 274
+    share_of_leaving_pct: 84.0
+  - from: CUT-01
+    to: PCK-01
+    jobs: 52
+    share_of_leaving_pct: 10.5
+  - from: CUT-01
+    to: PNT-01
+    jobs: 53
+    share_of_leaving_pct: 10.7
+  - from: CUT-01
+    to: WLD-01
+    jobs: 204
+    share_of_leaving_pct: 41.0
+  - from: CUT-01
+    to: WLD-02
+    jobs: 188
+    share_of_leaving_pct: 37.8
+  - from: PNT-01
+    to: ASM-01
+    jobs: 328
+    share_of_leaving_pct: 100.0
+  - from: WLD-01
+    to: PNT-01
+    jobs: 101
+    share_of_leaving_pct: 57.1
+  - from: WLD-01
+    to: WLD-02
+    jobs: 76
+    share_of_leaving_pct: 42.9
+  - from: WLD-02
+    to: PCK-01
+    jobs: 76
+    share_of_leaving_pct: 30.3
+  - from: WLD-02
+    to: PNT-01
+    jobs: 175
+    share_of_leaving_pct: 69.7
+notes: []
