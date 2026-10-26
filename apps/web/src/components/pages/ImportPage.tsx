@@ -13,6 +13,7 @@ import { conversionLabel, fieldLabel } from "@/lib/model";
 import { Count } from "../Figure";
 import { ImportChanges, type ImportEvents } from "../ImportChanges";
 import { DeletePlantData } from "../DeleteImport";
+import { ExportFound } from "../ExportFound";
 import { ImportHistory } from "../ImportHistory";
 import { ImportPreview } from "../ImportPreview";
 import { PageHeader } from "../PageHeader";
@@ -175,7 +176,18 @@ export function ImportPage() {
     status: string;
     detail: string;
   }[];
-  const runBlocked = usable.length === 0 ? t("runNoFiles") : null;
+  const found = latest?.recognised ?? null;
+  // The built-in format must read the event log the wizard found; a file that only shares a
+  // name with the format (e.g. Rooster.csv in an hour-bookings export) is not enough.
+  const logs = found?.minimum.find((m) => m.key === "events")?.tables ?? [];
+  const formatReadsLog =
+    !found || logs.some((tb) => usable.some((f) => f.name === tb.split("#")[0]));
+  const runBlocked =
+    usable.length > 0 && formatReadsLog
+      ? null
+      : found && found.minimum.every((m) => m.tables.length > 0)
+        ? t("runNotMatched")
+        : t("runNoFiles");
   const n = (value: number) => value.toLocaleString(locale);
 
   /** Run the import, with its state; on the Upload and the Map columns step. */
@@ -213,8 +225,15 @@ export function ImportPage() {
     </>
   );
 
+  // The wizard reads title lines, totals lines and sheets the built-in check does not; when it
+  // read the file, its result counts, so the two panels never disagree.
+  const wizardRead = (f: FileCheck) =>
+    found?.tables.filter((tb) => tb.file === f.name && tb.problem === null) ?? [];
   const fileStatus = (f: FileCheck) => {
+    if (!f.readable && wizardRead(f).length > 0) return { glyph: "●", text: t("fileRead") };
     if (!f.readable) return { glyph: "✕", text: t(`problem.${f.problem ?? "not_text"}`) };
+    if (!f.recognised_as && found?.tables.some((tb) => tb.file === f.name && tb.role !== null))
+      return { glyph: "●", text: t("fileRead") };
     if (!f.recognised_as) return { glyph: "▲", text: t("notRecognised") };
     return { glyph: "●", text: t("readyToImport") };
   };
@@ -281,7 +300,7 @@ export function ImportPage() {
                       ref={files}
                       type="file"
                       multiple
-                      accept=".csv,.xlsx"
+                      accept=".csv,.txt,.tsv,.xlsx,.zip"
                       className="text-sm text-text file:mr-3 file:rounded-control file:border file:border-line-strong file:bg-surface file:px-3 file:py-1.5 file:text-text"
                     />
                   )}
@@ -302,7 +321,15 @@ export function ImportPage() {
               )}
             </Panel>
           )}
-          {latest && (
+          {latest && found && (
+            <ExportFound
+              importId={latest.import_id}
+              found={found}
+              canAnswer={changeable}
+              onChanged={() => void refresh()}
+            />
+          )}
+          {latest && !found && (
             <Panel label={t("neededLabel")}>
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
                 {latest.needed
@@ -333,7 +360,7 @@ export function ImportPage() {
               <p className="m-0 mt-2 text-xs text-muted">{t("neededNote")}</p>
             </Panel>
           )}
-          {latest && latest.needed.some((need) => need.minimum === false) && (
+          {latest && !found && latest.needed.some((need) => need.minimum === false) && (
             <Panel label={t("optionalLabel")}>
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
                 {latest.needed
@@ -406,7 +433,12 @@ export function ImportPage() {
                           <tr className="border-t border-line">
                             <td className={`${TD} font-mono text-xs`}>{f.name}</td>
                             <td className={TD}>
-                              {f.recognised_as ? t(`source.${f.recognised_as}`) : "—"}
+                              {f.recognised_as
+                                ? t(`source.${f.recognised_as}`)
+                                : found?.tables
+                                    .filter((tb) => tb.file === f.name && tb.role !== null)
+                                    .map((tb) => t(`found.role.${tb.role ?? "events"}`))
+                                    .join("; ") || "—"}
                               {f.feeds.length > 0 && (
                                 <span className="block text-xs text-muted">
                                   {t("unlocksLabel")}:{" "}
@@ -420,6 +452,12 @@ export function ImportPage() {
                                   value={f.rows}
                                   label={`${f.name} · ${t("colRows")}`}
                                   source={{ what: tf("src.upload", { file: f.name }) }}
+                                />
+                              ) : wizardRead(f).length > 0 ? (
+                                <Count
+                                  value={wizardRead(f).reduce((n, tb) => n + tb.rows, 0)}
+                                  label={`${f.name} · ${t("colRows")}`}
+                                  source={{ what: tf("src.found.rows") }}
                                 />
                               ) : (
                                 "—"
@@ -534,7 +572,7 @@ export function ImportPage() {
                             ref={changeInput}
                             type="file"
                             multiple
-                            accept=".csv,.xlsx"
+                            accept=".csv,.txt,.tsv,.xlsx,.zip"
                             className="text-sm text-text file:mr-3 file:rounded-control file:border file:border-line-strong file:bg-surface file:px-3 file:py-1.5 file:text-text"
                           />
                         )}
@@ -564,13 +602,13 @@ export function ImportPage() {
                     })}
                   </p>
                 )}
-                {latest.status === "uploaded" && usable.length > 0 && (
+                {latest.status === "uploaded" && runBlocked === null && (
                   <ImportPreview
                     importId={latest.import_id}
                     files={checks.map((f) => `${f.name}:${f.rows}`).join()}
                   />
                 )}
-                {ignored.length > 0 && (
+                {ignored.length > 0 && !found && (
                   <p className="m-0 text-sm">
                     <span aria-hidden="true">▲</span>{" "}
                     {t("ignoredFiles", {

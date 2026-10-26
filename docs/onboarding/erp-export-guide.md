@@ -20,9 +20,9 @@ Breaks and holidays usually come in the shift sheet; breaks add the stagger-brea
 
 ## Format
 
-- One file per export, named as above (e.g. `orders.csv`), all files of one export uploaded together.
-- First row: column names. One row per record. No totals or blank title rows.
-- CSV with `;` as separator and `,` as decimal point is fine (Dutch Excel default); so is `.xlsx`.
+- Your own file names and layout are fine: upload the whole export at once (all files, or one zip). The app works out what each file is and how the files link, says how sure it is, and asks when it cannot tell (ADR-0011). The names above are what the app reads without any question.
+- CSV, TXT (tab separated) and `.xlsx` (one table per sheet) all work, with any common separator; title lines above the column names and a totals line at the end are skipped.
+- One row per record, column names in one row.
 - Dates and times as your system writes them (e.g. `13-10-2026 07:15`); tell us the format once. Times are local plant time; we convert to UTC.
 - Codes as they are in your system (step codes, status codes, stop reasons). We translate them with code tables; an unknown code becomes a rejected row with its reason, never a guess.
 - Money in euros with decimals (e.g. `980,00`).

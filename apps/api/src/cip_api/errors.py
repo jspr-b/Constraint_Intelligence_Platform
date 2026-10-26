@@ -131,11 +131,12 @@ CATALOG: dict[str, tuple[int, str]] = {
         "Type the plant code {plant} exactly to confirm. Nothing was deleted.",
     ),
     "no_files": (422, "Choose at least one file to upload."),
-    "bad_file_name": (
+    "no_table_files": (
         422,
-        "Only .csv or .xlsx files with plain names (letters, digits, dashes and underscores) "
-        "can be uploaded.",
+        "None of these files is a table we can read. Upload CSV, TXT or Excel files, or a zip "
+        "with them.",
     ),
+    "table_not_found": (404, "That file or sheet is not in this upload. Reload the page."),
     "file_too_large": (
         413,
         "A file is larger than {limit_mb} MB. Split the export or ask support.",

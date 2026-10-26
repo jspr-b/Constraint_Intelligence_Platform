@@ -440,6 +440,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/tables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Answer Table
+         * @description The client says what a table is, or skips it (ADR-0011 §1: the client confirms).
+         */
+        put: operations["answer_table_imports__import_id__tables_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/meta": {
         parameters: {
             query?: never;
@@ -1614,6 +1634,7 @@ export interface components {
             optional_set: components["schemas"]["MinimumOut"][];
             /** Plant Code */
             plant_code: string;
+            recognised?: components["schemas"]["RecognisedOut"] | null;
             /** Replaced By */
             replaced_by?: string | null;
             /** Replaces */
@@ -1654,6 +1675,23 @@ export interface components {
             /** Plant Code */
             plant_code?: string | null;
             role: components["schemas"]["Role"];
+        };
+        /** LinkOut */
+        LinkOut: {
+            /** Column */
+            column: string;
+            /** Found */
+            found: number;
+            /** Is List */
+            is_list: boolean;
+            /** Table */
+            table: string;
+            /** To Column */
+            to_column: string;
+            /** To Table */
+            to_table: string;
+            /** Total */
+            total: number;
         };
         /** ListChangeOut */
         ListChangeOut: {
@@ -1753,6 +1791,16 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** MinimumRoleOut */
+        MinimumRoleOut: {
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "events" | "steps" | "calendar";
+            /** Tables */
+            tables: string[];
+        };
         /** MissingOut */
         MissingOut: {
             /** Confidence Impact */
@@ -1789,6 +1837,19 @@ export interface components {
             present: boolean;
             /** Sources */
             sources: string[];
+        };
+        /**
+         * NotRead
+         * @description A file of the upload that is not a table, kept out with the reason.
+         */
+        NotRead: {
+            /** Name */
+            name: string;
+            /**
+             * Problem
+             * @enum {string}
+             */
+            problem: "not_a_table_file" | "unreadable_zip";
         };
         /** OidcLoginIn */
         OidcLoginIn: {
@@ -1989,6 +2050,22 @@ export interface components {
             values: {
                 [key: string]: string | number;
             };
+        };
+        /**
+         * RecognisedOut
+         * @description What the app found in the upload (ADR-0011 §2).
+         */
+        RecognisedOut: {
+            /** Links */
+            links: components["schemas"]["LinkOut"][];
+            /** Minimum */
+            minimum: components["schemas"]["MinimumRoleOut"][];
+            /** Not Read */
+            not_read: components["schemas"]["NotRead"][];
+            /** Tables */
+            tables: components["schemas"]["TableOut"][];
+            /** To Answer */
+            to_answer: string[];
         };
         /**
          * RefreshOut
@@ -2212,6 +2289,45 @@ export interface components {
              * @enum {string}
              */
             state: "done" | "todo" | "later";
+        };
+        /** TableAnswer */
+        TableAnswer: {
+            /** Role */
+            role: ("events" | "hour_bookings" | "steps" | "calendar" | "orders" | "products" | "routings" | "teams" | "team_shifts" | "overtime" | "capacity_costs" | "changeovers" | "outsourcing") | "skip";
+            /** Table */
+            table: string;
+        };
+        /** TableOut */
+        TableOut: {
+            /** Columns */
+            columns: number;
+            /** File */
+            file: string;
+            /** Personal Columns */
+            personal_columns: number;
+            /** Problem */
+            problem: string | null;
+            /** Reasons */
+            reasons: string[];
+            /** Role */
+            role: ("events" | "hour_bookings" | "steps" | "calendar" | "orders" | "products" | "routings" | "teams" | "team_shifts" | "overtime" | "capacity_costs" | "changeovers" | "outsourcing") | null;
+            /** Rows */
+            rows: number;
+            /** Sheet */
+            sheet: string | null;
+            /**
+             * Skipped
+             * @default false
+             */
+            skipped: boolean;
+            /** Sure */
+            sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
+            /** Table */
+            table: string;
+            /** Title Lines */
+            title_lines: number;
+            /** Totals Lines */
+            totals_lines: number;
         };
         /** TeamOut */
         TeamOut: {
@@ -3126,6 +3242,45 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answer_table_imports__import_id__tables_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TableAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

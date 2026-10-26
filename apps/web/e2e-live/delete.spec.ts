@@ -10,7 +10,7 @@ async function uploadAndRun(page: Page, folder: string) {
   await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-D");
   const dir = join(SPLIT, folder);
   await page
-    .getByLabel("CSV or Excel exports")
+    .getByLabel("CSV, TXT or Excel files, or a zip")
     .setInputFiles(readdirSync(dir).map((f) => join(dir, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });

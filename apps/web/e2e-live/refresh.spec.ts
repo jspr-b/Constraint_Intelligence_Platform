@@ -26,7 +26,7 @@ test("a calendar edit recalculates the numbers by itself and every page says so"
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-R");
   await page
-    .getByLabel("CSV or Excel exports")
+    .getByLabel("CSV, TXT or Excel files, or a zip")
     .setInputFiles(readdirSync(CLEAN).map((f) => join(CLEAN, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });

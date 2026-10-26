@@ -107,7 +107,7 @@ Plant and stations (#1–2) are filled in together during kick-off. Everything e
 
 | Stage | How | When |
 |---|---|---|
-| 1. File upload | CSV/Excel exports on the Import page, mapped once and saved | Diagnostic and MVP |
+| 1. File upload | The whole export (CSV, TXT, Excel or a zip) on the Import page; the app recognises each file and asks what it cannot tell; mapped once and saved | Diagnostic and MVP |
 | 2. Scheduled export | Same files nightly/hourly via SFTP, or a read-only database view | Pilot |
 | 3. Live connections | ERP APIs, machine signals via OPC UA / MQTT | Later |
 

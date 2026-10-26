@@ -243,9 +243,9 @@
     "stepMap": "Map columns",
     "stepCheck": "Results and data checklist",
     "uploadLabel": "Upload",
-    "chooseFiles": "CSV or Excel exports",
+    "chooseFiles": "CSV, TXT or Excel files, or a zip",
     "upload": "Upload files",
-    "uploadNote": "Upload all files of one export together. Files stay in your company's private space; employee columns are never read.",
+    "uploadNote": "Upload the whole export at once: all its files, or one zip. We work out what each file is and you check it. Files stay in your company's private space; employee columns are never read.",
     "filesLabel": "Files · standard layout",
     "noImport": "No import for this plant yet.",
     "colFile": "File",
@@ -297,8 +297,8 @@
     "colDetail": "Detail",
     "toDataQuality": "Open the data quality report",
     "howTitle": "How importing works",
-    "how1": "Upload the exports from your ERP, MES or spreadsheets (CSV or Excel). To start you need only three: the event log, the steps list and the shift sheet. Upload all files of one export together.",
-    "how2": "Check each file here before anything is imported: is it readable, which export is it, how many rows and columns, and a preview of the first rows.",
+    "how1": "Upload the whole export from your ERP, MES or spreadsheets at once: CSV, TXT or Excel files, or one zip. To start you need only three: the event log (or hour bookings), the steps list and the shift sheet.",
+    "how2": "We work out what each file or sheet is and how the files link, and say how sure we are. Check it, and tell us what a file is when we could not tell.",
     "how3": "Look at how your columns map to the standard model (step 2), then run the import. It runs in the background; this page updates by itself.",
     "how4": "See per file what was imported and what was rejected, with the reason and line numbers (step 3), and the data checklist.",
     "howPrivacy": "Columns with personal data (e.g. employee names) are dropped while a file is read: their values are never shown, imported or stored. The platform never writes anything back to your ERP.",
@@ -584,7 +584,94 @@
       "typeCode": "Type {plant} to confirm",
       "confirm": "Delete everything",
       "cancel": "Cancel"
-    }
+    },
+    "found": {
+      "label": "What we found",
+      "summary": "{tables, plural, one {# table} other {# tables}} in {files, plural, one {# file} other {# files}}",
+      "minimumLabel": "Needed to start a diagnostic",
+      "minimum": {
+        "events": "Event log or hour bookings",
+        "steps": "Steps list",
+        "calendar": "Shift sheet"
+      },
+      "foundIn": "Found in",
+      "missing": {
+        "events": "Not found yet. Upload the file with a start and finish per job and step, or tell us below which file it is.",
+        "steps": "Not found yet. Upload the list of your steps (machines, benches), or tell us below which file it is.",
+        "calendar": "Not found yet. Upload the shift sheet, or tell us below which file it is."
+      },
+      "toAnswer": "{count, plural, one {We could not tell what one file is. Choose what it holds, or skip it.} other {We could not tell what # files are. Choose what each holds, or skip it.}}",
+      "tablesCaption": "Each file or sheet of the upload, what we think it is and how sure we are",
+      "colTable": "File or sheet",
+      "colWhat": "What it is",
+      "colSure": "How sure",
+      "colRows": "Rows",
+      "rowsLabel": "Rows in {table}",
+      "whatIs": "What is in {table}?",
+      "choose": "What is in this file?",
+      "skip": "Skip this file: not needed",
+      "skipped": "Skipped by you",
+      "notPlaced": "Not sure: tell us",
+      "sure": {
+        "sure": "Sure: its content and name agree",
+        "likely": "Likely: from its content; please check",
+        "unsure": "Not sure: only its name suggests this",
+        "confirmed": "You confirmed this"
+      },
+      "role": {
+        "events": "Event log: a start, finish or stop per job and step",
+        "hour_bookings": "Hour bookings: time booked per job and step",
+        "steps": "Steps list: your machines, benches and stations",
+        "calendar": "Shift sheet: shifts, breaks and maintenance per step",
+        "orders": "Jobs (orders): due dates, quantities and value",
+        "products": "Products: prices and variable costs",
+        "routings": "Routings: the steps each product goes through",
+        "teams": "Teams: which steps a team covers",
+        "team_shifts": "Team plan: team size per shift",
+        "overtime": "Overtime per step and week",
+        "capacity_costs": "Cost of overtime and extra shifts per step",
+        "changeovers": "Changeover times between product groups",
+        "outsourcing": "Outsourcing prices per operation"
+      },
+      "adds": {
+        "events": "Needed: shows when work passed each step.",
+        "hour_bookings": "Counts as the event log, with lower confidence: there are no scans, setups or stops.",
+        "steps": "Needed: the steps and their stations.",
+        "calendar": "Needed: when each step could work.",
+        "orders": "Adds late jobs and, with a job value, euros.",
+        "products": "Adds euros per product.",
+        "routings": "Adds standard times and raises confidence.",
+        "teams": "Finds a shared team as the bottleneck.",
+        "team_shifts": "Gives the team's size per shift.",
+        "overtime": "Shows overtime spent on each step.",
+        "capacity_costs": "Prices an extra shift or overtime.",
+        "changeovers": "Helps rank setup actions.",
+        "outsourcing": "Prices outsourcing an operation."
+      },
+      "personal": "{count, plural, one {1 personal column not read} other {# personal columns not read}}",
+      "problem": {
+        "empty": "Empty: nothing to read",
+        "no_header": "No header row found: the column names should be in one row",
+        "not_text": "Not a text file we can read",
+        "single_column": "One column only: not a table",
+        "unreadable_excel": "This Excel file cannot be opened (damaged or password protected)",
+        "not_a_table_file": "Not a table (CSV, TXT or Excel)"
+      },
+      "linksLabel": "How the files link",
+      "link": "uses the codes in",
+      "linkList": "lists codes from",
+      "linkFound": "{found} of {total} found",
+      "noExtras": "Only the needed files. Jobs with a value, products or routings would add euros and confidence.",
+      "notReadLabel": "Not read",
+      "notRead": {
+        "not_a_table_file": "not a table (CSV, TXT or Excel), so it was not stored",
+        "unreadable_zip": "this zip cannot be opened"
+      },
+      "titleLines": "{count, plural, one {1 title line above the header} other {# title lines above the header}}: not read as rows.",
+      "totalsLines": "{count, plural, one {A totals line at the end} other {# totals lines at the end}}: not read as rows."
+    },
+    "fileRead": "Read: see What we found",
+    "runNotMatched": "We know what each file is. Next: check how the columns match (step 2)."
   },
   "setup": {
     "label": "Plant setup",
@@ -833,12 +920,12 @@
     "upload": {
       "title": "Upload your exports",
       "todo": "Upload your event log, steps list and shift sheet from your ERP, MES or spreadsheets.",
-      "uploaded": "Files uploaded. Run the import to read them in.",
+      "uploaded": "Files uploaded. Check what we found in them, then run the import.",
       "running": "The import is running. This page updates by itself.",
       "failed": "The last import failed. Open Import to see why.",
       "done": "Your exports are imported.",
       "go": "Upload files",
-      "goRun": "Run the import",
+      "goRun": "Open Import",
       "goFailed": "See why",
       "calculating": "Your exports are imported. Calculating your numbers… this updates by itself.",
       "numbers_failed": "Your exports are imported, but the numbers could not be calculated. Open Import and run it again."
@@ -1161,7 +1248,10 @@
       "rejectedRows": "Rows the import's run could not read, in every file of this upload.",
       "fixedRows": "Rejected rows of this upload that are fixed or left out in the app (corrections in use).",
       "corrections": "Fixes in use for this plant: values fixed, rows left out and imported rows removed in the app.",
-      "deleteRemoved": "Events in use now that are gone after the delete: they came only from this upload. Counted by the engine by comparing the plant now with the plant rebuilt without it."
+      "deleteRemoved": "Events in use now that are gone after the delete: they came only from this upload. Counted by the engine by comparing the plant now with the plant rebuilt without it.",
+      "found": {
+        "rows": "Rows of this file or sheet as read, without the header, title lines above it, a totals line at the end and empty lines."
+      }
     },
     "pages": {
       "import": "Import",
@@ -1487,7 +1577,7 @@
       "missing": "Imported, but still missing: {items}.",
       "done": "Your exports are imported and cover what a diagnosis needs.",
       "goUpload": "Upload files",
-      "goRun": "Run the import",
+      "goRun": "Open Import",
       "goImport": "Open Import",
       "goQuality": "Open Data quality"
     },

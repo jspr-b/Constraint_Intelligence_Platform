@@ -96,10 +96,14 @@ def test_only_import_roles_upload(client_as: Callable[[str], TestClient]) -> Non
 
 def test_bad_uploads_are_refused(client_as: Callable[[str], TestClient]) -> None:
     it = client_as("it")
-    bad = [("files", ("../escape.csv", b"x", "text/csv"))]
-    assert it.post("/plants/PLANT-1/imports", files=bad).status_code == 422
+    # A folder in the name is dropped: the file lands inside the import as escape.csv.
+    escaped = it.post(
+        "/plants/PLANT-1/imports", files=[("files", ("../escape.csv", b"a;b\n", "text/csv"))]
+    )
+    assert escaped.status_code == 201 and escaped.json()["file_names"] == ["escape.csv"]
     exe = [("files", ("tool.exe", b"x", "application/octet-stream"))]
-    assert it.post("/plants/PLANT-1/imports", files=exe).status_code == 422
+    refused = it.post("/plants/PLANT-1/imports", files=exe)
+    assert (refused.status_code, refused.json()["code"]) == (422, "no_table_files")
     ok = [("files", ("orders.csv", b"a;b\n", "text/csv"))]
     assert it.post("/plants/NO-SUCH/imports", files=ok).status_code == 404
 

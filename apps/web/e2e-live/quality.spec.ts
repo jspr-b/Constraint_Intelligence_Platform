@@ -33,7 +33,7 @@ test("import plant_a with known defects, then Data quality shows the score and t
   await expect(page.getByText("No import for this plant yet.")).toBeVisible();
   const csv = join(ERP, "defects/csv");
   await page
-    .getByLabel("CSV or Excel exports")
+    .getByLabel("CSV, TXT or Excel files, or a zip")
     .setInputFiles(readdirSync(csv).map((f) => join(csv, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });

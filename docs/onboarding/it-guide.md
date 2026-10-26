@@ -28,7 +28,7 @@ What a mapping contains:
 
 | Stage | How | Status |
 |---|---|---|
-| 1. File upload | CSV/Excel exports on the Import page; the import runs in a background worker, then the data checklist and data quality report are updated | Available |
+| 1. File upload | The whole export on the Import page (CSV, TXT, Excel with several sheets, or a zip). The page shows what each file is, how sure, and how the files link; you name or skip a file it cannot place. The import runs in a background worker, then the data checklist and data quality report are updated | Available |
 | 2. Scheduled export | The same files dropped nightly or hourly on SFTP, or a read-only database view queried on a schedule | Planned for the pilot; shown as *not configured* on the Connections page |
 | 3. Live connections | ERP APIs; machine signals via OPC UA or MQTT through an edge gateway | Later |
 

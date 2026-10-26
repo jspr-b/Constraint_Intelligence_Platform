@@ -38,6 +38,14 @@ from cip_api.facts import FactRunOut, fact_run, queue_facts, start_facts
 from cip_api.jobs import enqueue
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
+from cip_api.wizard import (
+    NotRead,
+    RecognisedOut,
+    TableAnswer,
+    recognise_folder,
+    recognised_out,
+    save_export,
+)
 from cip_connectors.importer import Fixes, import_export
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
@@ -61,7 +69,7 @@ GENERIC_MAPPING = MAPPINGS / "generic" / "mapping.yaml"
 EXPORT_FORMATS = (GENERIC_MAPPING, MAPPINGS / "workshop_scans" / "mapping.yaml")
 """Export formats the Import page knows; the first one wins a tie."""
 INPUT_DATA = REPO / "docs" / "input-data.md"
-SAFE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}\.(csv|xlsx)$")
+SAFE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}\.(csv|txt|tsv|xlsx)$")
 View = Annotated[Ctx, Depends(require(page="import"))]
 Run = Annotated[Ctx, Depends(require(page="import", decision=Decision.IMPORT_RUN_DIAGNOSTIC))]
 
@@ -172,6 +180,9 @@ class ImportOut(BaseModel):
     deleted_at: datetime | None = None
     deleted_by_role: str | None = None
     """Who deleted it, as a role (never a name)."""
+    recognised: RecognisedOut | None = None
+    """What the mapping wizard found in the upload: each table's role and the links
+    (ADR-0011). None for uploads made before the wizard."""
 
 
 def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
@@ -364,6 +375,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
         file_names=[f["name"] for f in stored_files],
         deleted_at=row.deleted_at,
         deleted_by_role=_role_of(db, row.deleted_by) if row.deleted_by else None,
+        recognised=recognised_out(row.wizard),
     )
 
 
@@ -382,7 +394,7 @@ def _role_of(db: Connection, actor: str) -> str | None:
 
 COLUMNS = (
     "import_id, plant_code, status, created_at, files, report, error, actor, replaces, "
-    "deleted_at, deleted_by"
+    "deleted_at, deleted_by, wizard"
 )
 
 
@@ -395,39 +407,36 @@ def _row(db: Connection, import_id: uuid.UUID) -> Any:
     return row
 
 
-async def _save(folder: Path, files: list[UploadFile], settings: Settings) -> list[Path]:
-    """Write uploaded files into an import's source folder, with the size limit."""
-    for f in files:
-        if not f.filename or not SAFE_NAME.fullmatch(f.filename):
-            raise ApiProblem("bad_file_name")
-    folder.mkdir(parents=True, exist_ok=True)
-    limit = settings.max_upload_mb * 1024 * 1024
-    written = []
-    for f in files:
-        target = folder / str(f.filename)
-        part = target.with_suffix(target.suffix + ".part")
-        size = 0
-        with part.open("wb") as out:
-            while chunk := await f.read(1024 * 1024):
-                size += len(chunk)
-                if size > limit:
-                    out.close()
-                    part.unlink(missing_ok=True)
-                    raise ApiProblem("file_too_large", limit_mb=settings.max_upload_mb)
-                out.write(chunk)
-        part.replace(target)
-        written.append(target)
-    return written
-
-
-def _check_folder(db: Connection, folder: Path, import_id: uuid.UUID) -> list[dict[str, Any]]:
-    """Run the file check on every file in the source folder and store the result."""
+def _check_folder(
+    db: Connection,
+    folder: Path,
+    import_id: uuid.UUID,
+    not_read: list[NotRead] | None = None,
+    answers: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Run the file check and the wizard's recognition on every file in the source folder and
+    store both. Without ``not_read``/``answers`` the stored ones are kept."""
     present = sorted(p for p in folder.iterdir() if p.is_file() and not p.name.endswith(".part"))
     mapping = choose_mapping(p.name for p in present)
     stored = [check_file(p, mapping) for p in present]
+    before = (
+        db.execute(
+            text("SELECT wizard FROM imports WHERE import_id = :i"), {"i": import_id}
+        ).scalar_one_or_none()
+        or {}
+    )
+    if not_read is None:
+        not_read = [NotRead.model_validate(n) for n in before.get("not_read", [])]
+    tables = {p.name for p in present}
+    kept = {
+        k: v
+        for k, v in (before.get("answers", {}) if answers is None else answers).items()
+        if k.split("#", 1)[0] in tables
+    }
+    wizard = recognise_folder(folder, not_read, kept)
     db.execute(
-        text("UPDATE imports SET files = :f WHERE import_id = :i"),
-        {"f": json.dumps(stored), "i": import_id},
+        text("UPDATE imports SET files = :f, wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
+        {"f": json.dumps(stored), "w": json.dumps(wizard), "i": import_id},
     )
     return stored
 
@@ -450,9 +459,6 @@ async def upload(
         raise ApiProblem("plant_not_found")
     if not files:
         raise ApiProblem("no_files")
-    for f in files:
-        if not f.filename or not SAFE_NAME.fullmatch(f.filename):
-            raise ApiProblem("bad_file_name")
     import_id = ctx.db.execute(
         text(
             "INSERT INTO imports (tenant_id, plant_code, actor, slot_at) "
@@ -462,11 +468,11 @@ async def upload(
     ).scalar_one()
     folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id) / "source"
     try:
-        await _save(folder, files, settings)
+        _, not_read = await save_export(folder, files, settings)
     except ApiProblem:
         shutil.rmtree(folder.parent, ignore_errors=True)
         raise
-    stored = _check_folder(ctx.db, folder, import_id)
+    stored = _check_folder(ctx.db, folder, import_id, not_read, {})
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -590,12 +596,20 @@ async def change_files(
     if row.status == "done":
         target, folder = _new_version(settings, ctx, row)
     try:
-        written = await _save(folder, files, settings)
+        written, not_read = await save_export(folder, files, settings)
     except ApiProblem:
         if target != row.import_id:
             shutil.rmtree(folder.parent, ignore_errors=True)
         raise
-    _check_folder(ctx.db, folder, target)
+    if target != row.import_id:  # the new version keeps the answers given for the old one
+        ctx.db.execute(
+            text(
+                "UPDATE imports SET wizard = (SELECT wizard FROM imports WHERE import_id = :o) "
+                "WHERE import_id = :n"
+            ),
+            {"o": row.import_id, "n": target},
+        )
+    _check_folder(ctx.db, folder, target, not_read)
     for f in written:
         audit(
             ctx.db,
@@ -625,6 +639,14 @@ def remove_file(
     target = row.import_id
     if row.status == "done":
         target, folder = _new_version(settings, ctx, row)
+    if target != row.import_id:
+        ctx.db.execute(
+            text(
+                "UPDATE imports SET wizard = (SELECT wizard FROM imports WHERE import_id = :o) "
+                "WHERE import_id = :n"
+            ),
+            {"o": row.import_id, "n": target},
+        )
     (folder / name).unlink()
     _check_folder(ctx.db, folder, target)
     audit(
@@ -636,6 +658,35 @@ def remove_file(
         f"{row.plant_code}: {name}",
     )
     return _out(settings, ctx.principal.tenant_id, _row(ctx.db, target), ctx.db)
+
+
+@router.put("/imports/{import_id}/tables", response_model=ImportOut)
+def answer_table(
+    import_id: uuid.UUID,
+    answer: TableAnswer,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client says what a table is, or skips it (ADR-0011 §1: the client confirms)."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    if answer.table not in {t["table"] for t in stored.get("tables", [])}:
+        raise ApiProblem("table_not_found")
+    answers = {**stored.get("answers", {}), answer.table: answer.role}
+    stored["answers"] = answers
+    ctx.db.execute(
+        text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
+        {"w": json.dumps(stored), "i": import_id},
+    )
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        "import_table_named",
+        f"import:{import_id}",
+        f"{row.plant_code}: {answer.table} = {answer.role}",
+    )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
 
 
 # --- See what an upload changes before running it -----------------------------------------

@@ -27,7 +27,7 @@ test("the COO leaves fixing rows to IT; the planner sees why and who can", async
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-G");
   await page
-    .getByLabel("CSV or Excel exports")
+    .getByLabel("CSV, TXT or Excel files, or a zip")
     .setInputFiles(readdirSync(BROKEN).map((f) => join(BROKEN, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });

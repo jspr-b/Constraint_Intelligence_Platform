@@ -1791,6 +1791,16 @@
             "title": "Plant Code",
             "type": "string"
           },
+          "recognised": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecognisedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "replaced_by": {
             "anyOf": [
               {
@@ -1916,6 +1926,49 @@
           "role"
         ],
         "title": "InviteIn",
+        "type": "object"
+      },
+      "LinkOut": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "found": {
+            "title": "Found",
+            "type": "integer"
+          },
+          "is_list": {
+            "title": "Is List",
+            "type": "boolean"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "to_column": {
+            "title": "To Column",
+            "type": "string"
+          },
+          "to_table": {
+            "title": "To Table",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "table",
+          "column",
+          "to_table",
+          "to_column",
+          "found",
+          "total",
+          "is_list"
+        ],
+        "title": "LinkOut",
         "type": "object"
       },
       "ListChangeOut": {
@@ -2216,6 +2269,32 @@
         "title": "MinimumOut",
         "type": "object"
       },
+      "MinimumRoleOut": {
+        "properties": {
+          "key": {
+            "enum": [
+              "events",
+              "steps",
+              "calendar"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "tables"
+        ],
+        "title": "MinimumRoleOut",
+        "type": "object"
+      },
       "MissingOut": {
         "properties": {
           "confidence_impact": {
@@ -2282,6 +2361,29 @@
           "present"
         ],
         "title": "NeededOut",
+        "type": "object"
+      },
+      "NotRead": {
+        "description": "A file of the upload that is not a table, kept out with the reason.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "problem": {
+            "enum": [
+              "not_a_table_file",
+              "unreadable_zip"
+            ],
+            "title": "Problem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "problem"
+        ],
+        "title": "NotRead",
         "type": "object"
       },
       "OidcLoginIn": {
@@ -2890,6 +2992,55 @@
           "values"
         ],
         "title": "ReasonOut",
+        "type": "object"
+      },
+      "RecognisedOut": {
+        "description": "What the app found in the upload (ADR-0011 §2).",
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/LinkOut"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "minimum": {
+            "items": {
+              "$ref": "#/components/schemas/MinimumRoleOut"
+            },
+            "title": "Minimum",
+            "type": "array"
+          },
+          "not_read": {
+            "items": {
+              "$ref": "#/components/schemas/NotRead"
+            },
+            "title": "Not Read",
+            "type": "array"
+          },
+          "tables": {
+            "items": {
+              "$ref": "#/components/schemas/TableOut"
+            },
+            "title": "Tables",
+            "type": "array"
+          },
+          "to_answer": {
+            "items": {
+              "type": "string"
+            },
+            "title": "To Answer",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tables",
+          "links",
+          "minimum",
+          "not_read",
+          "to_answer"
+        ],
+        "title": "RecognisedOut",
         "type": "object"
       },
       "RefreshOut": {
@@ -3561,6 +3712,172 @@
           "state"
         ],
         "title": "StepOut",
+        "type": "object"
+      },
+      "TableAnswer": {
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "events",
+                  "hour_bookings",
+                  "steps",
+                  "calendar",
+                  "orders",
+                  "products",
+                  "routings",
+                  "teams",
+                  "team_shifts",
+                  "overtime",
+                  "capacity_costs",
+                  "changeovers",
+                  "outsourcing"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "skip",
+                "type": "string"
+              }
+            ],
+            "title": "Role"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "role"
+        ],
+        "title": "TableAnswer",
+        "type": "object"
+      },
+      "TableOut": {
+        "properties": {
+          "columns": {
+            "title": "Columns",
+            "type": "integer"
+          },
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "personal_columns": {
+            "title": "Personal Columns",
+            "type": "integer"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "events",
+                  "hour_bookings",
+                  "steps",
+                  "calendar",
+                  "orders",
+                  "products",
+                  "routings",
+                  "teams",
+                  "team_shifts",
+                  "overtime",
+                  "capacity_costs",
+                  "changeovers",
+                  "outsourcing"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet"
+          },
+          "skipped": {
+            "default": false,
+            "title": "Skipped",
+            "type": "boolean"
+          },
+          "sure": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sure",
+                  "likely",
+                  "unsure",
+                  "confirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sure"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "title_lines": {
+            "title": "Title Lines",
+            "type": "integer"
+          },
+          "totals_lines": {
+            "title": "Totals Lines",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "table",
+          "file",
+          "sheet",
+          "role",
+          "sure",
+          "reasons",
+          "rows",
+          "columns",
+          "personal_columns",
+          "title_lines",
+          "totals_lines",
+          "problem"
+        ],
+        "title": "TableOut",
         "type": "object"
       },
       "TeamOut": {
@@ -5683,6 +6000,108 @@
           }
         },
         "summary": "Run",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/imports/{import_id}/tables": {
+      "put": {
+        "description": "The client says what a table is, or skips it (ADR-0011 §1: the client confirms).",
+        "operationId": "answer_table_imports__import_id__tables_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableAnswer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Table",
         "tags": [
           "imports"
         ]

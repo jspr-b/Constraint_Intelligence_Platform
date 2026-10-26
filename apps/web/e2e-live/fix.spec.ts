@@ -26,7 +26,7 @@ test("IT fixes a rejected row in the app, sees it on Data quality, and undoes it
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-F");
   await page
-    .getByLabel("CSV or Excel exports")
+    .getByLabel("CSV, TXT or Excel files, or a zip")
     .setInputFiles(readdirSync(BROKEN).map((f) => join(BROKEN, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });

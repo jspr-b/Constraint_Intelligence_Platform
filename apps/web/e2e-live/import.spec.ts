@@ -16,9 +16,13 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
   await page.waitForLoadState("networkidle");
   await expect(page.getByText("No import for this plant yet.")).toBeVisible();
   const files = readdirSync(EXPORT).map((f) => join(EXPORT, f));
-  await page.getByLabel("CSV or Excel exports").setInputFiles(files);
+  await page.getByLabel("CSV, TXT or Excel files, or a zip").setInputFiles(files);
   await page.getByRole("button", { name: "Upload files" }).click();
-  await expect(page.getByRole("cell", { name: "mes_events.csv", exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: /Files · standard layout/ })
+      .getByRole("cell", { name: "mes_events.csv", exact: true }),
+  ).toBeVisible();
 
   // Step 1 tells what each file is before anything is imported.
   const eventsRow = page
