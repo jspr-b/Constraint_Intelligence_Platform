@@ -289,7 +289,12 @@ export interface paths {
         get: operations["get_import_imports__import_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Import
+         * @description Delete an upload or an import for real. One in use: the plant is rebuilt from the rest
+         *     and the answer recalculated; an earlier version it replaced comes back in use.
+         */
+        delete: operations["delete_import_imports__import_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -309,6 +314,26 @@ export interface paths {
          * @description Fix a value or leave a line out; checked by the import's rules, then the plant rebuilds.
          */
         post: operations["make_correction_imports__import_id__corrections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/delete-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Delete Preview
+         * @description Rebuild the plant without this import in a transaction that is rolled back, and compare.
+         */
+        get: operations["delete_preview_imports__import_id__delete_preview_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -600,6 +625,28 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Plant Data
+         * @description Delete every import, file and row of a plant (IT only, the plant code typed to confirm).
+         *     The plant itself, its accounts and station logins stay; the history keeps a line per
+         *     import.
+         */
+        delete: operations["delete_plant_data_plants__plant_code__data_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1237,6 +1284,42 @@ export interface components {
             decision: components["schemas"]["Decision"];
             role: components["schemas"]["Role"];
         };
+        /**
+         * DeletePreviewOut
+         * @description What deleting this import changes, from the engine's comparison (nothing is changed).
+         */
+        DeletePreviewOut: {
+            /** Corrections */
+            corrections: number;
+            /** Events After */
+            events_after: number;
+            /** Events Before */
+            events_before: number;
+            /** Events Removed */
+            events_removed: number;
+            /** Falls Back To */
+            falls_back_to: string | null;
+            /** Imports Left */
+            imports_left: number;
+            /** In Use */
+            in_use: boolean;
+            /** Lists */
+            lists: components["schemas"]["ListChangeOut"][];
+            /** Lists After */
+            lists_after: components["schemas"]["ListSourceOut"][];
+            /** Period After */
+            period_after: [
+                string | null,
+                string | null
+            ];
+            /** Period Before */
+            period_before: [
+                string | null,
+                string | null
+            ];
+            /** Warnings */
+            warnings: components["schemas"]["PreviewWarningOut"][];
+        };
         /** DetectionOut */
         DetectionOut: {
             agreement: components["schemas"]["FigureOut"];
@@ -1455,6 +1538,10 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** Deleted By Role */
+            deleted_by_role?: string | null;
             /** Error */
             error: string | null;
             /** Expected Files */
@@ -1462,6 +1549,11 @@ export interface components {
             facts?: components["schemas"]["FactRunOut"] | null;
             /** Failed Step */
             failed_step?: ("read" | "load" | "check" | "store") | null;
+            /**
+             * File Names
+             * @default []
+             */
+            file_names: string[];
             /** Files */
             files: components["schemas"]["FileCheckOut"][];
             /**
@@ -1535,6 +1627,15 @@ export interface components {
             name: string;
             /** New */
             new: string[];
+        };
+        /** ListSourceOut */
+        ListSourceOut: {
+            /** From Created At */
+            from_created_at: string | null;
+            /** From Import Id */
+            from_import_id: string | null;
+            /** Name */
+            name: string;
         };
         /** MachineDay */
         MachineDay: {
@@ -2678,6 +2779,39 @@ export interface operations {
             };
         };
     };
+    delete_import_imports__import_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     make_correction_imports__import_id__corrections_post: {
         parameters: {
             query?: never;
@@ -2704,6 +2838,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CorrectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_preview_imports__import_id__delete_preview_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletePreviewOut"];
                 };
             };
             /** @description Validation Error */
@@ -3318,6 +3487,41 @@ export interface operations {
                 content: {
                     "text/csv": unknown;
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_plant_data_plants__plant_code__data_delete: {
+        parameters: {
+            query: {
+                confirm: string;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

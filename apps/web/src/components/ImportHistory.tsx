@@ -6,6 +6,7 @@ import { Button, Panel } from "@cip/ui";
 import { api } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Count } from "./Figure";
+import { DeleteImport } from "./DeleteImport";
 import type { ImportEvents } from "./ImportChanges";
 
 type ImportOut = components["schemas"]["ImportOut"];
@@ -19,11 +20,16 @@ export function ImportHistory({
   imports,
   shown,
   onOpen,
+  canDelete,
+  onDeleted,
 }: {
   plant: string;
   imports: ImportOut[];
   shown: string | undefined;
   onOpen: (id: string) => void;
+  /** IT and the planner delete imports (the import_run_diagnostic decision). */
+  canDelete: boolean;
+  onDeleted: (id: string) => void;
 }) {
   const t = useTranslations("import.history");
   const ts = useTranslations("import.status");
@@ -107,9 +113,7 @@ export function ImportHistory({
                   <td className={`${TD} font-mono text-xs`}>{stamp(i.created_at)}</td>
                   <td className={TD}>{role(i.by_role)}</td>
                   <td className={TD}>
-                    <span className="font-mono text-xs">
-                      {i.files.map((f) => f.name).join(", ")}
-                    </span>
+                    <span className="font-mono text-xs">{i.file_names.join(", ")}</span>
                     {i.replaces && (
                       <span className="block text-xs text-muted">
                         {t("newVersionOf", { when: when.get(i.replaces) ?? "—" })}
@@ -134,6 +138,14 @@ export function ImportHistory({
                   </td>
                   <td className={TD}>
                     {ts(i.status as "done")}
+                    {i.status === "deleted" && (
+                      <span className="block text-xs text-muted">
+                        {t("deletedBy", {
+                          role: role(i.deleted_by_role),
+                          when: i.deleted_at ? stamp(i.deleted_at) : "—",
+                        })}
+                      </span>
+                    )}
                     {i.replaced_by && (
                       <span className="block text-xs text-muted">
                         {t("replacedBy", { when: when.get(i.replaced_by) ?? "—" })}
@@ -141,17 +153,31 @@ export function ImportHistory({
                     )}
                   </td>
                   <td className={TD}>
-                    {isShown ? (
-                      <span className="text-xs text-muted">{t("showing")}</span>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        aria-label={t("openOf", { when: stamp(i.created_at) })}
-                        onPress={() => onOpen(i.import_id)}
-                      >
-                        {t("open")}
-                      </Button>
-                    )}
+                    <div className="flex flex-col items-start gap-1">
+                      {i.status === "deleted" ? null : isShown ? (
+                        <span className="text-xs text-muted">{t("showing")}</span>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          aria-label={t("openOf", { when: stamp(i.created_at) })}
+                          onPress={() => onOpen(i.import_id)}
+                        >
+                          {t("open")}
+                        </Button>
+                      )}
+                      {canDelete && i.status === "running" && (
+                        <span className="text-xs text-muted">{t("deleteWhenDone")}</span>
+                      )}
+                      {canDelete && !["deleted", "running"].includes(i.status) && (
+                        <DeleteImport
+                          importId={i.import_id}
+                          plant={plant}
+                          label={t("uploadOf", { when: stamp(i.created_at) })}
+                          when={(id) => t("uploadOf", { when: when.get(id) ?? "—" })}
+                          onDeleted={() => onDeleted(i.import_id)}
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

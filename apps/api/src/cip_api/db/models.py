@@ -375,6 +375,10 @@ class Import(Base):
     report: Mapped[str | None] = mapped_column(Text)
     """JSON: the connector's import report, the data checklist and stored row counts."""
     error: Mapped[str | None] = mapped_column(Text)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    """When it was deleted; its files and rows are gone, this line stays in the history."""
+    deleted_by: Mapped[str | None] = mapped_column(String(64))
+    """The actor who deleted it (``user:<id>``); the page shows the role, never a name."""
 
 
 class Correction(Base):

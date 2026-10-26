@@ -453,7 +453,10 @@
       "system": "System",
       "newVersionOf": "New version of the upload of {when}",
       "replacedBy": "Replaced by the version of {when}; kept in the history",
-      "note": "In use: its data counts in the answer. Replaced: a newer version took its place; it stays here so you can see what changed."
+      "note": "In use: its data counts in the answer. Replaced: a newer version took its place; it stays here so you can see what changed. Deleted: its files and data are gone for good; this line says who deleted it and when.",
+      "deletedBy": "By {role}, {when}. Its files and data are removed; only this line stays.",
+      "uploadOf": "the upload of {when}",
+      "deleteWhenDone": "Can be deleted once it is done"
     },
     "preview": {
       "label": "What this upload will change",
@@ -548,6 +551,37 @@
         "empty": "Empty field",
         "other": "Other"
       }
+    },
+    "delete": {
+      "button": "Delete",
+      "buttonOf": "Delete {what}",
+      "title": "Delete {what}?",
+      "confirm": "Delete for good",
+      "cancel": "Cancel",
+      "working": "Working out what this changes…",
+      "failed": "Could not work out what this changes: {reason}",
+      "notInUse": "This upload is not in use, so the data in use and the answer stay as they are. Its files are removed.",
+      "events": "Events:",
+      "eventsRemoved": "Events removed",
+      "eventsRemovedText": "would go; {after} stay.",
+      "period": "Period: {from} now, {to} after the delete.",
+      "list": "{list}: {before} now, {after} after the delete",
+      "listGone": "{list}: no other upload has it, so it goes",
+      "listsFrom": "After the delete, from {when}: {lists}",
+      "fallsBack": "The version before it comes back in use: {when}.",
+      "corrections": "{count, plural, one {# row fixed in the app goes} other {# rows fixed in the app go}} with it.",
+      "empty": "No import is left: the plant has no data until you upload again.",
+      "note": "Deleted for good: its files, rows, fixes and numbers are removed, and the answer is calculated again from the other uploads. The history keeps one line: who deleted it and when."
+    },
+    "deletePlant": {
+      "title": "Delete all data of this plant",
+      "lead": "Removes every upload, file and row of {plant}, including what was added in the app. The plant, its accounts and station logins stay. Use it when the plant's data must be gone, e.g. at the end of a pilot.",
+      "button": "Delete all data of {plant}",
+      "dialogTitle": "Delete all data of {plant}?",
+      "warning": "Every upload, file, fixed row and number of {plant} is removed for good. This cannot be undone. The history keeps one line per upload: who deleted it and when.",
+      "typeCode": "Type {plant} to confirm",
+      "confirm": "Delete everything",
+      "cancel": "Cancel"
     }
   },
   "setup": {
@@ -1120,7 +1154,8 @@
       },
       "rejectedRows": "Rows the import's run could not read, in every file of this upload.",
       "fixedRows": "Rejected rows of this upload that are fixed or left out in the app (corrections in use).",
-      "corrections": "Fixes in use for this plant: values fixed, rows left out and imported rows removed in the app."
+      "corrections": "Fixes in use for this plant: values fixed, rows left out and imported rows removed in the app.",
+      "deleteRemoved": "Events in use now that are gone after the delete: they came only from this upload. Counted by the engine by comparing the plant now with the plant rebuilt without it."
     },
     "pages": {
       "import": "Import",

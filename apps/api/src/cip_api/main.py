@@ -89,6 +89,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from cip_api.calendar import router as calendar_router
     from cip_api.corrections import router as corrections_router
     from cip_api.data_quality import router as quality_router
+    from cip_api.deletes import router as deletes_router
     from cip_api.detection import router as detection_router
     from cip_api.facts import router as facts_router
     from cip_api.imports import router as imports_router
@@ -102,6 +103,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(plants_router)
     app.include_router(imports_router)
     app.include_router(corrections_router)
+    app.include_router(deletes_router)
     app.include_router(setup_router)
     app.include_router(calendar_router)
     app.include_router(quality_router)

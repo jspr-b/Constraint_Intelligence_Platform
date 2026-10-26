@@ -870,6 +870,144 @@
         "title": "DecisionIn",
         "type": "object"
       },
+      "DeletePreviewOut": {
+        "description": "What deleting this import changes, from the engine's comparison (nothing is changed).",
+        "properties": {
+          "corrections": {
+            "title": "Corrections",
+            "type": "integer"
+          },
+          "events_after": {
+            "title": "Events After",
+            "type": "integer"
+          },
+          "events_before": {
+            "title": "Events Before",
+            "type": "integer"
+          },
+          "events_removed": {
+            "title": "Events Removed",
+            "type": "integer"
+          },
+          "falls_back_to": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Falls Back To"
+          },
+          "imports_left": {
+            "title": "Imports Left",
+            "type": "integer"
+          },
+          "in_use": {
+            "title": "In Use",
+            "type": "boolean"
+          },
+          "lists": {
+            "items": {
+              "$ref": "#/components/schemas/ListChangeOut"
+            },
+            "title": "Lists",
+            "type": "array"
+          },
+          "lists_after": {
+            "items": {
+              "$ref": "#/components/schemas/ListSourceOut"
+            },
+            "title": "Lists After",
+            "type": "array"
+          },
+          "period_after": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            ],
+            "title": "Period After",
+            "type": "array"
+          },
+          "period_before": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            ],
+            "title": "Period Before",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewWarningOut"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "in_use",
+          "events_before",
+          "events_after",
+          "events_removed",
+          "period_before",
+          "period_after",
+          "lists",
+          "lists_after",
+          "warnings",
+          "corrections",
+          "falls_back_to",
+          "imports_left"
+        ],
+        "title": "DeletePreviewOut",
+        "type": "object"
+      },
       "DetectionOut": {
         "properties": {
           "agreement": {
@@ -1532,6 +1670,29 @@
             "title": "Created At",
             "type": "string"
           },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "deleted_by_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted By Role"
+          },
           "error": {
             "anyOf": [
               {
@@ -1576,6 +1737,14 @@
               }
             ],
             "title": "Failed Step"
+          },
+          "file_names": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "File Names",
+            "type": "array"
           },
           "files": {
             "items": {
@@ -1783,6 +1952,45 @@
           "gone"
         ],
         "title": "ListChangeOut",
+        "type": "object"
+      },
+      "ListSourceOut": {
+        "properties": {
+          "from_created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Created At"
+          },
+          "from_import_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Import Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "from_import_id",
+          "from_created_at"
+        ],
+        "title": "ListSourceOut",
         "type": "object"
       },
       "MachineDay": {
@@ -4436,6 +4644,89 @@
       }
     },
     "/imports/{import_id}": {
+      "delete": {
+        "description": "Delete an upload or an import for real. One in use: the plant is rebuilt from the rest\nand the answer recalculated; an earlier version it replaced comes back in use.",
+        "operationId": "delete_import_imports__import_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Import",
+        "tags": [
+          "imports"
+        ]
+      },
       "get": {
         "operationId": "get_import_imports__import_id__get",
         "parameters": [
@@ -4625,6 +4916,98 @@
         "summary": "Make Correction",
         "tags": [
           "corrections"
+        ]
+      }
+    },
+    "/imports/{import_id}/delete-preview": {
+      "get": {
+        "description": "Rebuild the plant without this import in a transaction that is rolled back, and compare.",
+        "operationId": "delete_preview_imports__import_id__delete_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletePreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Preview",
+        "tags": [
+          "imports"
         ]
       }
     },
@@ -6267,6 +6650,99 @@
         "summary": "Download Corrections",
         "tags": [
           "corrections"
+        ]
+      }
+    },
+    "/plants/{plant_code}/data": {
+      "delete": {
+        "description": "Delete every import, file and row of a plant (IT only, the plant code typed to confirm).\nThe plant itself, its accounts and station logins stay; the history keeps a line per\nimport.",
+        "operationId": "delete_plant_data_plants__plant_code__data_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "confirm",
+            "required": true,
+            "schema": {
+              "title": "Confirm",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Plant Data",
+        "tags": [
+          "imports"
         ]
       }
     },

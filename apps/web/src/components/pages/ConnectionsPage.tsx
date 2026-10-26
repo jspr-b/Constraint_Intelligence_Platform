@@ -71,7 +71,7 @@ export function ConnectionsPage() {
     onSettled: () => void queries.invalidateQueries({ queryKey: ["imports", plant] }),
   });
 
-  const latest = imports.data?.[0];
+  const latest = imports.data?.find((i) => i.status !== "deleted");
   const report = latest?.report?.import as
     { rows_written?: Record<string, number>; row_errors?: unknown[] } | undefined;
   const rows = report?.rows_written

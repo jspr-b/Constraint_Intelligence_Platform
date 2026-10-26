@@ -51,7 +51,7 @@ def _latest_import(ctx: Ctx, plant_code: str) -> Any:
         text(
             "SELECT i.status, i.report, f.status AS facts_status FROM imports i "
             "LEFT JOIN fact_runs f ON f.import_id = i.import_id "
-            "WHERE i.plant_code = :p ORDER BY i.created_at DESC LIMIT 1"
+            "WHERE i.plant_code = :p AND i.status <> 'deleted' ORDER BY i.created_at DESC LIMIT 1"
         ),
         {"p": plant_code},
     ).first()

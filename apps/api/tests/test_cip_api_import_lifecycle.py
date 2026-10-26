@@ -25,8 +25,6 @@ CLEAN = DATA / "plant_a" / "erp_export" / "clean" / "csv"
 ANSWERS: dict[str, Any] = yaml.safe_load((CASES / "expected_answers.yaml").read_text())
 PLANT_A: dict[str, Any] = yaml.safe_load((DATA / "plant_a" / "expected_answers.yaml").read_text())
 
-deletes = pytest.mark.xfail(strict=True, reason="ADR-0010: delete an import, CI0004 seq 05")
-
 
 @pytest.fixture
 def client_as(world: World, tmp_path: Path) -> Callable[[str], TestClient]:
@@ -121,7 +119,6 @@ def test_the_whole_export_twice_is_the_same_as_once(
     _is_plant_a(world, it)
 
 
-@deletes
 def test_deleting_the_second_upload_gives_the_first_uploads_answer(
     world: World, client_as: Callable[[str], TestClient]
 ) -> None:

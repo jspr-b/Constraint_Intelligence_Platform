@@ -206,3 +206,68 @@ test("Data quality lists the fixes with their reason, a CSV download and undo", 
   );
   await expect(fixed.getByRole("button", { name: /^Undo: line 4/ })).toBeVisible();
 });
+
+test("deleting an import first shows what goes, then deletes it for good", async ({ page }) => {
+  let deleted = false;
+  await page.route("**/api/imports/i1/delete-preview", (route) =>
+    route.fulfill({
+      json: {
+        in_use: true,
+        events_before: 7084,
+        events_after: 0,
+        events_removed: 7084,
+        period_before: ["2026-07-20T04:00:00Z", "2026-10-09T20:00:00Z"],
+        period_after: [null, null],
+        lists: [{ name: "resources", before: 6, after: 0, new: [], gone: [] }],
+        lists_after: [],
+        warnings: [],
+        corrections: 2,
+        falls_back_to: null,
+        imports_left: 0,
+      },
+    }),
+  );
+  await page.route("**/api/imports/i1", (route) => {
+    if (route.request().method() !== "DELETE") return route.fallback();
+    deleted = true;
+    return route.fulfill({ status: 204 });
+  });
+  await page.goto("/import");
+  const history = page.getByRole("region", { name: "Import history" });
+  await history.getByRole("button", { name: /^Delete the upload of/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("7,084");
+  await expect(dialog).toContainText("steps list: no other upload has it, so it goes");
+  await expect(dialog).toContainText("2 rows fixed in the app go with it.");
+  await expect(dialog).toContainText("No import is left");
+  expect(deleted).toBe(false);
+  await dialog.getByRole("button", { name: "Delete for good" }).click();
+  await expect(dialog).toBeHidden();
+  expect(deleted).toBe(true);
+});
+
+test("IT deletes all data of a plant only with the plant code typed", async ({ page }) => {
+  await page.route("**/api/plants/PLANT-A/data?*", (route) =>
+    route.fulfill(
+      new URL(route.request().url()).searchParams.get("confirm") === "PLANT-A"
+        ? { status: 204 }
+        : {
+            status: 422,
+            json: {
+              code: "plant_delete_confirm",
+              message: "Type the plant code PLANT-A exactly to confirm. Nothing was deleted.",
+            },
+          },
+    ),
+  );
+  await page.goto("/import");
+  await page.getByText("Delete all data of this plant").click();
+  await page.getByRole("button", { name: "Delete all data of PLANT-A" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Type PLANT-A to confirm").fill("PLANT-B");
+  await dialog.getByRole("button", { name: "Delete everything" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Nothing was deleted");
+  await dialog.getByLabel("Type PLANT-A to confirm").fill("PLANT-A");
+  await dialog.getByRole("button", { name: "Delete everything" }).click();
+  await expect(dialog).toBeHidden();
+});

@@ -451,6 +451,7 @@ export async function stubPages(
               preview: [],
             },
           ],
+          file_names: ["mes_events.csv", "notes.csv"],
           expected_files: [
             "werkplekken",
             "artikelen",

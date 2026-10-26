@@ -116,6 +116,20 @@ CATALOG: dict[str, tuple[int, str]] = {
         "This import already ran: its results show what it changed.",
     ),
     "import_not_found": (404, "This import no longer exists. The page will refresh."),
+    "import_already_deleted": (409, "This import is already deleted. The page will refresh."),
+    "facts_calculating": (
+        409,
+        "The numbers of this plant are being calculated. Wait until they are done (the page "
+        "updates), then delete.",
+    ),
+    "plant_delete_it_only": (
+        403,
+        "Only IT can delete all data of a plant. Ask IT, or delete single imports here.",
+    ),
+    "plant_delete_confirm": (
+        422,
+        "Type the plant code {plant} exactly to confirm. Nothing was deleted.",
+    ),
     "no_files": (422, "Choose at least one file to upload."),
     "bad_file_name": (
         422,

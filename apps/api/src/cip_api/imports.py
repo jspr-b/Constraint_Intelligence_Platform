@@ -167,6 +167,11 @@ class ImportOut(BaseModel):
     """The import this one is a new version of (ADR-0010)."""
     replaced_by: uuid.UUID | None = None
     """The newer version that replaced this import, once it ran."""
+    file_names: list[str] = []
+    """The names of its files; for a deleted import the only thing kept of them."""
+    deleted_at: datetime | None = None
+    deleted_by_role: str | None = None
+    """Who deleted it, as a role (never a name)."""
 
 
 def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
@@ -332,15 +337,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
     mapping = choose_mapping(f["name"] for f in stored_files)
     report = json.loads(row.report) if row.report else None
     files = [FileCheckOut.model_validate(f) for f in stored_files if "readable" in f]
-    by_role = None
-    if str(row.actor).startswith("user:"):
-        with contextlib.suppress(ValueError):
-            by_role = db.execute(
-                text("SELECT role FROM users WHERE user_id = :u"),
-                {"u": uuid.UUID(str(row.actor).removeprefix("user:"))},
-            ).scalar_one_or_none()
-    elif str(row.actor).startswith("system"):
-        by_role = "system"
+    by_role = _role_of(db, row.actor)
     replaced_by = db.execute(
         text("SELECT import_id FROM imports WHERE replaces = :i AND status = 'done'"),
         {"i": row.import_id},
@@ -364,10 +361,29 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
         error=row.error,
         failed_step=_failed_step(row.error),
         facts=fact_run(db, row.import_id),
+        file_names=[f["name"] for f in stored_files],
+        deleted_at=row.deleted_at,
+        deleted_by_role=_role_of(db, row.deleted_by) if row.deleted_by else None,
     )
 
 
-COLUMNS = "import_id, plant_code, status, created_at, files, report, error, actor, replaces"
+def _role_of(db: Connection, actor: str) -> str | None:
+    """The role of an actor (``user:<id>``), never a name; ``system`` for jobs."""
+    if str(actor).startswith("user:"):
+        with contextlib.suppress(ValueError):
+            role: str | None = db.execute(
+                text("SELECT role FROM users WHERE user_id = :u"),
+                {"u": uuid.UUID(str(actor).removeprefix("user:"))},
+            ).scalar_one_or_none()
+            return role
+        return None
+    return "system" if str(actor).startswith("system") else None
+
+
+COLUMNS = (
+    "import_id, plant_code, status, created_at, files, report, error, actor, replaces, "
+    "deleted_at, deleted_by"
+)
 
 
 def _row(db: Connection, import_id: uuid.UUID) -> Any:

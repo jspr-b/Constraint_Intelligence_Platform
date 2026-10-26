@@ -12,6 +12,7 @@ import { Field } from "../FormDialog";
 import { conversionLabel, fieldLabel } from "@/lib/model";
 import { Count } from "../Figure";
 import { ImportChanges, type ImportEvents } from "../ImportChanges";
+import { DeletePlantData } from "../DeleteImport";
 import { ImportHistory } from "../ImportHistory";
 import { ImportPreview } from "../ImportPreview";
 import { PageHeader } from "../PageHeader";
@@ -79,7 +80,8 @@ export function ImportPage() {
     },
   });
   const latest: ImportOut | undefined =
-    imports.data?.find((i) => i.import_id === selected) ?? imports.data?.[0];
+    imports.data?.find((i) => i.import_id === selected) ??
+    imports.data?.find((i) => i.status !== "deleted");
   const changeable =
     canRun && latest !== undefined && ["uploaded", "failed", "done"].includes(latest.status);
   const refresh = () => queries.invalidateQueries({ queryKey: ["imports", plant] });
@@ -249,6 +251,8 @@ export function ImportPage() {
           imports={imports.data ?? []}
           shown={latest?.import_id}
           onOpen={setSelected}
+          canDelete={canRun}
+          onDeleted={(id) => id === selected && setSelected(null)}
         />
       )}
       <Tabs>
@@ -847,6 +851,9 @@ export function ImportPage() {
           )}
         </TabPanel>
       </Tabs>
+      {plant && view?.role === "it" && !view.preview && (imports.data?.length ?? 0) > 0 && (
+        <DeletePlantData plant={plant} onDeleted={() => setSelected(null)} />
+      )}
     </div>
   );
 }
