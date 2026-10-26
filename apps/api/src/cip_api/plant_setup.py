@@ -17,6 +17,7 @@ from sqlalchemy import text
 
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
+from cip_api.corrections import record_removal
 from cip_api.errors import ApiProblem
 from cip_api.figures import FigureOut
 from cip_api.tenancy import Ctx, require
@@ -94,12 +95,15 @@ class MachineOut(BaseModel):
     kind: str
     parallel_units: int
     has_station_login: bool
+    imported: bool = False
+    """From an upload: removing it is stored as a correction, with a reason (ADR-0010)."""
 
 
 class StationOut(BaseModel):
     station_code: str
     name: str
     machines: list[MachineOut]
+    imported: bool = False
 
 
 class OperationOut(BaseModel):
@@ -197,7 +201,8 @@ def setup(plant_code: str, ctx: View) -> SetupOut:
     machines: dict[str, list[MachineOut]] = {}
     for r in db.execute(
         text(
-            "SELECT resource_code, name, kind, parallel_units, station_code FROM resources "
+            "SELECT resource_code, name, kind, parallel_units, station_code, "
+            "import_id IS NOT NULL AS imported FROM resources "
             "WHERE plant_code = :p ORDER BY resource_code"
         ),
         p,
@@ -209,16 +214,20 @@ def setup(plant_code: str, ctx: View) -> SetupOut:
                 kind=r.kind,
                 parallel_units=r.parallel_units,
                 has_station_login=r.resource_code in logins,
+                imported=r.imported,
             )
         )
     stations = [
         StationOut(
-            station_code=s.station_code, name=s.name, machines=machines.pop(s.station_code, [])
+            station_code=s.station_code,
+            name=s.name,
+            machines=machines.pop(s.station_code, []),
+            imported=s.imported,
         )
         for s in db.execute(
             text(
-                "SELECT station_code, name FROM stations WHERE plant_code = :p "
-                "ORDER BY station_code"
+                "SELECT station_code, name, import_id IS NOT NULL AS imported FROM stations "
+                "WHERE plant_code = :p ORDER BY station_code"
             ),
             p,
         )
@@ -389,7 +398,10 @@ def put_resource(plant_code: str, resource_code: str, body: ResourceIn, ctx: Edi
 
 
 @router.delete("/plants/{plant_code}/resources/{resource_code}", response_model=SetupOut)
-def delete_resource(plant_code: str, resource_code: str, ctx: Edit) -> SetupOut:
+def delete_resource(
+    plant_code: str, resource_code: str, ctx: Edit, reason: str | None = None
+) -> SetupOut:
+    """Remove a step. One from an upload needs a reason and stays out of later rebuilds."""
     _exists(ctx, plant_code)
     login = ctx.db.execute(
         text("SELECT 1 FROM station_logins WHERE plant_code = :p AND resource_code = :r"),
@@ -397,11 +409,59 @@ def delete_resource(plant_code: str, resource_code: str, ctx: Edit) -> SetupOut:
     ).first()
     if login:
         raise ApiProblem("machine_has_station_login")
+    step = ctx.db.execute(
+        text(
+            "SELECT import_id IS NOT NULL AS imported FROM resources "
+            "WHERE plant_code = :p AND resource_code = :r"
+        ),
+        {"p": plant_code, "r": resource_code},
+    ).first()
+    if step is None:
+        raise ApiProblem("machine_not_found")
+    touchpoints = ctx.db.execute(
+        text("SELECT count(*) FROM operation_events WHERE plant_code = :p AND resource_code = :r"),
+        {"p": plant_code, "r": resource_code},
+    ).scalar_one()
+    if touchpoints:
+        raise ApiProblem("step_has_touchpoints", count=touchpoints)
+    if step.imported:
+        record_removal(ctx, plant_code, "resources", [resource_code], reason)
     ctx.db.execute(
         text("DELETE FROM resources WHERE plant_code = :p AND resource_code = :r"),
         {"p": plant_code, "r": resource_code},
     )
-    _log(ctx, "machine_deleted", f"{plant_code}/{resource_code}")
+    _log(ctx, "machine_deleted", f"{plant_code}/{resource_code}", reason or "")
+    return setup(plant_code, ctx)
+
+
+@router.delete("/plants/{plant_code}/stations/{station_code}", response_model=SetupOut)
+def delete_station(
+    plant_code: str, station_code: str, ctx: Edit, reason: str | None = None
+) -> SetupOut:
+    """Remove a station without steps. One from an upload needs a reason (ADR-0010)."""
+    _exists(ctx, plant_code)
+    station = ctx.db.execute(
+        text(
+            "SELECT import_id IS NOT NULL AS imported FROM stations "
+            "WHERE plant_code = :p AND station_code = :s"
+        ),
+        {"p": plant_code, "s": station_code},
+    ).first()
+    if station is None:
+        raise ApiProblem("station_not_found")
+    used = ctx.db.execute(
+        text("SELECT 1 FROM resources WHERE plant_code = :p AND station_code = :s"),
+        {"p": plant_code, "s": station_code},
+    ).first()
+    if used:
+        raise ApiProblem("station_in_use")
+    if station.imported:
+        record_removal(ctx, plant_code, "stations", [station_code], reason)
+    ctx.db.execute(
+        text("DELETE FROM stations WHERE plant_code = :p AND station_code = :s"),
+        {"p": plant_code, "s": station_code},
+    )
+    _log(ctx, "station_deleted", f"{plant_code}/{station_code}", reason or "")
     return setup(plant_code, ctx)
 
 

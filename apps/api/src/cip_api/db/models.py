@@ -197,6 +197,7 @@ class OperationEvent(Base):
     """TimescaleDB hypertable on ``at``; the primary key includes ``at`` as Timescale requires."""
 
     __tablename__ = "operation_events"
+    __table_args__ = (Index("ix_operation_events_import", "tenant_id", "plant_code", "import_id"),)
     # The import this row came from (ADR-0010); NULL = entered or edited in the app.
     import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=False)
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
@@ -374,6 +375,47 @@ class Import(Base):
     report: Mapped[str | None] = mapped_column(Text)
     """JSON: the connector's import report, the data checklist and stored row counts."""
     error: Mapped[str | None] = mapped_column(Text)
+
+
+class Correction(Base):
+    """A row fixed, left out or removed in the app, next to the original (ADR-0010 point 7).
+
+    ``row``: a line of an import's source file, one column set to a new value or the line left
+    out; applied when the import is mapped, the file is never changed. ``removed``: an imported
+    step, station or calendar row removed on Setup or Calendar, so a rebuild does not bring it
+    back. An undone correction stays, with who undid it and when.
+    """
+
+    __tablename__ = "corrections"
+    __table_args__ = (Index("ix_corrections_plant", "tenant_id", "plant_code"),)
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    correction_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    """set (a value fixed), exclude (a line left out) or remove (a Setup/Calendar row)."""
+    import_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    file: Mapped[str | None] = mapped_column(String(255))
+    line: Mapped[int | None] = mapped_column(Integer)
+    column: Mapped[str | None] = mapped_column(String(255))
+    original: Mapped[str | None] = mapped_column(Text)
+    """The value as uploaded (never a personal column: those are dropped on read)."""
+    value: Mapped[str | None] = mapped_column(Text)
+    target: Mapped[str | None] = mapped_column(String(32))
+    """For remove: the plant table (resources, stations, calendar_windows)."""
+    target_key: Mapped[str | None] = mapped_column(Text)
+    """For remove: JSON of the row's key columns."""
+    event_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    """When the fixed touchpoint happened, so numbers of that period say they use it."""
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    actor: Mapped[str] = mapped_column(String(64), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    undone_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    undone_by: Mapped[str | None] = mapped_column(String(64))
 
 
 class FactRun(Base):

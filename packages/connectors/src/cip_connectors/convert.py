@@ -10,7 +10,13 @@ Cell = str | int | float | datetime | None
 
 
 class ConversionError(ValueError):
-    pass
+    """A value that does not convert. ``code`` names the rule it breaks, for plain messages:
+    ``empty``, ``not_a_number``, ``not_whole``, ``too_many_decimals``, ``not_a_datetime``,
+    ``not_yes_no``, ``unknown_code``, ``no_code_table``."""
+
+    def __init__(self, message: str, code: str) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 def _text(value: Cell) -> str:
@@ -26,7 +32,7 @@ def _decimal(value: Cell, mapping: MappingSet) -> Decimal:
     try:
         return Decimal(raw)
     except InvalidOperation as exc:
-        raise ConversionError(f"not a number: {raw!r}") from exc
+        raise ConversionError(f"not a number: {raw!r}", "not_a_number") from exc
 
 
 EXCEL_EPOCH = datetime(1899, 12, 30)
@@ -43,7 +49,8 @@ def _datetime(value: Cell, mapping: MappingSet) -> str:
             local = datetime.strptime(_text(value), mapping.datetime_format)
         except ValueError as exc:
             raise ConversionError(
-                f"not a date/time in format {mapping.datetime_format}: {_text(value)!r}"
+                f"not a date/time in format {mapping.datetime_format}: {_text(value)!r}",
+                "not_a_datetime",
             ) from exc
     if local.tzinfo is None:
         local = local.replace(tzinfo=ZoneInfo(mapping.timezone))
@@ -57,9 +64,9 @@ def _code(raw: str, rule: FieldRule, mapping: MappingSet, column: str) -> str:
         else mapping.code_tables.get(rule.code_table or "", {})
     )
     if rule.code_table and rule.code_table not in mapping.code_tables:
-        raise ConversionError(f"code table {rule.code_table!r} is not defined")
+        raise ConversionError(f"code table {rule.code_table!r} is not defined", "no_code_table")
     if raw not in table:
-        raise ConversionError(f"unknown code {raw!r} in column {column!r}")
+        raise ConversionError(f"unknown code {raw!r} in column {column!r}", "unknown_code")
     return table[raw]
 
 
@@ -68,18 +75,20 @@ def convert(value: Cell, rule: FieldRule, mapping: MappingSet, column: str) -> s
     if _text(value) == "":
         if rule.optional:
             return None
-        raise ConversionError(f"column {column!r} is empty")
+        raise ConversionError(f"column {column!r} is empty", "empty")
     if rule.type == "decimal":
         return str(_decimal(value, mapping).normalize())
     if rule.type == "int":
         number = _decimal(value, mapping)
         if number != number.to_integral_value():
-            raise ConversionError(f"not a whole number: {_text(value)!r}")
+            raise ConversionError(f"not a whole number: {_text(value)!r}", "not_whole")
         return str(int(number))
     if rule.type == "eur_cents":
         cents = _decimal(value, mapping) * 100
         if cents != cents.to_integral_value():
-            raise ConversionError(f"more than two decimals for euros: {_text(value)!r}")
+            raise ConversionError(
+                f"more than two decimals for euros: {_text(value)!r}", "too_many_decimals"
+            )
         return str(int(cents))
     if rule.type == "datetime":
         return _datetime(value, mapping)
@@ -89,7 +98,7 @@ def convert(value: Cell, rule: FieldRule, mapping: MappingSet, column: str) -> s
             return "true"
         if raw in mapping.false_values:
             return "false"
-        raise ConversionError(f"not yes/no: {_text(value)!r}")
+        raise ConversionError(f"not yes/no: {_text(value)!r}", "not_yes_no")
     raw = _text(value)
     if rule.type == "list":
         parts = [p.strip() for p in raw.split(";") if p.strip()]

@@ -26,6 +26,8 @@ const INPUT_SOURCE: Record<string, string> = {
   truly_variable_cost_eur_cents: "/setup",
   planned_production_min: "/calendar",
   unplanned_stop_min: "/data",
+  fixed_rows: "/data#fixed-rows",
+  fixed_rows_share_pct: "/data#fixed-rows",
 };
 
 const isFigure = (v: unknown): v is FigureLike =>

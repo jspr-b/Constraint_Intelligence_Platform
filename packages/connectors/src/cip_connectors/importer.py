@@ -3,7 +3,7 @@
 import csv
 import hashlib
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -91,6 +91,17 @@ class ImportIssue:
     file: str
     line: int
     reason: str
+    code: str | None = None
+    """The rule the value breaks (``ConversionError.code``), for plain messages."""
+    column: str | None = None
+    """The source column of the value; never a personal column (dropped on read)."""
+    value: str | None = None
+
+
+RowFix = Mapping[str, str] | None
+"""A fix for one source line: column -> new value, or None to leave the line out (ADR-0010)."""
+Fixes = Mapping[str, Mapping[int, RowFix]]
+"""Fixes per source file name, per line number in that file."""
 
 
 @dataclass
@@ -103,6 +114,12 @@ class ImportReport:
     missing_sources: list[str] = field(default_factory=list)
     missing_required: list[str] = field(default_factory=list)
     """``target.field`` entries a mapping does not cover; that target is not written."""
+    fixed: dict[str, list[int]] = field(default_factory=dict)
+    """Lines per file whose values were fixed in the app before mapping."""
+    excluded: dict[str, list[int]] = field(default_factory=dict)
+    """Lines per file left out in the app."""
+    fixed_at: dict[str, dict[int, str]] = field(default_factory=dict)
+    """For a fixed line that is a touchpoint: when it happened (UTC, standard layout)."""
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -113,6 +130,9 @@ class ImportReport:
             "dropped_columns": self.dropped_columns,
             "missing_sources": self.missing_sources,
             "missing_required": self.missing_required,
+            "fixed": self.fixed,
+            "excluded": self.excluded,
+            "fixed_at": self.fixed_at,
         }
 
 
@@ -139,8 +159,10 @@ def _map_table(
     out: list[dict[str, str]] = []
     for line, row in source.rows:
         record: dict[str, str] = {}
+        column: str | None = None
         try:
             for name, rule in table.fields.items():
+                column = rule.from_
                 if rule.generate == "content_id":
                     continue  # filled below, from the other fields
                 if rule.generate == "row_id":
@@ -153,11 +175,23 @@ def _map_table(
                 if value is not None:
                     record[name] = value
         except ConversionError as exc:
-            report.row_errors.append(ImportIssue(source.path.name, line, str(exc)))
+            raw = row.get(column) if column else None
+            report.row_errors.append(
+                ImportIssue(
+                    source.path.name,
+                    line,
+                    str(exc),
+                    exc.code,
+                    column,
+                    None if raw is None else str(raw),
+                )
+            )
             continue
         for name, rule in table.fields.items():
             if rule.generate == "content_id":
                 record[name] = content_id(record, rule.prefix)
+        if "at" in record and line in report.fixed.get(source.path.name, ()):
+            report.fixed_at.setdefault(source.path.name, {})[line] = record["at"]
         out.append(record)
     return out
 
@@ -179,6 +213,27 @@ def _write(path: Path, target: str, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def apply_fixes(source: SourceTable, fixes: Mapping[int, RowFix], report: ImportReport) -> None:
+    """Fixes made in the app, on the rows as read; the file itself is never changed.
+
+    A fix only sets columns the row has (personal columns are gone already); a line that is not
+    in the file is ignored. The fixed row then goes through the same mapping rules as any row.
+    """
+    rows = []
+    for line, row in source.rows:
+        if line in fixes:
+            fix = fixes[line]
+            done = report.excluded if fix is None else report.fixed
+            lines = done.setdefault(source.path.name, [])
+            if line not in lines:  # a file read for two tables counts once
+                lines.append(line)
+            if fix is None:
+                continue
+            row = {**row, **{c: v for c, v in fix.items() if c in row}}
+        rows.append((line, row))
+    source.rows[:] = rows
+
+
 def import_export(
     export_dir: Path | str,
     mapping: MappingSet,
@@ -186,8 +241,12 @@ def import_export(
     plant: dict[str, str] | None = None,
     drop: DropRule | None = None,
     reader: Reader = _default_reader,
+    fixes: Fixes | None = None,
 ) -> ImportReport:
-    """Map every source table in ``export_dir`` and write the standard layout to ``out_dir``."""
+    """Map every source table in ``export_dir`` and write the standard layout to ``out_dir``.
+
+    ``fixes`` are rows fixed or left out in the app (ADR-0010), applied before mapping.
+    """
     from cip_connectors.privacy import personal_column_rule
 
     src, out = Path(export_dir), Path(out_dir)
@@ -202,6 +261,8 @@ def import_export(
             continue
         source = reader(path, mapping, drop_rule)
         report.rows_read[table.source] = len(source.rows)
+        if fixes and path.name in fixes:
+            apply_fixes(source, fixes[path.name], report)
         if source.dropped_columns:
             report.dropped_columns[table.source] = source.dropped_columns
         rows = _map_table(table, source, mapping, report)

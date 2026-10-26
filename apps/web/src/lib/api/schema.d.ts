@@ -241,6 +241,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/corrections/{correction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Undo Correction
+         * @description Undo a correction: the original counts again; the correction stays in the list.
+         */
+        delete: operations["undo_correction_corrections__correction_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -269,6 +289,26 @@ export interface paths {
         get: operations["get_import_imports__import_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Correction
+         * @description Fix a value or leave a line out; checked by the import's rules, then the plant rebuilds.
+         */
+        post: operations["make_correction_imports__import_id__corrections_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -327,6 +367,26 @@ export interface paths {
          * @description Rebuild the plant with this upload in a transaction that is rolled back, and compare.
          */
         get: operations["what_changes_imports__import_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/rejected-rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rejected Rows
+         * @description The rows the import's run rejected, with the rule, column and value, and their fixes.
+         */
+        get: operations["rejected_rows_imports__import_id__rejected_rows_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -457,7 +517,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Window */
+        /**
+         * Delete Window
+         * @description Delete a calendar row. One from an upload needs a reason and stays out of rebuilds.
+         */
         delete: operations["delete_window_plants__plant_code__calendar_windows__window_id__delete"];
         options?: never;
         head?: never;
@@ -495,6 +558,46 @@ export interface paths {
         get?: never;
         /** Put Changeover */
         put: operations["put_changeover_plants__plant_code__changeovers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Corrections
+         * @description Every correction of the plant, newest first; undone ones stay, marked undone.
+         */
+        get: operations["list_corrections_plants__plant_code__corrections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/corrections.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Corrections
+         * @description The corrections as a CSV, to send back to the plant's ERP owner.
+         */
+        get: operations["download_corrections_plants__plant_code__corrections_csv_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -673,7 +776,10 @@ export interface paths {
         /** Put Resource */
         put: operations["put_resource_plants__plant_code__resources__resource_code__put"];
         post?: never;
-        /** Delete Resource */
+        /**
+         * Delete Resource
+         * @description Remove a step. One from an upload needs a reason and stays out of later rebuilds.
+         */
         delete: operations["delete_resource_plants__plant_code__resources__resource_code__delete"];
         options?: never;
         head?: never;
@@ -708,7 +814,11 @@ export interface paths {
         /** Put Station */
         put: operations["put_station_plants__plant_code__stations__station_code__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete Station
+         * @description Remove a station without steps. One from an upload needs a reason (ADR-0010).
+         */
+        delete: operations["delete_station_plants__plant_code__stations__station_code__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1006,6 +1116,80 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * CorrectionIn
+         * @description Fix one value of a source line, or leave the line out (``exclude``).
+         */
+        CorrectionIn: {
+            /** Column */
+            column?: string | null;
+            /**
+             * Exclude
+             * @default false
+             */
+            exclude: boolean;
+            /** File */
+            file: string;
+            /**
+             * Line
+             * @description Line in the file; line 1 is the header.
+             */
+            line: number;
+            /** Reason */
+            reason: string;
+            /** Value */
+            value?: string | null;
+        };
+        /** CorrectionOut */
+        CorrectionOut: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "set" | "exclude" | "remove";
+            /** Column */
+            column: string | null;
+            /**
+             * Correction Id
+             * Format: uuid
+             */
+            correction_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Event At */
+            event_at: string | null;
+            /** File */
+            file: string | null;
+            /** Import Created At */
+            import_created_at: string | null;
+            /** Import Id */
+            import_id: string | null;
+            /** Line */
+            line: number | null;
+            /** Original */
+            original: string | null;
+            /** Plant Code */
+            plant_code: string;
+            /** Reason */
+            reason: string;
+            /** Role */
+            role: string;
+            /** Target */
+            target: string | null;
+            /** Target Key */
+            target_key: string[] | null;
+            /** Timezone Iana */
+            timezone_iana: string;
+            /** Undone */
+            undone: boolean;
+            /** Undone At */
+            undone_at: string | null;
+            /** Value */
+            value: string | null;
+        };
         /** CoveredIn */
         CoveredIn: {
             /** Covered */
@@ -1228,6 +1412,11 @@ export interface components {
             }[];
             /** File */
             file: string;
+            /**
+             * Fixed
+             * @default 0
+             */
+            fixed: number;
             /** Reasons */
             reasons: {
                 [key: string]: number;
@@ -1360,6 +1549,11 @@ export interface components {
         MachineOut: {
             /** Has Station Login */
             has_station_login: boolean;
+            /**
+             * Imported
+             * @default false
+             */
+            imported: boolean;
             /** Kind */
             kind: string;
             /** Name */
@@ -1655,6 +1849,46 @@ export interface components {
                 [key: string]: string | number;
             };
         };
+        /** RejectedRowOut */
+        RejectedRowOut: {
+            /** Code */
+            code: string | null;
+            /** Column */
+            column: string | null;
+            correction: components["schemas"]["CorrectionOut"] | null;
+            /** File */
+            file: string;
+            /** Line */
+            line: number;
+            /** Reason */
+            reason: string;
+            /** Value */
+            value: string | null;
+        };
+        /** RejectedRowsOut */
+        RejectedRowsOut: {
+            /** Codes */
+            codes: {
+                [key: string]: number;
+            };
+            /** Datetime Format */
+            datetime_format: string;
+            /** Fixed */
+            fixed: number;
+            /**
+             * Import Id
+             * Format: uuid
+             */
+            import_id: string;
+            /** Offset */
+            offset: number;
+            /** Rows */
+            rows: components["schemas"]["RejectedRowOut"][];
+            /** Shown */
+            shown: number;
+            /** Total */
+            total: number;
+        };
         /** ResourceIn */
         ResourceIn: {
             /**
@@ -1773,6 +2007,11 @@ export interface components {
         };
         /** StationOut */
         StationOut: {
+            /**
+             * Imported
+             * @default false
+             */
+            imported: boolean;
             /** Machines */
             machines: components["schemas"]["MachineOut"][];
             /** Name */
@@ -1880,6 +2119,11 @@ export interface components {
             end_min: number;
             /** Id */
             id: number;
+            /**
+             * Imported
+             * @default false
+             */
+            imported: boolean;
             /** Kind */
             kind: string;
             /** Resource Code */
@@ -2344,6 +2588,41 @@ export interface operations {
             };
         };
     };
+    undo_correction_corrections__correction_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                correction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -2386,6 +2665,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_correction_imports__import_id__corrections_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2496,6 +2814,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rejected_rows_imports__import_id__rejected_rows_get: {
+        parameters: {
+            query?: {
+                code?: string | null;
+                file?: string | null;
+                offset?: number;
+                limit?: number;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RejectedRowsOut"];
                 };
             };
             /** @description Validation Error */
@@ -2749,7 +3107,9 @@ export interface operations {
     };
     delete_window_plants__plant_code__calendar_windows__window_id__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                reason?: string | null;
+            };
             header?: {
                 "x-tenant-id"?: string | null;
                 "x-role"?: string | null;
@@ -2887,6 +3247,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_corrections_plants__plant_code__corrections_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_corrections_plants__plant_code__corrections_csv_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
                 };
             };
             /** @description Validation Error */
@@ -3273,7 +3703,9 @@ export interface operations {
     };
     delete_resource_plants__plant_code__resources__resource_code__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                reason?: string | null;
+            };
             header?: {
                 "x-tenant-id"?: string | null;
                 "x-role"?: string | null;
@@ -3361,6 +3793,44 @@ export interface operations {
                 "application/json": components["schemas"]["StationIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_station_plants__plant_code__stations__station_code__delete: {
+        parameters: {
+            query?: {
+                reason?: string | null;
+            };
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+                station_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

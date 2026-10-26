@@ -57,8 +57,10 @@ def test_kick_off_entry_of_plant_stations_and_machines(
                     "kind": "machine",
                     "parallel_units": 1,
                     "has_station_login": False,
+                    "imported": False,
                 }
             ],
+            "imported": False,
         }
     ]
     bad = {"name": "X", "station_code": "NOWHERE"}

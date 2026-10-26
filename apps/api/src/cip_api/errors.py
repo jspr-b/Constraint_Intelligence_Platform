@@ -76,6 +76,41 @@ CATALOG: dict[str, tuple[int, str]] = {
         422,
         "An upload needs at least one file. Add the right file first, then remove this one.",
     ),
+    "correction_needs_import_in_use": (
+        409,
+        "Rows can be fixed only in an import that is in use. Open the import marked IN USE.",
+    ),
+    "correction_reason_required": (
+        422,
+        "Say why you fix this row, so everyone can see it later (for example: time typed wrong).",
+    ),
+    "line_not_found": (404, "Line {line} is not in {file}. The page will refresh."),
+    "correction_personal_column": (
+        422,
+        "This is a personal column: it is never read, shown or fixed in the app.",
+    ),
+    "correction_column_not_found": (422, "Column {column} is not in {file}. Choose a column."),
+    "correction_value_required": (422, "Type the right value, or choose to leave the row out."),
+    "correction_still_rejected": (
+        422,
+        "The import still cannot read this value. It needs {rule}. Nothing was saved.",
+    ),
+    "removal_reason_required": (
+        422,
+        "This row came from an upload. Say why you remove it, so the next upload does not bring "
+        "it back without a trace.",
+    ),
+    "step_has_touchpoints": (
+        409,
+        "This step has {count} touchpoints in the data in use, so removing it would change the "
+        "answer without a trace. Leave its touchpoints out on the Import page first, or send a "
+        "steps list without it.",
+    ),
+    "station_in_use": (409, "Steps still belong to this station. Move or remove them first."),
+    "machine_not_found": (404, "This step is not in the plant. The page will refresh."),
+    "station_not_found": (404, "This station is not in the plant. The page will refresh."),
+    "correction_not_found": (404, "This correction no longer exists. The page will refresh."),
+    "correction_already_undone": (409, "This correction was already undone."),
     "preview_after_run": (
         409,
         "This import already ran: its results show what it changed.",

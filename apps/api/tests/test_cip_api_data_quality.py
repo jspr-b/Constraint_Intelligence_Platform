@@ -44,7 +44,7 @@ def test_defects_are_found_as_injected(it: TestClient) -> None:
     assert 0 <= body["score"]["value"] < 100
     events = next(f for f in body["files"] if f["file"] == "events.csv")
     assert events["rejected"] == known["unknown_machine_code_rows"] and events["rows"] > 1000
-    assert events["reasons"] == {"unknown": known["unknown_machine_code_rows"]}
+    assert events["reasons"] == {"unknown_code": known["unknown_machine_code_rows"]}
     unpaired = sum(g["count"] for g in body["gaps"] if g["code"] == "unpaired_start")
     assert (
         known["missing_end_events"]

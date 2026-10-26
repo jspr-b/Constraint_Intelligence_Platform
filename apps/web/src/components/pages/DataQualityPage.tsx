@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { EmptyState } from "../EmptyState";
 import { Count, Figure } from "../Figure";
 import { PageHeader } from "../PageHeader";
+import { CorrectionsList } from "../CorrectionsList";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { termTags } from "../terms";
 
@@ -43,7 +44,10 @@ export function DataQualityPage() {
       timeStyle: "short",
       hourCycle: "h23",
     }).format(new Date(iso));
-  const files = (q?.files ?? []).filter((f) => !onlyIssues || f.rejected > 0);
+  const files = (q?.files ?? []).filter((f) => !onlyIssues || f.rejected > 0 || f.fixed > 0);
+  const tr = useTranslations("import.rejected");
+  const rule = (reason: string) =>
+    tr.has(`codeShort.${reason}`) ? tr(`codeShort.${reason}`) : reason;
   const rejected = (q?.files ?? []).reduce((n, f) => n + f.rejected, 0);
   const tf = useTranslations("figure");
   const when = q?.imported_at ? date(q.imported_at) : "";
@@ -179,10 +183,18 @@ export function DataQualityPage() {
                       <td className={TD}>
                         <span aria-hidden="true">{f.rejected > 0 ? "▲" : "●"}</span>{" "}
                         {f.rejected > 0 ? t("hasRejected") : t("ok")}
+                        {f.fixed > 0 && (
+                          <>
+                            {" · "}
+                            <a href="#fixed-rows" className="text-accent">
+                              {t("fixedInApp", { count: f.fixed })}
+                            </a>
+                          </>
+                        )}
                       </td>
                       <td className={`${TD} text-xs text-muted`}>
                         {Object.entries(f.reasons)
-                          .map(([reason, n]) => `${reason} ${n}`)
+                          .map(([reason, n]) => `${rule(reason)} ${n}`)
                           .join(" · ") || "—"}
                       </td>
                     </tr>
@@ -233,6 +245,7 @@ export function DataQualityPage() {
               </table>
             )}
           </Panel>
+          {plant && <CorrectionsList plant={plant} />}
         </>
       )}
     </div>

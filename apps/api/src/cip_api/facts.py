@@ -9,6 +9,7 @@ so the Import page and the getting-started guide can say where the numbers are.
 import contextlib
 import json
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -26,6 +27,7 @@ from cip_api.settings import Settings
 from cip_api.tenancy import Ctx, require
 from constraint_engine.facts import Fact, measured_facts
 from constraint_engine.figure import Figure, Missing
+from constraint_engine.fixed_rows import with_fixed_rows
 from constraint_engine.formulas.money import NO_RATE
 from constraint_engine.formulas.registry import registry
 from constraint_engine.loss import loss_facts
@@ -115,6 +117,22 @@ INSERT = text(
 )
 
 
+def _fixed_rows(conn: Connection, plant_code: str) -> tuple[list[datetime], int]:
+    """Corrections in use: when each fixed touchpoint happened, and how many other fixes
+    (lines left out, rows removed, fixed rows that are not touchpoints) count everywhere."""
+    rows = conn.execute(
+        text(
+            "SELECT c.action, c.event_at FROM corrections c "
+            "LEFT JOIN imports i ON i.import_id = c.import_id "
+            "WHERE c.plant_code = :p AND c.undone_at IS NULL "
+            "AND (c.import_id IS NULL OR i.status = 'done')"
+        ),
+        {"p": plant_code},
+    ).all()
+    fixed_at = sorted(r.event_at for r in rows if r.action == "set" and r.event_at)
+    return fixed_at, len(rows) - len(fixed_at)
+
+
 class NoEventsError(RuntimeError):
     """The import has no touchpoints to calculate from."""
 
@@ -131,12 +149,19 @@ def compute_facts(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -
             ).one()
             # The whole plant as stored, all kept imports and app rows (ADR-0010).
             plant = load_plant_from_db(conn, tenant, plant_code)
+            fixed_at, fixed_anywhere = _fixed_rows(conn, plant_code)
         if not plant.events:
             # Nothing to calculate from: fail, so the plant's previous numbers stay.
             raise NoEventsError("the plant has no events")
         facts = measured_facts(plant)
         detections = detect(plant, facts, report)
         facts += loss_facts(plant, facts, detections)
+        # Every number that uses rows fixed in the app says so (ADR-0010 point 7).
+        events_at = sorted(e.at for e in plant.events)
+        facts = [
+            replace(f, figure=with_fixed_rows(f.figure, fixed_at, fixed_anywhere, events_at))
+            for f in facts
+        ]
         whole = next((f.figure for f in facts if f.period_kind == "all"), None)
         rows = [fact_row(tenant, plant_code, import_id, f) for f in facts]
         with tenant_conn(settings, tenant) as conn:

@@ -63,7 +63,7 @@ test("import plant_a with known defects, then Data quality shows the score and t
   const files = page.getByRole("region", { name: "Files" }).last();
   const events = files.getByRole("row").filter({ hasText: "events.csv" });
   await expect(events).toContainText(String(known.unknown_machine_code_rows));
-  await expect(events).toContainText("unknown");
+  await expect(events).toContainText("Unknown code");
 
   const gaps = page.getByRole("region", { name: "Gaps and their effect on the results" });
   await expect(gaps).toContainText("MISSING IS SHOWN AS MISSING");

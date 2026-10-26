@@ -9,6 +9,7 @@ import { api } from "@/lib/api/client";
 import { useDetection } from "../ConstraintBanner";
 import { useFacts, useFactPeriods, useMachineLabel, usePeriodName } from "../diagnose";
 import { EmptyState } from "../EmptyState";
+import { useCorrectionText, useCorrections } from "../CorrectionsList";
 import { Count, Figure, useFormulaText, useInputLines } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { PlantPicker, usePlant } from "../PlantPicker";
@@ -143,6 +144,9 @@ export function ReportPage() {
   const periodName = usePeriodName();
   const formulaText = useFormulaText();
   const inputLines = useInputLines();
+  const troles = useTranslations("roles");
+  const corrections = useCorrections(plant);
+  const correctionText = useCorrectionText();
   const [madeAt] = useState(() => new Date());
   const [pdf, setPdf] = useState<{ busy: boolean; saved?: string; error?: string }>({
     busy: false,
@@ -237,6 +241,13 @@ export function ReportPage() {
           wholeLoss: wholeLoss.data?.facts ?? [],
           utilisation: busy.data?.facts ?? [],
           quality: quality.data ?? null,
+          corrections: (corrections.data ?? [])
+            .filter((c) => !c.undone)
+            .map((c) => ({
+              what: correctionText(c),
+              reason: c.reason,
+              by: `${troles.has(c.role) ? troles(c.role) : c.role}, ${new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(c.created_at))}`,
+            })),
           label,
           periodName,
           t: ((key, values) => root(key, values)) as Translate,

@@ -14,6 +14,7 @@ export function FormDialog({
   error,
   children,
   variant = "secondary",
+  ariaLabel,
 }: {
   label: string;
   title: string;
@@ -22,11 +23,15 @@ export function FormDialog({
   onSubmit: (form: FormData) => Promise<boolean>;
   error: string | null;
   children: ReactNode;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "ghost";
+  /** Names the trigger when its text is short, e.g. "Fix line 101 of mes_events.csv". */
+  ariaLabel?: string;
 }) {
   return (
     <DialogTrigger>
-      <Button variant={variant}>{label}</Button>
+      <Button variant={variant} {...(ariaLabel ? { "aria-label": ariaLabel } : {})}>
+        {label}
+      </Button>
       <ModalOverlay
         isDismissable
         className="fixed inset-0 z-40 flex items-center justify-center bg-text/30 p-4"

@@ -361,21 +361,60 @@ export function CalendarPage() {
                       </td>
                       {canEdit && (
                         <td className="px-3 py-1">
-                          <Button
-                            variant="ghost"
-                            aria-label={t("deleteWindow", {
-                              what: `${label(e)} ${e.resource_code} ${when(e.start_at)}`,
-                            })}
-                            onPress={() =>
-                              change.mutate(() =>
-                                api.DELETE("/plants/{plant_code}/calendar/windows/{window_id}", {
-                                  params: { path: { plant_code: c.plant_code, window_id: e.id } },
-                                }),
-                              )
-                            }
-                          >
-                            {t("delete")}
-                          </Button>
+                          {e.imported ? (
+                            <FormDialog
+                              label={t("delete")}
+                              ariaLabel={t("deleteWindow", {
+                                what: `${label(e)} ${e.resource_code} ${when(e.start_at)}`,
+                              })}
+                              variant="ghost"
+                              title={t("deleteWindow", {
+                                what: `${label(e)} ${e.resource_code} ${when(e.start_at)}`,
+                              })}
+                              submitLabel={t("delete")}
+                              cancelLabel={t("cancel")}
+                              error={error}
+                              onSubmit={async (form) => {
+                                const { response, error: problem } = await api.DELETE(
+                                  "/plants/{plant_code}/calendar/windows/{window_id}",
+                                  {
+                                    params: {
+                                      path: { plant_code: c.plant_code, window_id: e.id },
+                                      query: { reason: String(form.get("reason") ?? "") },
+                                    },
+                                  },
+                                );
+                                if (!response.ok) {
+                                  setError(problemOf(problem, response.status).message);
+                                  return false;
+                                }
+                                setError(null);
+                                await refresh();
+                                return true;
+                              }}
+                            >
+                              <p className="m-0 text-sm">{t("deleteImported")}</p>
+                              <Field label={t("deleteReason")}>
+                                {(id) => <input id={id} name="reason" required className={FIELD} />}
+                              </Field>
+                            </FormDialog>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              aria-label={t("deleteWindow", {
+                                what: `${label(e)} ${e.resource_code} ${when(e.start_at)}`,
+                              })}
+                              onPress={() =>
+                                change.mutate(() =>
+                                  api.DELETE("/plants/{plant_code}/calendar/windows/{window_id}", {
+                                    params: { path: { plant_code: c.plant_code, window_id: e.id } },
+                                  }),
+                                )
+                              }
+                            >
+                              {t("delete")}
+                            </Button>
+                          )}
                         </td>
                       )}
                     </tr>

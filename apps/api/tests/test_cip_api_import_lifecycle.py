@@ -25,7 +25,6 @@ CLEAN = DATA / "plant_a" / "erp_export" / "clean" / "csv"
 ANSWERS: dict[str, Any] = yaml.safe_load((CASES / "expected_answers.yaml").read_text())
 PLANT_A: dict[str, Any] = yaml.safe_load((DATA / "plant_a" / "expected_answers.yaml").read_text())
 
-fixes = pytest.mark.xfail(strict=True, reason="ADR-0010: fix rows in the app, CI0004 seq 04")
 deletes = pytest.mark.xfail(strict=True, reason="ADR-0010: delete an import, CI0004 seq 05")
 
 
@@ -137,7 +136,6 @@ def test_deleting_the_second_upload_gives_the_first_uploads_answer(
     assert want and _busy(world) == pytest.approx(want, abs=0.01)
 
 
-@fixes
 def test_rows_fixed_in_the_app_give_the_answer_of_a_corrected_file(
     world: World, client_as: Callable[[str], TestClient]
 ) -> None:

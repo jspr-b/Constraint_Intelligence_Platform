@@ -23,7 +23,11 @@ class FileOut(BaseModel):
     file: str
     rows: int
     rejected: int
+    """Rows the import could not read and that are not fixed or left out in the app."""
+    fixed: int = 0
+    """Rows of the file fixed or left out in the app (ADR-0010); counted in rows, not rejected."""
     reasons: dict[str, int]
+    """Rejected rows per rule: the rule's code (e.g. not_a_datetime), else its first words."""
     examples: list[dict[str, int | str]]
 
 

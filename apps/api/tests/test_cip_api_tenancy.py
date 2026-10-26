@@ -59,7 +59,9 @@ def sample_row(table: Table, tenant: uuid.UUID) -> dict[str, Any]:
 
 
 def insert_sql(table: Table, row: dict[str, Any]) -> str:
-    return f"INSERT INTO {table.name} ({', '.join(row)}) VALUES ({', '.join(':' + k for k in row)})"
+    columns = ", ".join(f'"{k}"' for k in row)  # quoted: "column" is a reserved word
+    values = ", ".join(":" + k for k in row)
+    return f"INSERT INTO {table.name} ({columns}) VALUES ({values})"
 
 
 @pytest.fixture(scope="module")

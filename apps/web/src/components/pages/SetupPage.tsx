@@ -120,6 +120,45 @@ export function SetupPage() {
   }
 
   const machines = s?.stations.flatMap((st) => st.machines) ?? [];
+  /** Remove a step or station; one from an upload asks why and stays out of later uploads. */
+  const removeDialog = (
+    path:
+      | "/plants/{plant_code}/resources/{resource_code}"
+      | "/plants/{plant_code}/stations/{station_code}",
+    code: string,
+    imported: boolean,
+    title: string,
+  ) => (
+    <FormDialog
+      label={t("remove")}
+      ariaLabel={title}
+      variant="ghost"
+      title={title}
+      submitLabel={t("remove")}
+      cancelLabel={t("cancel")}
+      error={error}
+      onSubmit={(form) => {
+        const reason = imported ? String(form.get("reason") ?? "") : undefined;
+        const query = reason ? { reason } : {};
+        return save(() =>
+          path === "/plants/{plant_code}/resources/{resource_code}"
+            ? api.DELETE(path, {
+                params: { path: { plant_code: s?.plant_code ?? "", resource_code: code }, query },
+              })
+            : api.DELETE(path, {
+                params: { path: { plant_code: s?.plant_code ?? "", station_code: code }, query },
+              }),
+        );
+      }}
+    >
+      <p className="m-0 text-sm">{imported ? t("removeImported") : t("removeOwn")}</p>
+      {imported && (
+        <Field label={t("removeReason")}>
+          {(id) => <input id={id} name="reason" required className={FIELD} />}
+        </Field>
+      )}
+    </FormDialog>
+  );
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -312,8 +351,23 @@ export function SetupPage() {
                                       />
                                     </span>
                                   )}
+                                  {canEdit &&
+                                    removeDialog(
+                                      `/plants/{plant_code}/resources/{resource_code}`,
+                                      m.resource_code,
+                                      m.imported,
+                                      t("removeStep", { code: m.resource_code }),
+                                    )}
                                 </span>
                               ))}
+                          {canEdit &&
+                            st.machines.length === 0 &&
+                            removeDialog(
+                              `/plants/{plant_code}/stations/{station_code}`,
+                              st.station_code,
+                              st.imported,
+                              t("removeStation", { code: st.station_code }),
+                            )}
                         </td>
                         <td className={TD}>
                           {t("screens", {

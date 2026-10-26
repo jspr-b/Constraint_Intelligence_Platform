@@ -17,6 +17,7 @@ import { ImportPreview } from "../ImportPreview";
 import { PageHeader } from "../PageHeader";
 import { TechnicalDetails } from "../Problems";
 import { ReadOnlyNote } from "../ReadOnlyNote";
+import { RejectedRows } from "../RejectedRows";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
 
@@ -755,6 +756,13 @@ export function ImportPage() {
                 </table>
                 <p className="m-0 mt-2 text-xs text-muted">{t("resultsNote")}</p>
               </Panel>
+              {plant && (
+                <RejectedRows
+                  importId={latest.import_id}
+                  plant={plant}
+                  canFix={canRun && latest.status === "done"}
+                />
+              )}
               <Panel label={t("minimumLabel")}>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                   {minimum.map((m) => (

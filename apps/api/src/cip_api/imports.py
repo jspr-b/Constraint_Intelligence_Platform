@@ -11,7 +11,7 @@ import json
 import re
 import shutil
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import asdict
 from datetime import datetime
 from functools import lru_cache
@@ -27,16 +27,18 @@ from cip_api.auth.sessions import audit, tenant_conn
 from cip_api.db.plant_store import (
     TABLES,
     EventCounts,
+    fixes_digest,
     load_plant_from_db,
     merge_imports,
     rebuild_plant_data,
+    row_fixes,
 )
 from cip_api.errors import ApiProblem
 from cip_api.facts import FactRunOut, fact_run, queue_facts, start_facts
 from cip_api.jobs import enqueue
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
-from cip_connectors.importer import import_export
+from cip_connectors.importer import Fixes, import_export
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
 from cip_connectors.readers import choose_delimiter, decode, find_source, inspect_file
@@ -753,6 +755,63 @@ def data_in_use(plant_code: str, ctx: View) -> list[InUseOut]:
     ]
 
 
+def quality_section(
+    mapping: MappingSet, plant: LoadedPlant, issues: Iterable[dict[str, Any]], fixes: Fixes
+) -> dict[str, Any]:
+    """The quality report of an import as stored: the rows its run rejected that are not fixed
+    or left out in the app, and per file how many were (ADR-0010).
+
+    Rejected rows count against the standard file they would fill (e.g. events.csv) and are
+    grouped by the rule's code where there is one, so the page can name the rule in plain words.
+    """
+    target = {f"{t.source}.csv": f"{t.target}.csv" for t in mapping.tables}
+    target |= {f"{t.source}.xlsx": f"{t.target}.csv" for t in mapping.tables}
+    fixed = {(file, line) for file, lines in fixes.items() for line in lines}
+    errors = [
+        RowError(
+            target.get(e["file"], e["file"]),
+            e["line"],
+            f"{e['code']}: {e['reason']}" if e.get("code") else e["reason"],
+        )
+        for e in issues
+        if (e["file"], e["line"]) not in fixed
+    ]
+    out = quality_dict(quality_report(plant, errors), plant)
+    per_file: dict[str, int] = {}
+    for file, _ in fixed:
+        per_file[target.get(file, file)] = per_file.get(target.get(file, file), 0) + 1
+    for f in out["files"]:
+        f["fixed"] = per_file.get(f["file"], 0)
+    return out
+
+
+def refresh_quality(settings: Settings, conn: Connection, tenant: uuid.UUID, plant: str) -> None:
+    """After a fix, an undo or a removal: the latest import's quality report from the rebuilt
+    plant, so Data quality counts the rows still rejected and the ones fixed in the app."""
+    row = conn.execute(
+        text(
+            "SELECT import_id, report FROM imports WHERE plant_code = :p AND status = 'done' "
+            "ORDER BY created_at DESC LIMIT 1"
+        ),
+        {"p": plant},
+    ).first()
+    if row is None or not row.report:
+        return
+    report = json.loads(row.report)
+    if "quality" not in report:
+        return
+    folder = import_dir(settings, tenant, plant, row.import_id) / "source"
+    mapping = choose_mapping(p.name for p in folder.iterdir())
+    fixes = row_fixes(conn, [row.import_id]).get(row.import_id) or {}
+    loaded = load_plant_from_db(conn, tenant, plant)
+    issues = (report.get("import") or {}).get("row_errors", [])
+    report["quality"] = quality_section(mapping, loaded, issues, fixes)
+    conn.execute(
+        text("UPDATE imports SET report = :r WHERE import_id = :i"),
+        {"r": json.dumps(report, ensure_ascii=False), "i": row.import_id},
+    )
+
+
 def quality_dict(q: QualityReport, plant: LoadedPlant) -> dict[str, Any]:
     """The engine's quality report as stored JSON: every number a Figure or a plain count."""
     times = [e.at for e in plant.events]
@@ -798,15 +857,23 @@ ID_RULE = ".ids-content-v1"
 mapped again from their source files, which never change."""
 
 
-def map_import(folder: Path, plant: dict[str, Any]) -> Any:
-    """Map an import's source files to its standard layout. Returns the connector report."""
+def map_import(folder: Path, plant: dict[str, Any], fixes: Fixes | None = None) -> Any:
+    """Map an import's source files, with the rows fixed in the app, to its standard layout.
+
+    Returns the connector report. The marker holds the stamp of the fixes it was mapped with.
+    """
     mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
     standard = folder / "standard"
     if standard.exists():
         shutil.rmtree(standard)
-    report = import_export(folder / "source", mapping, standard, plant=plant)
-    (standard / ID_RULE).touch()
+    report = import_export(folder / "source", mapping, standard, plant=plant, fixes=fixes)
+    (standard / ID_RULE).write_text(fixes_digest(fixes))
     return report
+
+
+def _mapped_with(folder: Path) -> str | None:
+    marker = folder / "standard" / ID_RULE
+    return marker.read_text() if marker.exists() else None
 
 
 def kept_imports(
@@ -818,21 +885,26 @@ def kept_imports(
         {"p": plant_code},
     ).one()
     # The running import takes the place of the version it replaces (ADR-0010).
-    ids = conn.execute(
-        text(
-            "SELECT import_id FROM imports WHERE plant_code = :p "
-            "AND (status = 'done' OR import_id = :i) "
-            "AND import_id IS DISTINCT FROM "
-            "(SELECT replaces FROM imports WHERE import_id = :i) "
-            "ORDER BY coalesce(slot_at, created_at), created_at, import_id"
-        ),
-        {"p": plant_code, "i": running},
-    ).scalars()
+    ids: Sequence[uuid.UUID] = (
+        conn.execute(
+            text(
+                "SELECT import_id FROM imports WHERE plant_code = :p "
+                "AND (status = 'done' OR import_id = :i) "
+                "AND import_id IS DISTINCT FROM "
+                "(SELECT replaces FROM imports WHERE import_id = :i) "
+                "ORDER BY coalesce(slot_at, created_at), created_at, import_id"
+            ),
+            {"p": plant_code, "i": running},
+        )
+        .scalars()
+        .all()
+    )
+    fixes = row_fixes(conn, ids)
     out = []
     for i in ids:
         folder = import_dir(settings, tenant, plant_code, i)
-        if not (folder / "standard" / ID_RULE).exists():
-            map_import(folder, dict(plant._mapping))
+        if _mapped_with(folder) != fixes_digest(fixes.get(i)):  # new id rule or other fixes
+            map_import(folder, dict(plant._mapping), fixes.get(i))
         out.append((i, load_plant(folder / "standard", tenant_id=tenant)))
     return out
 
@@ -857,9 +929,10 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 text("SELECT plant_code, name, timezone_iana FROM plants WHERE plant_code = :p"),
                 {"p": row.plant_code},
             ).one()
+            fixes = row_fixes(conn, [import_id]).get(import_id)
         folder = import_dir(settings, tenant, row.plant_code, import_id)
         mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
-        report = map_import(folder, dict(plant._mapping))
+        report = map_import(folder, dict(plant._mapping), fixes)
         step = "load"
         own = load_plant(folder / "standard", tenant_id=tenant)
         step = "store"
@@ -871,12 +944,8 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
             loaded.row_errors.extend(own.row_errors)
             items = checklist(parse_requirements(INPUT_DATA.read_text()), loaded)
             measured = task_times(pair_operations(loaded), per_product=False)
-            # Rejected rows count against the standard file they would fill (e.g. events.csv).
-            target = {f"{t.source}.csv": f"{t.target}.csv" for t in mapping.tables}
-            target |= {f"{t.source}.xlsx": f"{t.target}.csv" for t in mapping.tables}
-            quality = quality_report(
-                loaded,
-                [RowError(target.get(e.file, e.file), e.line, e.reason) for e in report.row_errors],
+            quality = quality_section(
+                mapping, loaded, [vars(e) for e in report.row_errors], fixes or {}
             )
             counts = merged.events.get(import_id, EventCounts())
             ats = [e.at for e in loaded.events]
@@ -906,7 +975,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                     }
                     for i in items
                 ],
-                "quality": quality_dict(quality, loaded),
+                "quality": quality,
                 "task_times": [
                     {
                         "resource_code": m.resource_code,

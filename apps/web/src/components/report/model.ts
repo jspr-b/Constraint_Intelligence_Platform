@@ -68,6 +68,8 @@ export interface ReportInput {
   /** Utilisation facts of the whole period (used when no machine limits output). */
   utilisation: Fact[];
   quality: Quality | null;
+  /** Rows fixed, left out or removed in the app that the answer uses (ADR-0010). */
+  corrections?: { what: string; reason: string; by: string }[];
   label: (code: string) => string;
   periodName: (p: { period_kind: string; period_start_at: string } | undefined) => string;
   t: Translate;
@@ -319,6 +321,20 @@ export function buildReport(input: ReportInput): Report {
     if (q.gaps.length === 0) data.push([text(t("report.noGaps"))]);
   } else {
     data.push([text(t("report.noQuality"))]);
+  }
+  const fixes = input.corrections ?? [];
+  if (fixes.length > 0) {
+    data.push([
+      count(fixes.length, t("report.fixedLabel"), {
+        what: t("figure.src.corrections"),
+        href: "/data#fixed-rows",
+        page: t("figure.pages.data"),
+      }),
+      text(` ${t("report.fixedLead")}`),
+    ]);
+    for (const f of fixes) {
+      data.push([text(t("report.fixed", { what: f.what, reason: f.reason, by: f.by }))]);
+    }
   }
   sections.push({ key: "data", heading: t("report.sections.data"), lines: data });
 

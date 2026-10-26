@@ -533,7 +533,14 @@ export async function stubPages(
         score: FIG(94, "score", "data_quality_score_v1"),
         rows: FIG(11684, "rows", "record_count_v1"),
         files: [
-          { file: "events.csv", rows: 7084, rejected: 2, reasons: { bad_time: 2 }, examples: [] },
+          {
+            file: "events.csv",
+            rows: 7084,
+            rejected: 2,
+            fixed: 0,
+            reasons: { bad_time: 2 },
+            examples: [],
+          },
         ],
         files_required: 8,
         files_missing: [],

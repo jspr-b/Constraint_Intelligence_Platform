@@ -14,6 +14,8 @@ from sqlalchemy import text
 
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
+from cip_api.corrections import record_removal
+from cip_api.db.plant_store import key_text
 from cip_api.errors import ApiProblem
 from cip_api.tenancy import Ctx, require
 
@@ -33,6 +35,8 @@ class WindowOut(BaseModel):
     covered: bool
     start_min: int
     end_min: int
+    imported: bool = False
+    """From an upload: removing it needs a reason and is stored as a correction (ADR-0010)."""
 
 
 class MachineDay(BaseModel):
@@ -125,6 +129,7 @@ def _window(row: object, day_start: datetime) -> WindowOut:
         covered=r["covered"],
         start_min=offset(r["start_at"]),
         end_min=offset(r["end_at"]),
+        imported=r["imported"],
     )
 
 
@@ -147,7 +152,8 @@ def calendar(plant_code: str, ctx: View, day: date | None = None) -> CalendarOut
     end = datetime.combine(day + timedelta(days=1), time(0), zone)
     rows = ctx.db.execute(
         text(
-            "SELECT id, resource_code, kind, start_at, end_at, covered FROM calendar_windows "
+            "SELECT id, resource_code, kind, start_at, end_at, covered, "
+            "import_id IS NOT NULL AS imported FROM calendar_windows "
             "WHERE plant_code = :p AND start_at < :e AND end_at > :s ORDER BY start_at"
         ),
         {**p, "s": start, "e": end},
@@ -170,7 +176,8 @@ def calendar(plant_code: str, ctx: View, day: date | None = None) -> CalendarOut
         _window(r, start)
         for r in ctx.db.execute(
             text(
-                "SELECT id, resource_code, kind, start_at, end_at, covered FROM calendar_windows "
+                "SELECT id, resource_code, kind, start_at, end_at, covered, "
+                "import_id IS NOT NULL AS imported FROM calendar_windows "
                 "WHERE plant_code = :p AND kind IN ('maintenance', 'holiday', 'overtime') "
                 "AND end_at > :s AND start_at < :e ORDER BY start_at LIMIT 200"
             ),
@@ -221,7 +228,8 @@ def add_window(plant_code: str, body: WindowIn, ctx: Edit) -> WindowOut:
         text(
             "INSERT INTO calendar_windows (tenant_id, plant_code, resource_code, kind, start_at, "
             "end_at, covered) VALUES (:t, :p, :r, :k, :s, :e, :c) "
-            "RETURNING id, resource_code, kind, start_at, end_at, covered"
+            "RETURNING id, resource_code, kind, start_at, end_at, covered, "
+            "import_id IS NOT NULL AS imported"
         ),
         {
             "t": ctx.principal.tenant_id,
@@ -250,7 +258,8 @@ def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> 
         text(
             "UPDATE calendar_windows SET covered = :c, import_id = NULL WHERE id = :i "
             "AND plant_code = :p "
-            "AND kind = 'break' RETURNING id, resource_code, kind, start_at, end_at, covered"
+            "AND kind = 'break' RETURNING id, resource_code, kind, start_at, end_at, covered, "
+            "import_id IS NOT NULL AS imported"
         ),
         {"c": body.covered, "i": window_id, "p": plant_code},
     ).first()
@@ -266,17 +275,28 @@ def set_covered(plant_code: str, window_id: int, body: CoveredIn, ctx: Edit) -> 
 
 
 @router.delete("/plants/{plant_code}/calendar/windows/{window_id}", status_code=204)
-def delete_window(plant_code: str, window_id: int, ctx: Edit) -> None:
+def delete_window(plant_code: str, window_id: int, ctx: Edit, reason: str | None = None) -> None:
+    """Delete a calendar row. One from an upload needs a reason and stays out of rebuilds."""
     _plant(ctx, plant_code)
+    found = ctx.db.execute(
+        text(
+            "SELECT resource_code, kind, start_at, end_at, import_id IS NOT NULL AS imported "
+            "FROM calendar_windows WHERE id = :i AND plant_code = :p"
+        ),
+        {"i": window_id, "p": plant_code},
+    ).first()
+    if found is None:
+        raise ApiProblem("window_not_found")
+    if found.imported:
+        key = [found.resource_code, found.kind, key_text(found.start_at), key_text(found.end_at)]
+        record_removal(ctx, plant_code, "calendar_windows", key, reason)
     row = ctx.db.execute(
         text(
             "DELETE FROM calendar_windows WHERE id = :i AND plant_code = :p "
             "RETURNING resource_code, kind, start_at"
         ),
         {"i": window_id, "p": plant_code},
-    ).first()
-    if row is None:
-        raise ApiProblem("window_not_found")
+    ).one()
     _log(
         ctx,
         "calendar_window_deleted",

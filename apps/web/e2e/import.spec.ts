@@ -108,3 +108,101 @@ test("an upload replaced by a newer version still shows what it did", async ({ p
     }),
   ).toContainText("Imported, some rows rejected");
 });
+
+const REJECTED = {
+  import_id: "i1",
+  total: 1,
+  codes: { unknown_code: 1 },
+  fixed: 0,
+  shown: 1,
+  offset: 0,
+  datetime_format: "20-07-2026 10:11",
+  rows: [
+    {
+      file: "mes_events.csv",
+      line: 4,
+      column: "Werkplek",
+      value: "LAS9",
+      code: "unknown_code",
+      reason: "unknown code 'LAS9' in column 'Werkplek'",
+      correction: null,
+    },
+  ],
+};
+
+test("IT fixes a rejected row with a reason; the file stays as uploaded", async ({ page }) => {
+  let sent: Record<string, unknown> | null = null;
+  await page.route("**/api/imports/i1/rejected-rows?*", (route) =>
+    route.fulfill({ json: REJECTED }),
+  );
+  await page.route("**/api/imports/i1/corrections", (route) => {
+    sent = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({
+      status: 422,
+      json: {
+        code: "correction_still_rejected",
+        message:
+          "The import still cannot read this value. It needs a code the plant's export uses. Nothing was saved.",
+      },
+    });
+  });
+  await page.goto("/import");
+  await page.getByRole("tab", { name: /data checklist/i }).click();
+  const panel = page.getByRole("region", { name: "Rejected rows" });
+  await expect(panel).toContainText("This code is not one the export uses");
+  await expect(panel).toContainText("LAS9");
+  await panel.getByRole("button", { name: "Fix line 4 of mes_events.csv" }).click();
+  const dialog = page.getByRole("dialog", { name: "Fix line 4 of mes_events.csv" });
+  await dialog.getByLabel("Right value for Werkplek").fill("LAS1");
+  await dialog.getByLabel("Why (required)").fill("typo at the terminal");
+  await dialog.getByRole("button", { name: "Save fix" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Nothing was saved");
+  expect(sent).toMatchObject({
+    file: "mes_events.csv",
+    line: 4,
+    column: "Werkplek",
+    value: "LAS1",
+    exclude: false,
+    reason: "typo at the terminal",
+  });
+});
+
+test("Data quality lists the fixes with their reason, a CSV download and undo", async ({
+  page,
+}) => {
+  await page.route("**/api/plants/PLANT-A/corrections", (route) =>
+    route.fulfill({
+      json: [
+        {
+          correction_id: "c1",
+          plant_code: "PLANT-A",
+          action: "set",
+          import_id: "i1",
+          import_created_at: "2026-10-13T07:15:00Z",
+          file: "mes_events.csv",
+          line: 4,
+          column: "Werkplek",
+          original: "LAS9",
+          value: "LAS1",
+          target: null,
+          target_key: null,
+          event_at: "2026-09-02T08:00:00Z",
+          reason: "typo at the terminal",
+          role: "it",
+          created_at: "2026-10-14T09:00:00Z",
+          undone_at: null,
+          undone: false,
+        },
+      ],
+    }),
+  );
+  await page.goto("/data");
+  const fixed = page.getByRole("region", { name: "Fixed in the app" });
+  await expect(fixed).toContainText("line 4 of mes_events.csv: Werkplek “LAS9” → “LAS1”");
+  await expect(fixed).toContainText("typo at the terminal");
+  await expect(fixed.getByRole("link", { name: /Download as CSV/ })).toHaveAttribute(
+    "href",
+    "/api/plants/PLANT-A/corrections.csv",
+  );
+  await expect(fixed.getByRole("button", { name: /^Undo: line 4/ })).toBeVisible();
+});

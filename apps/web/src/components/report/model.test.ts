@@ -56,7 +56,7 @@ const quality = {
   imported_at: "2026-10-22T08:00:00Z",
   score: fig(88, "score", "data_quality_score_v1"),
   rows: fig(1000, "rows", "record_count_v1"),
-  files: [{ file: "orders.csv", rows: 120, rejected: 2, reasons: {}, examples: [] }],
+  files: [{ file: "orders.csv", rows: 120, rejected: 2, fixed: 0, reasons: {}, examples: [] }],
   files_required: 8,
   files_missing: [],
   gaps: [

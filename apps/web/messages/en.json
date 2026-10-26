@@ -341,7 +341,7 @@
       "partial": "Imported, some rows rejected",
       "skipped": "Not imported"
     },
-    "resultsNote": "Rejected rows are never guessed or fixed: correct them in the source or add the code to the code table, then run again.",
+    "resultsNote": "Rejected rows are never guessed. Fix them under Rejected rows below, with a reason; or correct them in the source or add the code to the code table, then run again.",
     "source": {
       "werkplekken": "Steps and stations",
       "artikelen": "Products",
@@ -487,6 +487,67 @@
       "remove": "Remove",
       "removeOf": "Remove {file} from the upload",
       "readOnly": "This import was {status}; change the version in use instead."
+    },
+    "rejected": {
+      "label": "Rejected rows",
+      "status": "{fixed} of {total} fixed",
+      "lead": "The import could not read",
+      "leadRows": "rows.",
+      "fixedLabel": "Rows fixed or left out",
+      "leadFixed": "are fixed or left out in the app. Your files stay as uploaded.",
+      "filter": "Show",
+      "all": "All reasons ({count})",
+      "download": "Download the fixes (CSV) for your ERP owner",
+      "colFile": "File",
+      "colLine": "Line",
+      "colColumn": "Column",
+      "colValue": "Value in the file",
+      "colReason": "Why it was rejected",
+      "colFix": "Fix",
+      "where": "line {line} of {file}",
+      "leftOut": "Left out",
+      "fixedTo": "Fixed to {value}",
+      "why": "{reason} · {role}, {when}",
+      "undo": "Undo",
+      "undoOf": "Undo the fix of {where}",
+      "fix": "Fix",
+      "fixOf": "Fix {where}",
+      "fixTitle": "Fix {where}",
+      "save": "Save fix",
+      "cancel": "Cancel",
+      "uploaded": "In the file, {column} is “{value}”.",
+      "newValue": "Right value for {column}",
+      "exclude": "Leave this row out instead",
+      "reason": "Why (required)",
+      "reasonHint": "e.g. time typed wrong at the bench terminal",
+      "fixNote": "The file stays as uploaded. The fix is checked by the same rules as the import, kept next to the original with your role and time, and the answer is calculated again.",
+      "notFixed": "Not fixed",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Rows {from}–{to} of {total}",
+      "note": "Fix a value or leave a row out. Every fix keeps the original, the reason, the role and the time; undo puts the original back. Numbers that use fixed rows say so when you click them.",
+      "readOnly": "Your role sees the rejected rows and their fixes but cannot change them. Ask IT or the planner to fix a row.",
+      "code": {
+        "not_a_datetime": "The date and time cannot be read. It must look like {example}.",
+        "not_a_number": "This is not a number.",
+        "not_whole": "This must be a whole number.",
+        "too_many_decimals": "A euro amount can have at most two decimals.",
+        "not_yes_no": "This must be yes or no.",
+        "unknown_code": "This code is not one the export uses (for example a step code that is not in the steps list).",
+        "no_code_table": "The export's code list for this column is missing.",
+        "empty": "This field is empty but is needed."
+      },
+      "codeShort": {
+        "not_a_datetime": "Date or time not readable",
+        "not_a_number": "Not a number",
+        "not_whole": "Not a whole number",
+        "too_many_decimals": "Too many decimals",
+        "not_yes_no": "Not yes/no",
+        "unknown_code": "Unknown code",
+        "no_code_table": "Code list missing",
+        "empty": "Empty field",
+        "other": "Other"
+      }
     }
   },
   "setup": {
@@ -550,7 +611,13 @@
     "extraShift": "Extra shift €",
     "action": "Action",
     "editCosts": "Edit costs {machine}",
-    "costsNote": "Used later to weigh Elevate actions (overtime, extra shifts) against their gain. Empty means not known."
+    "costsNote": "Used later to weigh Elevate actions (overtime, extra shifts) against their gain. Empty means not known.",
+    "remove": "Remove",
+    "removeStep": "Remove step {code}",
+    "removeStation": "Remove station {code}",
+    "removeImported": "This row came from your upload. It stays removed after later uploads, until you undo it under Fixed in the app on Data quality. A step that has touchpoints cannot be removed: the answer would change without a trace.",
+    "removeOwn": "This row was added in the app. Removing it cannot be undone; add it again if needed.",
+    "removeReason": "Why (required)"
   },
   "calendar": {
     "headline": "Shifts, breaks and maintenance per step, in plant local time ({tz}).",
@@ -603,7 +670,9 @@
     "hours": "Hours",
     "isoWeek": "Week",
     "noOvertime": "No overtime entered or imported yet.",
-    "overtimeNote": "Per step and week, never per person. Can also come from an import."
+    "overtimeNote": "Per step and week, never per person. Can also come from an import.",
+    "deleteImported": "This entry came from your upload. It stays deleted after later uploads, until you undo it under Fixed in the app on Data quality.",
+    "deleteReason": "Why (required)"
   },
   "connections": {
     "headlineNone": "No data has come in yet. Start with a file upload on the Import page.",
@@ -687,6 +756,7 @@
     "status": "Status",
     "reasons": "Reasons",
     "hasRejected": "Rows rejected",
+    "fixedInApp": "{count, plural, one {# row fixed in the app} other {# rows fixed in the app}}",
     "ok": "OK",
     "gapsLabel": "Gaps and their effect on the results",
     "missingShown": "MISSING IS SHOWN AS MISSING",
@@ -1047,7 +1117,10 @@
       "preview": {
         "added": "Events in this upload that the data in use does not have yet, counted by the event itself (step, job, what happened, time).",
         "removed": "Events in use now that would be gone after the run: they came from a file this upload replaces and are not in the new file."
-      }
+      },
+      "rejectedRows": "Rows the import's run could not read, in every file of this upload.",
+      "fixedRows": "Rejected rows of this upload that are fixed or left out in the app (corrections in use).",
+      "corrections": "Fixes in use for this plant: values fixed, rows left out and imported rows removed in the app."
     },
     "pages": {
       "import": "Import",
@@ -1086,7 +1159,9 @@
       "machines": "Steps",
       "constraint_run_min_per_unit": "Bottleneck time per unit",
       "end": "Finish event",
-      "start": "Start event"
+      "start": "Start event",
+      "fixed_rows": "Rows fixed in the app",
+      "fixed_rows_share_pct": "Share of the touchpoints that were fixed in the app (fixed rows lower the confidence one level from 10%)"
     },
     "noMachine": "no step"
   },
@@ -1460,6 +1535,31 @@
     "sourceFormulaId": "Calculation reference",
     "page": "Page {n} of {total}",
     "sourceLink": "Where number {n} comes from",
-    "pointsAtNone": "{none}. Evidence:"
+    "pointsAtNone": "{none}. Evidence:",
+    "fixedLabel": "Rows fixed in the app",
+    "fixedLead": "rows were fixed, left out or removed in the app; the numbers above use them, and the uploaded files are unchanged:",
+    "fixed": "{what} — {reason} ({by})."
+  },
+  "corrections": {
+    "label": "Fixed in the app",
+    "count": "{count, plural, =0 {none in use} one {# in use} other {# in use}}",
+    "none": "No rows are fixed in the app. Rejected rows can be fixed on the Import page.",
+    "toImport": "Go to Import",
+    "importPage": "Import",
+    "lead": "fixes are in use: the answer is calculated with them, and every number that uses them says so.",
+    "download": "Download as CSV for your ERP owner",
+    "colWhat": "What changed",
+    "colWhy": "Why",
+    "colBy": "By, when",
+    "colStatus": "Status",
+    "where": "line {line} of {file}",
+    "set": "{where}: {column} “{from}” → “{to}”",
+    "leftOut": "{where}: left out",
+    "removed": "{list}: {key} removed",
+    "inUse": "In use",
+    "undone": "Undone {when}; the original counts again",
+    "note": "Your files are never changed: each fix sits next to the original. Fix it in your ERP too, so the next export is right.",
+    "undo": "Undo",
+    "undoOf": "Undo: {what}"
   }
 }
