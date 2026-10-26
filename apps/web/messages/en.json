@@ -231,7 +231,9 @@
     "headline": {
       "uploaded": "Files uploaded. Check how the columns map, then run the import.",
       "running": "Importing… this page updates by itself.",
-      "failed": "The last import failed. See the reason below."
+      "failed": "The last import failed. See the reason below.",
+      "replaced": "A newer version replaced this upload. It is kept to show what it did; the version in use is marked IN USE in the history.",
+      "deleted": "This import was deleted; its data no longer counts. Open an import marked IN USE in the history."
     },
     "steps": "Import steps",
     "stepUpload": "Upload files",
@@ -301,6 +303,7 @@
     "neededLabel": "Needed to start a diagnostic · 3 files",
     "neededPresent": "In this upload",
     "neededMissing": "Missing: upload {files}",
+    "neededInPlant": "Not in this upload; the one in use stays",
     "neededNote": "These three are enough to find your bottleneck and its lost hours. Without one of them the import still runs, but the answer cannot be found.",
     "colRecognised": "Recognised as",
     "colRows": "Rows",
@@ -431,6 +434,59 @@
         "teams": "teams",
         "team_shifts": "team plan"
       }
+    },
+    "history": {
+      "label": "Import history",
+      "count": "{count, plural, one {# import} other {# imports}}",
+      "inUse": "Data in use now:",
+      "inUseItem": "upload of {when}: {events} events first sent in it, {lists, plural, =0 {no lists} one {# list} other {# lists}}",
+      "colUploaded": "Uploaded",
+      "colBy": "By",
+      "colFiles": "Files",
+      "colPeriod": "Period in the upload",
+      "colAdded": "Events added",
+      "colStatus": "Status",
+      "colOpen": "Open",
+      "open": "Open",
+      "openOf": "Open the import of {when}",
+      "showing": "Shown below",
+      "system": "System",
+      "newVersionOf": "New version of the upload of {when}",
+      "replacedBy": "Replaced by the version of {when}; kept in the history",
+      "note": "In use: its data counts in the answer. Replaced: a newer version took its place; it stays here so you can see what changed."
+    },
+    "preview": {
+      "label": "What this upload will change",
+      "working": "Comparing this upload with the data in use…",
+      "failed": "Could not compare this upload: {reason}",
+      "eventsLead": "Events:",
+      "eventsAdded": "added",
+      "eventsRemoved": "removed",
+      "count": {
+        "added": "Events added",
+        "removed": "Events removed"
+      },
+      "period": "period now {from}, after the run {to}",
+      "list": "{list}: {before} now, {after} after the run",
+      "new": "new: {items}",
+      "gone": "gone: {items}",
+      "noListChanges": "No list changes: the steps list, shift sheet and other lists stay as they are.",
+      "note": "Nothing changes until you run the import.",
+      "warning": {
+        "steps_removed_with_events": "These steps have events but are not in this upload's steps list: {items}. After the run they are gone from the answer. Send the full steps list, or run only if they really closed.",
+        "events_removed": "{count, plural, one {# event} other {# events}} in use now would be gone after the run, because this upload replaces the file they came from. Check that the new file is complete.",
+        "period_shrinks": "After the run the data covers a shorter period than now. Check that the new file covers all weeks."
+      }
+    },
+    "changeFiles": {
+      "label": "Change this upload",
+      "choose": "Files to add or replace",
+      "submit": "Add or replace files",
+      "noteBefore": "A file with the same name replaces the one in the upload; the file check runs again. Nothing is imported until you run it.",
+      "noteAfter": "This import already ran. Changing its files makes a new version; this one stays in use until you run the new version, then it is kept in the history as replaced.",
+      "remove": "Remove",
+      "removeOf": "Remove {file} from the upload",
+      "readOnly": "This import was {status}; change the version in use instead."
     }
   },
   "setup": {
@@ -556,7 +612,9 @@
     "headline": {
       "uploaded": "Files are uploaded but the import has not run yet.",
       "running": "An import is running.",
-      "failed": "The last import failed. See the Import page."
+      "failed": "The last import failed. See the Import page.",
+      "replaced": "The last upload was replaced by a newer version. See the Import page.",
+      "deleted": "The last import was deleted. See the Import page for the data in use."
     },
     "runNow": "Run import now",
     "sourcesLabel": "Connections · read-only",
@@ -985,6 +1043,10 @@
         "changed": "Events with your own event id that came back with other values; the newest upload's values are used.",
         "repeated_in_file": "Rows in this upload that are identical in every field; each is counted once.",
         "in_plant": "All events your plant has now, from every upload you kept."
+      },
+      "preview": {
+        "added": "Events in this upload that the data in use does not have yet, counted by the event itself (step, job, what happened, time).",
+        "removed": "Events in use now that would be gone after the run: they came from a file this upload replaces and are not in the new file."
       }
     },
     "pages": {

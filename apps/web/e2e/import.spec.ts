@@ -9,10 +9,16 @@ test.beforeEach(async ({ page }) => {
 test("the import page explains each file before running", async ({ page }) => {
   await page.goto("/import");
   await expect(page.getByText("How importing works")).toBeVisible();
-  const events = page.getByRole("row").filter({ hasText: "mes_events.csv" });
+  const events = page
+    .getByRole("region", { name: /Files · standard layout/ })
+    .getByRole("row")
+    .filter({ hasText: "mes_events.csv" });
   await expect(events).toContainText("Operation events (MES)");
   await expect(events).toContainText("Readable, ready to import");
-  const notes = page.getByRole("row").filter({ hasText: "notes.csv" });
+  const notes = page
+    .getByRole("region", { name: /Files · standard layout/ })
+    .getByRole("row")
+    .filter({ hasText: "notes.csv" });
   await expect(notes).toContainText("Only one column: the separator may be wrong");
   await expect(page.getByText(/1 file is not recognised and will be ignored/)).toBeVisible();
   const needed = page.getByRole("region", { name: /Needed to start a diagnostic/ });
@@ -88,4 +94,17 @@ test("a failed calculation says what to do and keeps the details for IT", async 
   const alert = page.getByRole("alert").filter({ hasText: "could not calculate your numbers" });
   await expect(alert).toContainText("Run the import again");
   await expect(alert.getByText("facts:ValueError")).toBeHidden();
+});
+
+test("an upload replaced by a newer version still shows what it did", async ({ page }) => {
+  await stubPages(page, { latestImport: { status: "replaced" } });
+  await page.goto("/import");
+  await expect(page.getByText(/A newer version replaced this upload/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run import again" })).toHaveCount(0);
+  await page.getByRole("tab", { name: /data checklist/i }).click();
+  await expect(
+    page.getByRole("region", { name: "Results per file" }).getByRole("row").filter({
+      hasText: "mes_events.csv",
+    }),
+  ).toContainText("Imported, some rows rejected");
 });

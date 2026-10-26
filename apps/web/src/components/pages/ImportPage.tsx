@@ -12,6 +12,8 @@ import { Field } from "../FormDialog";
 import { conversionLabel, fieldLabel } from "@/lib/model";
 import { Count } from "../Figure";
 import { ImportChanges, type ImportEvents } from "../ImportChanges";
+import { ImportHistory } from "../ImportHistory";
+import { ImportPreview } from "../ImportPreview";
 import { PageHeader } from "../PageHeader";
 import { TechnicalDetails } from "../Problems";
 import { ReadOnlyNote } from "../ReadOnlyNote";
@@ -59,6 +61,8 @@ export function ImportPage() {
   const files = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const changeInput = useRef<HTMLInputElement>(null);
   const imports = useQuery({
     queryKey: ["imports", plant],
     enabled: plant !== null,
@@ -73,7 +77,10 @@ export function ImportPage() {
       return last?.status === "running" || last?.facts?.status === "calculating" ? 2000 : false;
     },
   });
-  const latest: ImportOut | undefined = imports.data?.[0];
+  const latest: ImportOut | undefined =
+    imports.data?.find((i) => i.import_id === selected) ?? imports.data?.[0];
+  const changeable =
+    canRun && latest !== undefined && ["uploaded", "failed", "done"].includes(latest.status);
   const refresh = () => queries.invalidateQueries({ queryKey: ["imports", plant] });
 
   const upload = useMutation({
@@ -93,6 +100,7 @@ export function ImportPage() {
     },
     onSuccess: () => {
       setError(null);
+      setSelected(null);
       if (files.current) files.current.value = "";
       void refresh();
     },
@@ -112,10 +120,47 @@ export function ImportPage() {
     onError: () => void refresh(),
   });
 
+  const change = useMutation({
+    mutationFn: async () => {
+      const chosen = changeInput.current?.files;
+      if (!latest || !chosen || chosen.length === 0) throw new Error("none");
+      const form = new FormData();
+      for (const f of Array.from(chosen)) form.append("files", f);
+      const response = await fetch(`/api/imports/${latest.import_id}/files`, {
+        method: "POST",
+        body: form,
+      });
+      const body: unknown = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(problemOf(body, response.status).message);
+      return body as ImportOut;
+    },
+    onSuccess: (changed) => {
+      if (changeInput.current) changeInput.current.value = "";
+      setSelected(changed.import_id);
+      void refresh();
+    },
+  });
+  const remove = useMutation({
+    mutationFn: async (name: string) => {
+      if (!latest) throw new Error("none");
+      const { data, error, response } = await api.DELETE("/imports/{import_id}/files/{name}", {
+        params: { path: { import_id: latest.import_id, name } },
+      });
+      if (!data) throw new Error(problemOf(error, response.status).message);
+      return data;
+    },
+    onSuccess: (changed) => {
+      setSelected(changed.import_id);
+      void refresh();
+    },
+  });
+
   const checks: FileCheck[] = latest?.files ?? [];
   const usable = checks.filter((f) => f.readable && f.recognised_as);
   const ignored = checks.filter((f) => !f.recognised_as);
-  const missing = (latest?.needed ?? []).filter((n) => !n.present && n.minimum !== false);
+  const missing = (latest?.needed ?? []).filter(
+    (n) => !n.present && !n.in_plant && n.minimum !== false,
+  );
   const report = latest?.report?.import as ImportReport | undefined;
   const minimum = latest?.minimum_set ?? [];
   const optional = latest?.optional_set ?? [];
@@ -132,7 +177,7 @@ export function ImportPage() {
   /** Run the import, with its state; on the Upload and the Map columns step. */
   const runBar = latest && (
     <>
-      {canRun && latest.status !== "running" && latest.facts?.status !== "calculating" && (
+      {changeable && latest.status !== "running" && latest.facts?.status !== "calculating" && (
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="primary"
@@ -197,6 +242,14 @@ export function ImportPage() {
         <p className="m-0 mt-2 text-muted">{t("howPrivacy")}</p>
       </details>
       {!canRun && <ReadOnlyNote decision="import_run_diagnostic" />}
+      {plant && (imports.data?.length ?? 0) > 0 && (
+        <ImportHistory
+          plant={plant}
+          imports={imports.data ?? []}
+          shown={latest?.import_id}
+          onOpen={setSelected}
+        />
+      )}
       <Tabs>
         <TabList aria-label={t("steps")} className="flex border-b border-line">
           <Tab id="upload" className={TAB}>
@@ -252,15 +305,19 @@ export function ImportPage() {
                       className="flex flex-wrap items-center justify-between gap-2"
                     >
                       <span>
-                        <span aria-hidden="true">{need.present ? "●" : "○"}</span>{" "}
+                        <span aria-hidden="true">
+                          {need.present ? "●" : need.in_plant ? "◐" : "○"}
+                        </span>{" "}
                         {t(`minimum.${need.key}`)}
                       </span>
-                      <span className={need.present ? "text-muted" : ""}>
+                      <span className={need.present || need.in_plant ? "text-muted" : ""}>
                         {need.present
                           ? t("neededPresent")
-                          : t("neededMissing", {
-                              files: need.sources.map((s) => `${s}.csv`).join(", "),
-                            })}
+                          : need.in_plant
+                            ? t("neededInPlant")
+                            : t("neededMissing", {
+                                files: need.sources.map((s) => `${s}.csv`).join(", "),
+                              })}
                       </span>
                     </li>
                   ))}
@@ -286,9 +343,11 @@ export function ImportPage() {
                       <span className="text-muted">
                         {need.present
                           ? t("neededPresent")
-                          : t("optionalMissing", {
-                              files: need.sources.map((s) => `${s}.csv`).join(", "),
-                            })}
+                          : need.in_plant
+                            ? t("neededInPlant")
+                            : t("optionalMissing", {
+                                files: need.sources.map((s) => `${s}.csv`).join(", "),
+                              })}
                       </span>
                     </li>
                   ))}
@@ -384,7 +443,17 @@ export function ImportPage() {
                             <td className={TD}>
                               <span aria-hidden="true">{status.glyph}</span> {status.text}
                             </td>
-                            <td className={TD}>
+                            <td className={`${TD} whitespace-nowrap`}>
+                              {changeable && checks.length > 1 && (
+                                <Button
+                                  variant="ghost"
+                                  aria-label={t("changeFiles.removeOf", { file: f.name })}
+                                  isDisabled={remove.isPending}
+                                  onPress={() => remove.mutate(f.name)}
+                                >
+                                  {t("changeFiles.remove")}
+                                </Button>
+                              )}
                               {f.readable && f.preview.length > 0 && (
                                 <Button
                                   variant="ghost"
@@ -447,6 +516,52 @@ export function ImportPage() {
                     })}
                   </tbody>
                 </table>
+                {changeable && (
+                  <div className="flex flex-col gap-2 border-t border-line pt-3">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <Field label={t("changeFiles.choose")}>
+                        {(id) => (
+                          <input
+                            id={id}
+                            ref={changeInput}
+                            type="file"
+                            multiple
+                            accept=".csv,.xlsx"
+                            className="text-sm text-text file:mr-3 file:rounded-control file:border file:border-line-strong file:bg-surface file:px-3 file:py-1.5 file:text-text"
+                          />
+                        )}
+                      </Field>
+                      <Button onPress={() => change.mutate()} isDisabled={change.isPending}>
+                        {t("changeFiles.submit")}
+                      </Button>
+                    </div>
+                    <p className="m-0 text-xs text-muted">
+                      {latest.status === "done"
+                        ? t("changeFiles.noteAfter")
+                        : t("changeFiles.noteBefore")}
+                    </p>
+                    {(change.error ?? remove.error) && (
+                      <p role="alert" className="m-0 text-sm text-bad">
+                        {change.error?.message === "none"
+                          ? t("chooseFirst")
+                          : (change.error ?? remove.error)?.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {!changeable && canRun && ["replaced", "deleted"].includes(latest.status) && (
+                  <p className="m-0 text-sm text-muted">
+                    {t("changeFiles.readOnly", {
+                      status: t(`status.${latest.status}`).toLowerCase(),
+                    })}
+                  </p>
+                )}
+                {latest.status === "uploaded" && usable.length > 0 && (
+                  <ImportPreview
+                    importId={latest.import_id}
+                    files={checks.map((f) => `${f.name}:${f.rows}`).join()}
+                  />
+                )}
                 {ignored.length > 0 && (
                   <p className="m-0 text-sm">
                     <span aria-hidden="true">▲</span>{" "}
@@ -532,7 +647,7 @@ export function ImportPage() {
           {runBar}
         </TabPanel>
         <TabPanel id="check" className="flex flex-col gap-4 pt-4 outline-none">
-          {latest?.status !== "done" || !report ? (
+          {!latest || !["done", "replaced"].includes(latest.status) || !report ? (
             <p className="m-0 text-sm text-muted">{t("checkAfterRun")}</p>
           ) : (
             <>

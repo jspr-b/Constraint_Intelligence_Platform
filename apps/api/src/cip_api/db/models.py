@@ -360,7 +360,11 @@ class Import(Base):
     )
     plant_code: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="uploaded")
-    """uploaded, running, done or failed."""
+    """uploaded, running, done (in use), replaced, failed or deleted (ADR-0010)."""
+    replaces: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    """The import this one is a new version of; it is marked replaced when this one runs."""
+    slot_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    """Upload order for the rebuild: a new version keeps the place of the import it replaces."""
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

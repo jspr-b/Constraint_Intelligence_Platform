@@ -25,6 +25,7 @@ from sqlalchemy import Connection, text
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit, tenant_conn
 from cip_api.db.plant_store import (
+    TABLES,
     EventCounts,
     load_plant_from_db,
     merge_imports,
@@ -39,6 +40,7 @@ from cip_connectors.importer import import_export
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
 from cip_connectors.readers import choose_delimiter, decode, find_source, inspect_file
+from constraint_engine.io.compare import compare_plants
 from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError, load_plant
 from constraint_engine.quality.checklist import (
     OPTIONAL_SET,
@@ -123,6 +125,8 @@ class NeededOut(BaseModel):
     present: bool
     minimum: bool = True
     """False for an export that adds euros, actions or confidence but is not needed to start."""
+    in_plant: bool = False
+    """The plant already has it (an earlier upload or the app); an upload without it keeps that."""
 
 
 FailedStep = Literal["read", "load", "check", "store"]
@@ -155,6 +159,12 @@ class ImportOut(BaseModel):
     """Where a failed import stopped: read, load, check or store. The page explains each."""
     facts: FactRunOut | None = None
     """The numbers calculated from this import: calculating, ready or failed."""
+    by_role: str | None = None
+    """The role of the account that uploaded it (never a name); ``system`` for jobs."""
+    replaces: uuid.UUID | None = None
+    """The import this one is a new version of (ADR-0010)."""
+    replaced_by: uuid.UUID | None = None
+    """The newer version that replaced this import, once it ran."""
 
 
 def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
@@ -283,7 +293,11 @@ def check_file(path: Path, mapping: MappingSet) -> dict[str, Any]:
     }
 
 
-def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
+def _needed(
+    files: list[FileCheckOut], mapping: MappingSet, plant: tuple[Connection, str] | None = None
+) -> list[NeededOut]:
+    """Which exports this upload has; with ``plant``, also which the plant already has, so a
+    later upload with only some files does not show the others as missing (ADR-0010)."""
     out = []
     for minimum, targets in ((True, MINIMUM_TARGETS), (False, OPTIONAL_TARGETS)):
         for key, target in targets.items():
@@ -291,7 +305,22 @@ def _needed(files: list[FileCheckOut], mapping: MappingSet) -> list[NeededOut]:
             if not sources:
                 continue  # this export format does not carry it (e.g. no products, ADR-0009)
             present = any(f.readable and f.recognised_as in sources for f in files)
-            out.append(NeededOut(key=key, sources=sources, present=present, minimum=minimum))
+            in_plant = False
+            if plant and not present:
+                db, plant_code = plant
+                in_plant = bool(
+                    db.execute(
+                        text(
+                            f"SELECT EXISTS (SELECT 1 FROM {TABLES[target]} WHERE plant_code = :p)"
+                        ),
+                        {"p": plant_code},
+                    ).scalar_one()
+                )
+            out.append(
+                NeededOut(
+                    key=key, sources=sources, present=present, minimum=minimum, in_plant=in_plant
+                )
+            )
     return out
 
 
@@ -301,14 +330,30 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
     mapping = choose_mapping(f["name"] for f in stored_files)
     report = json.loads(row.report) if row.report else None
     files = [FileCheckOut.model_validate(f) for f in stored_files if "readable" in f]
+    by_role = None
+    if str(row.actor).startswith("user:"):
+        with contextlib.suppress(ValueError):
+            by_role = db.execute(
+                text("SELECT role FROM users WHERE user_id = :u"),
+                {"u": uuid.UUID(str(row.actor).removeprefix("user:"))},
+            ).scalar_one_or_none()
+    elif str(row.actor).startswith("system"):
+        by_role = "system"
+    replaced_by = db.execute(
+        text("SELECT import_id FROM imports WHERE replaces = :i AND status = 'done'"),
+        {"i": row.import_id},
+    ).scalar_one_or_none()
     return ImportOut(
+        by_role=by_role,
+        replaces=row.replaces,
+        replaced_by=replaced_by,
         import_id=row.import_id,
         plant_code=row.plant_code,
         status=row.status,
         created_at=row.created_at,
         files=files,
         expected_files=list(dict.fromkeys(t.source for t in mapping.tables)),
-        needed=_needed(files, mapping),
+        needed=_needed(files, mapping, (db, row.plant_code) if row.status == "uploaded" else None),
         mapping=mapping.source_system,
         sources=preview(folder, mapping) if folder.exists() else [],
         report=report,
@@ -320,7 +365,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
     )
 
 
-COLUMNS = "import_id, plant_code, status, created_at, files, report, error"
+COLUMNS = "import_id, plant_code, status, created_at, files, report, error, actor, replaces"
 
 
 def _row(db: Connection, import_id: uuid.UUID) -> Any:
@@ -330,6 +375,43 @@ def _row(db: Connection, import_id: uuid.UUID) -> Any:
     if row is None:
         raise ApiProblem("import_not_found")
     return row
+
+
+async def _save(folder: Path, files: list[UploadFile], settings: Settings) -> list[Path]:
+    """Write uploaded files into an import's source folder, with the size limit."""
+    for f in files:
+        if not f.filename or not SAFE_NAME.fullmatch(f.filename):
+            raise ApiProblem("bad_file_name")
+    folder.mkdir(parents=True, exist_ok=True)
+    limit = settings.max_upload_mb * 1024 * 1024
+    written = []
+    for f in files:
+        target = folder / str(f.filename)
+        part = target.with_suffix(target.suffix + ".part")
+        size = 0
+        with part.open("wb") as out:
+            while chunk := await f.read(1024 * 1024):
+                size += len(chunk)
+                if size > limit:
+                    out.close()
+                    part.unlink(missing_ok=True)
+                    raise ApiProblem("file_too_large", limit_mb=settings.max_upload_mb)
+                out.write(chunk)
+        part.replace(target)
+        written.append(target)
+    return written
+
+
+def _check_folder(db: Connection, folder: Path, import_id: uuid.UUID) -> list[dict[str, Any]]:
+    """Run the file check on every file in the source folder and store the result."""
+    present = sorted(p for p in folder.iterdir() if p.is_file() and not p.name.endswith(".part"))
+    mapping = choose_mapping(p.name for p in present)
+    stored = [check_file(p, mapping) for p in present]
+    db.execute(
+        text("UPDATE imports SET files = :f WHERE import_id = :i"),
+        {"f": json.dumps(stored), "i": import_id},
+    )
+    return stored
 
 
 @router.post("/plants/{plant_code}/imports", response_model=ImportOut, status_code=201)
@@ -355,32 +437,18 @@ async def upload(
             raise ApiProblem("bad_file_name")
     import_id = ctx.db.execute(
         text(
-            "INSERT INTO imports (tenant_id, plant_code, actor) VALUES (:t, :p, :a) "
-            "RETURNING import_id"
+            "INSERT INTO imports (tenant_id, plant_code, actor, slot_at) "
+            "VALUES (:t, :p, :a, now()) RETURNING import_id"
         ),
         {"t": ctx.principal.tenant_id, "p": plant_code, "a": ctx.principal.actor},
     ).scalar_one()
     folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id) / "source"
-    folder.mkdir(parents=True, exist_ok=True)
-    limit = settings.max_upload_mb * 1024 * 1024
-    written = []
-    for f in files:
-        target = folder / str(f.filename)
-        size = 0
-        with target.open("wb") as out:
-            while chunk := await f.read(1024 * 1024):
-                size += len(chunk)
-                if size > limit:
-                    shutil.rmtree(folder.parent, ignore_errors=True)
-                    raise ApiProblem("file_too_large", limit_mb=settings.max_upload_mb)
-                out.write(chunk)
-        written.append(target)
-    mapping = choose_mapping(p.name for p in written)
-    stored = [check_file(p, mapping) for p in written]
-    ctx.db.execute(
-        text("UPDATE imports SET files = :f WHERE import_id = :i"),
-        {"f": json.dumps(stored), "i": import_id},
-    )
+    try:
+        await _save(folder, files, settings)
+    except ApiProblem:
+        shutil.rmtree(folder.parent, ignore_errors=True)
+        raise
+    stored = _check_folder(ctx.db, folder, import_id)
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -456,6 +524,235 @@ def run(
     return _out(settings, tenant, _row(ctx.db, import_id), ctx.db)
 
 
+# --- Change an import's files (ADR-0010 point 8) -----------------------------------------
+
+
+def _changeable(db: Connection, import_id: uuid.UUID, ctx: Ctx) -> Any:
+    row = _row(db, import_id)
+    ctx.check_plant(row.plant_code)
+    if row.status == "running":
+        raise ApiProblem("import_running")
+    if row.status in ("replaced", "deleted"):
+        raise ApiProblem("import_not_changeable")
+    return row
+
+
+def _new_version(settings: Settings, ctx: Ctx, row: Any) -> tuple[uuid.UUID, Path]:
+    """A copy of an import that already ran: the change goes into this new version."""
+    tenant = ctx.principal.tenant_id
+    new_id = ctx.db.execute(
+        text(
+            "INSERT INTO imports (tenant_id, plant_code, actor, replaces, slot_at) "
+            "SELECT tenant_id, plant_code, :a, import_id, coalesce(slot_at, created_at) "
+            "FROM imports WHERE import_id = :i RETURNING import_id"
+        ),
+        {"a": ctx.principal.actor, "i": row.import_id},
+    ).scalar_one()
+    old = import_dir(settings, tenant, row.plant_code, row.import_id) / "source"
+    new = import_dir(settings, tenant, row.plant_code, new_id) / "source"
+    shutil.copytree(old, new)
+    return new_id, new
+
+
+@router.post("/imports/{import_id}/files", response_model=ImportOut)
+async def change_files(
+    import_id: uuid.UUID,
+    files: list[UploadFile],
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """Add or replace files. Before the run the upload changes; after it, a new version."""
+    row = _changeable(ctx.db, import_id, ctx)
+    if not files:
+        raise ApiProblem("no_files")
+    target, folder = (
+        row.import_id,
+        (import_dir(settings, ctx.principal.tenant_id, row.plant_code, row.import_id) / "source"),
+    )
+    if row.status == "done":
+        target, folder = _new_version(settings, ctx, row)
+    try:
+        written = await _save(folder, files, settings)
+    except ApiProblem:
+        if target != row.import_id:
+            shutil.rmtree(folder.parent, ignore_errors=True)
+        raise
+    _check_folder(ctx.db, folder, target)
+    for f in written:
+        audit(
+            ctx.db,
+            ctx.principal.tenant_id,
+            ctx.principal.actor,
+            "import_file_added",
+            f"import:{target}",
+            f"{row.plant_code}: {f.name}",
+        )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, target), ctx.db)
+
+
+@router.delete("/imports/{import_id}/files/{name}", response_model=ImportOut)
+def remove_file(
+    import_id: uuid.UUID,
+    name: str,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """Remove a file. Before the run the upload changes; after it, a new version."""
+    row = _changeable(ctx.db, import_id, ctx)
+    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, row.import_id) / "source"
+    if not SAFE_NAME.fullmatch(name) or not (folder / name).is_file():
+        raise ApiProblem("file_not_found")
+    if sum(1 for p in folder.iterdir() if p.is_file()) <= 1:
+        raise ApiProblem("last_file")
+    target = row.import_id
+    if row.status == "done":
+        target, folder = _new_version(settings, ctx, row)
+    (folder / name).unlink()
+    _check_folder(ctx.db, folder, target)
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        "import_file_removed",
+        f"import:{target}",
+        f"{row.plant_code}: {name}",
+    )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, target), ctx.db)
+
+
+# --- See what an upload changes before running it -----------------------------------------
+
+
+class ListChangeOut(BaseModel):
+    name: str
+    before: int
+    after: int
+    new: list[str]
+    gone: list[str]
+
+
+class PreviewWarningOut(BaseModel):
+    code: Literal["steps_removed_with_events", "events_removed", "period_shrinks"]
+    items: list[str]
+    count: int
+
+
+class PreviewOut(BaseModel):
+    """The plant now against the plant after this upload, from the engine (ADR-0010)."""
+
+    events_before: int
+    events_after: int
+    events_added: int
+    events_removed: int
+    period_before: tuple[datetime | None, datetime | None]
+    period_after: tuple[datetime | None, datetime | None]
+    lists: list[ListChangeOut]
+    warnings: list[PreviewWarningOut]
+
+
+@router.get("/imports/{import_id}/preview", response_model=PreviewOut)
+def what_changes(
+    import_id: uuid.UUID, ctx: View, settings: Annotated[Settings, Depends(get_settings)]
+) -> PreviewOut:
+    """Rebuild the plant with this upload in a transaction that is rolled back, and compare."""
+    row = _row(ctx.db, import_id)
+    ctx.check_plant(row.plant_code)
+    if row.status != "uploaded":
+        raise ApiProblem("preview_after_run")
+    tenant = ctx.principal.tenant_id
+    plant = ctx.db.execute(
+        text("SELECT plant_code, name, timezone_iana FROM plants WHERE plant_code = :p"),
+        {"p": row.plant_code},
+    ).one()
+    folder = import_dir(settings, tenant, row.plant_code, import_id)
+    if not any((folder / "source").iterdir()):
+        raise ApiProblem("no_files")
+    map_import(folder, dict(plant._mapping))
+    before = load_plant_from_db(ctx.db, tenant, row.plant_code)
+    trial = ctx.db.begin_nested()
+    try:
+        merged = merge_imports(kept_imports(settings, ctx.db, tenant, row.plant_code, import_id))
+        rebuild_plant_data(ctx.db, tenant, row.plant_code, merged)
+        after = load_plant_from_db(ctx.db, tenant, row.plant_code)
+    finally:
+        trial.rollback()
+    p = compare_plants(before, after)
+    return PreviewOut(
+        events_before=p.events_before,
+        events_after=p.events_after,
+        events_added=p.events_added,
+        events_removed=p.events_removed,
+        period_before=p.period_before,
+        period_after=p.period_after,
+        lists=[
+            ListChangeOut(
+                name=c.name, before=c.before, after=c.after, new=list(c.new), gone=list(c.gone)
+            )
+            for c in p.lists
+        ],
+        warnings=[
+            PreviewWarningOut(code=w.code, items=list(w.items), count=w.count)  # type: ignore[arg-type]
+            for w in p.warnings
+        ],
+    )
+
+
+# --- Which imports the data in use comes from ---------------------------------------------
+
+
+class InUseOut(BaseModel):
+    """Per import in use: how many events it brought and which lists come from it."""
+
+    import_id: uuid.UUID
+    created_at: datetime
+    events: int
+    lists: list[str]
+
+
+@router.get("/plants/{plant_code}/data-in-use", response_model=list[InUseOut])
+def data_in_use(plant_code: str, ctx: View) -> list[InUseOut]:
+    ctx.check_plant(plant_code)
+    events: dict[uuid.UUID, int] = {
+        i: n
+        for i, n in ctx.db.execute(
+            text(
+                "SELECT import_id, count(*) FROM operation_events WHERE plant_code = :p "
+                "AND import_id IS NOT NULL GROUP BY import_id"
+            ),
+            {"p": plant_code},
+        )
+    }
+    lists: dict[uuid.UUID, list[str]] = {}
+    for name, table in TABLES.items():
+        if name == "events":
+            continue
+        for (i,) in ctx.db.execute(
+            text(
+                f"SELECT DISTINCT import_id FROM {table} "
+                "WHERE plant_code = :p AND import_id IS NOT NULL"
+            ),
+            {"p": plant_code},
+        ):
+            lists.setdefault(i, []).append(name)
+    rows = ctx.db.execute(
+        text(
+            "SELECT import_id, created_at FROM imports WHERE plant_code = :p AND status = 'done' "
+            "ORDER BY coalesce(slot_at, created_at), created_at"
+        ),
+        {"p": plant_code},
+    )
+    return [
+        InUseOut(
+            import_id=r.import_id,
+            created_at=r.created_at,
+            events=events.get(r.import_id, 0),
+            lists=sorted(lists.get(r.import_id, [])),
+        )
+        for r in rows
+        if r.import_id in events or r.import_id in lists
+    ]
+
+
 def quality_dict(q: QualityReport, plant: LoadedPlant) -> dict[str, Any]:
     """The engine's quality report as stored JSON: every number a Figure or a plain count."""
     times = [e.at for e in plant.events]
@@ -520,10 +817,14 @@ def kept_imports(
         text("SELECT plant_code, name, timezone_iana FROM plants WHERE plant_code = :p"),
         {"p": plant_code},
     ).one()
+    # The running import takes the place of the version it replaces (ADR-0010).
     ids = conn.execute(
         text(
             "SELECT import_id FROM imports WHERE plant_code = :p "
-            "AND (status = 'done' OR import_id = :i) ORDER BY created_at, import_id"
+            "AND (status = 'done' OR import_id = :i) "
+            "AND import_id IS DISTINCT FROM "
+            "(SELECT replaces FROM imports WHERE import_id = :i) "
+            "ORDER BY coalesce(slot_at, created_at), created_at, import_id"
         ),
         {"p": plant_code, "i": running},
     ).scalars()
@@ -626,6 +927,11 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
                 text("UPDATE imports SET status = 'done', report = :r WHERE import_id = :i"),
                 {"r": json.dumps(result, ensure_ascii=False), "i": import_id},
             )
+            if row.replaces:  # the older version stays in the history, no longer in use
+                conn.execute(
+                    text("UPDATE imports SET status = 'replaced' WHERE import_id = :o"),
+                    {"o": row.replaces},
+                )
             audit(
                 conn,
                 tenant,

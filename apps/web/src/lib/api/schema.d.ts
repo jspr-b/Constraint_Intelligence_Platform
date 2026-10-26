@@ -275,6 +275,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Files
+         * @description Add or replace files. Before the run the upload changes; after it, a new version.
+         */
+        post: operations["change_files_imports__import_id__files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/files/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove File
+         * @description Remove a file. Before the run the upload changes; after it, a new version.
+         */
+        delete: operations["remove_file_imports__import_id__files__name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What Changes
+         * @description Rebuild the plant with this upload in a transaction that is rolled back, and compare.
+         */
+        get: operations["what_changes_imports__import_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/run": {
         parameters: {
             query?: never;
@@ -435,6 +495,23 @@ export interface paths {
         get?: never;
         /** Put Changeover */
         put: operations["put_changeover_plants__plant_code__changeovers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plants/{plant_code}/data-in-use": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Data In Use */
+        get: operations["data_in_use_plants__plant_code__data_in_use_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -846,6 +923,11 @@ export interface components {
             /** Tenant Name */
             tenant_name: string | null;
         };
+        /** Body_change_files_imports__import_id__files_post */
+        Body_change_files_imports__import_id__files_post: {
+            /** Files */
+            files: string[];
+        };
         /** Body_upload_plants__plant_code__imports_post */
         Body_upload_plants__plant_code__imports_post: {
             /** Files */
@@ -1177,6 +1259,8 @@ export interface components {
         };
         /** ImportOut */
         ImportOut: {
+            /** By Role */
+            by_role?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1209,6 +1293,10 @@ export interface components {
             optional_set: components["schemas"]["MinimumOut"][];
             /** Plant Code */
             plant_code: string;
+            /** Replaced By */
+            replaced_by?: string | null;
+            /** Replaces */
+            replaces?: string | null;
             /** Report */
             report: {
                 [key: string]: unknown;
@@ -1218,6 +1306,26 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * InUseOut
+         * @description Per import in use: how many events it brought and which lists come from it.
+         */
+        InUseOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Events */
+            events: number;
+            /**
+             * Import Id
+             * Format: uuid
+             */
+            import_id: string;
+            /** Lists */
+            lists: string[];
+        };
         /** InviteIn */
         InviteIn: {
             /** Email */
@@ -1225,6 +1333,19 @@ export interface components {
             /** Plant Code */
             plant_code?: string | null;
             role: components["schemas"]["Role"];
+        };
+        /** ListChangeOut */
+        ListChangeOut: {
+            /** After */
+            after: number;
+            /** Before */
+            before: number;
+            /** Gone */
+            gone: string[];
+            /** Name */
+            name: string;
+            /** New */
+            new: string[];
         };
         /** MachineDay */
         MachineDay: {
@@ -1317,6 +1438,11 @@ export interface components {
          *     it.
          */
         NeededOut: {
+            /**
+             * In Plant
+             * @default false
+             */
+            in_plant: boolean;
             /** Key */
             key: string;
             /**
@@ -1464,6 +1590,46 @@ export interface components {
          * @enum {string}
          */
         Plants: "all" | "own";
+        /**
+         * PreviewOut
+         * @description The plant now against the plant after this upload, from the engine (ADR-0010).
+         */
+        PreviewOut: {
+            /** Events Added */
+            events_added: number;
+            /** Events After */
+            events_after: number;
+            /** Events Before */
+            events_before: number;
+            /** Events Removed */
+            events_removed: number;
+            /** Lists */
+            lists: components["schemas"]["ListChangeOut"][];
+            /** Period After */
+            period_after: [
+                string | null,
+                string | null
+            ];
+            /** Period Before */
+            period_before: [
+                string | null,
+                string | null
+            ];
+            /** Warnings */
+            warnings: components["schemas"]["PreviewWarningOut"][];
+        };
+        /** PreviewWarningOut */
+        PreviewWarningOut: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "steps_removed_with_events" | "events_removed" | "period_shrinks";
+            /** Count */
+            count: number;
+            /** Items */
+            items: string[];
+        };
         /** ProductOut */
         ProductOut: {
             /** Family */
@@ -2233,6 +2399,116 @@ export interface operations {
             };
         };
     };
+    change_files_imports__import_id__files_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_change_files_imports__import_id__files_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_file_imports__import_id__files__name__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    what_changes_imports__import_id__preview_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     run_imports__import_id__run_post: {
         parameters: {
             query?: never;
@@ -2611,6 +2887,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    data_in_use_plants__plant_code__data_in_use_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InUseOut"][];
                 };
             };
             /** @description Validation Error */

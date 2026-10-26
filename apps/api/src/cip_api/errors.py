@@ -66,6 +66,20 @@ CATALOG: dict[str, tuple[int, str]] = {
     "station_login_exists": (409, "This machine already has a station login."),
     "station_login_not_found": (404, "This station login no longer exists. The page will refresh."),
     # Imports
+    "import_not_changeable": (
+        409,
+        "This import was replaced or deleted, so its files cannot change. "
+        "Change the version in use.",
+    ),
+    "file_not_found": (404, "This file is not part of the upload. The page will refresh."),
+    "last_file": (
+        422,
+        "An upload needs at least one file. Add the right file first, then remove this one.",
+    ),
+    "preview_after_run": (
+        409,
+        "This import already ran: its results show what it changed.",
+    ),
     "import_not_found": (404, "This import no longer exists. The page will refresh."),
     "no_files": (422, "Choose at least one file to upload."),
     "bad_file_name": (

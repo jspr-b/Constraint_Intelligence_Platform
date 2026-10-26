@@ -17,16 +17,29 @@ test("import plant_a with known defects, then Data quality shows the score and t
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/conn$/);
 
+  // Its own plant: on PLANT-A this export would add to the clean events there (ADR-0010).
+  await page.goto("/setup");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Add plant" }).first().click();
+  const add = page.getByRole("dialog");
+  await add.getByLabel(/Short plant code/).fill("PLANT-Q");
+  await add.getByLabel("Name").fill("Plant A with defects (synthetic)");
+  await add.getByRole("button", { name: "Save" }).click();
+  await expect(add).toBeHidden();
+
   await page.goto("/import");
   await page.waitForLoadState("networkidle");
+  await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-Q");
+  await expect(page.getByText("No import for this plant yet.")).toBeVisible();
   const csv = join(ERP, "defects/csv");
   await page
     .getByLabel("CSV or Excel exports")
     .setInputFiles(readdirSync(csv).map((f) => join(csv, f)));
   await page.getByRole("button", { name: "Upload files" }).click();
-  await expect(page.getByText("UPLOADED", { exact: true })).toBeVisible();
+  const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });
+  await expect(filesPanel.getByText("UPLOADED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Run import/ }).click();
-  await expect(page.getByText("DONE", { exact: true })).toBeVisible({ timeout: 90_000 });
+  await expect(filesPanel.getByText("IN USE", { exact: true })).toBeVisible({ timeout: 90_000 });
 
   await page.getByRole("tab", { name: /data checklist/i }).click();
   const results = page.getByRole("region", { name: "Results per file" });
@@ -36,6 +49,7 @@ test("import plant_a with known defects, then Data quality shows the score and t
 
   await page.goto("/data");
   await page.waitForLoadState("networkidle");
+  await page.getByLabel("Plant", { exact: true }).selectOption("PLANT-Q");
   const score = page.getByRole("region", { name: "Data quality score" });
   await expect(score).toContainText("45");
   await score.getByRole("button").click();
