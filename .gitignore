@@ -40,3 +40,6 @@ next-env.d.ts
 
 # Local uploads and import output (never commit plant data)
 var/
+
+# Paradev: personal overrides of .superset/config.json
+.superset/config.local.json
