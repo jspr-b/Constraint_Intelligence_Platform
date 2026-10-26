@@ -89,7 +89,9 @@ test("after one upload the page says what each file is and how sure", async ({ p
   // The built-in format does not read this event log, so nothing runs before the columns match.
   await expect(page.getByRole("button", { name: /^Run import/ })).toBeDisabled();
   await expect(
-    page.getByText("We know what each file is. Next: check how the columns match (step 2)."),
+    page.getByText(
+      "We know what each file is. Next: answer the questions and confirm the summary in step 2 (Map columns).",
+    ),
   ).toBeVisible();
   const axe = await new AxeBuilder({ page }).include("main").analyze();
   expect(axe.violations).toEqual([]);

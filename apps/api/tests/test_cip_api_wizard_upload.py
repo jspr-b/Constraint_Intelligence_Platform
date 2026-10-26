@@ -87,7 +87,10 @@ def test_personal_values_are_never_stored(
             .scalars()
             .all()
         )
-    assert stored and not any("TEST-OPERATOR" in s or "Badge" in s for s in stored)
+    # The name is listed so the summary can say it was not read; its values never are.
+    assert stored and not any("TEST-OPERATOR" in s for s in stored)
+    columns = [c for s in stored for c in json.loads(s)["columns"] if c["column"] == "Badge"]
+    assert columns and all(c["personal"] and c["sure"] == "sure" for c in columns)
 
 
 def test_a_zip_is_unpacked_and_what_is_not_a_table_is_listed(

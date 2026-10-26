@@ -5,6 +5,7 @@ description = "FastAPI service."
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.14",
+    "anthropic>=2.3.0",
     "cip-connectors",
     "cip-schema",
     "constraint-engine",

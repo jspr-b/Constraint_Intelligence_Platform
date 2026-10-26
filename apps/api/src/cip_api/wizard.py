@@ -13,9 +13,11 @@ from typing import Any, Literal
 from fastapi import UploadFile
 from pydantic import BaseModel
 
+from cip_api.ai import Ai, AiState, AiUnavailableError, OpenColumn, suggest_columns
 from cip_api.errors import ApiProblem
 from cip_api.settings import Settings
 from cip_connectors.wizard import recognise_export
+from cip_connectors.wizard.columns import FIELDS
 from cip_connectors.wizard.roles import MINIMUM, Role, Sure
 
 TABLE_SUFFIXES = (".csv", ".txt", ".tsv", ".xlsx")
@@ -171,8 +173,44 @@ class MinimumRoleOut(BaseModel):
     tables: list[str]
 
 
+class FoundColumnOut(BaseModel):
+    """One column of a placed table and the field it fills (ADR-0011 §3)."""
+
+    table: str
+    column: str
+    fields: list[str]
+    """Standard fields this column fills (a station column can fill three); empty: none."""
+    part: Literal["date", "time"] | None = None
+    """The column is the date or the time half of the field, with another column."""
+    sure: Sure | None
+    source: Literal["rules", "ai", "client"]
+    """Who suggested it: the rules, the AI (always to confirm) or the client."""
+    reasons: list[str]
+    ai_reason: str | None = None
+    personal: bool = False
+    """Dropped on read; never shown, stored or sent."""
+    skipped: bool = False
+    """The client said this column is not needed."""
+    question: bool = False
+    """The client should confirm or choose: not matched, matched from content only, or
+    suggested by the AI."""
+
+
+class AiOut(BaseModel):
+    state: AiState
+    """not_connected (no key: rules only), connected, limit_reached or error (rules only,
+    for this upload)."""
+
+
+class ConfirmedOut(BaseModel):
+    by: str
+    by_role: str | None = None
+    """The role of who confirmed, for the page to name (never an internal id)."""
+    at: str
+
+
 class RecognisedOut(BaseModel):
-    """What the app found in the upload (ADR-0011 §2)."""
+    """What the app found in the upload (ADR-0011 §2-3)."""
 
     tables: list[TableOut]
     links: list[LinkOut]
@@ -180,6 +218,13 @@ class RecognisedOut(BaseModel):
     not_read: list[NotRead]
     to_answer: list[str]
     """Tables the client should name or skip: not placed, or placed by name only."""
+    columns: list[FoundColumnOut] = []
+    fields: dict[str, list[str]] = {}
+    """For each role, the fields a column of that table can be: the client's choices."""
+    column_questions: int = 0
+    ai: AiOut = AiOut(state="not_connected")
+    confirmed: ConfirmedOut | None = None
+    """Who confirmed the summary and when; cleared by any later answer."""
 
 
 class TableAnswer(BaseModel):
@@ -187,11 +232,35 @@ class TableAnswer(BaseModel):
     role: Role | Literal["skip"]
 
 
+class ColumnAnswer(BaseModel):
+    table: str
+    column: str
+    field: str
+    """One of the table role's fields, or ``skip``: not needed."""
+
+
+SEP = "\u001f"
+"""Between table and column in the stored column answers."""
+
+
+def role_fields(role: str | None) -> list[str]:
+    return [f.target for f in FIELDS.get(role, ())] if role else []  # type: ignore[call-overload]
+
+
 def recognise_folder(
-    folder: Path, not_read: list[NotRead], answers: dict[str, str]
+    folder: Path,
+    not_read: list[NotRead],
+    answers: dict[str, str],
+    column_answers: dict[str, str],
+    ai: Ai,
 ) -> dict[str, Any]:
-    """Recognise every table in the import's source folder; stored as JSON with the import."""
-    found = recognise_export(sorted(p for p in folder.iterdir() if p.suffix in TABLE_SUFFIXES))
+    """Recognise every table in the import's source folder and match its columns, with the
+    roles the client gave; stored as JSON with the import. Columns the rules cannot match go to
+    the AI when it is connected; it only suggests."""
+    found = recognise_export(
+        sorted(p for p in folder.iterdir() if p.suffix in TABLE_SUFFIXES),
+        answers,  # type: ignore[arg-type]
+    )
     tables = []
     for t in found.tables:
         r = found.role_of(t.id)
@@ -211,13 +280,68 @@ def recognise_folder(
                 problem=t.problem,
             ).model_dump()
         )
-    links = [LinkOut(**vars(link)).model_dump() for link in found.links]
+    columns: list[dict[str, Any]] = [
+        {
+            "table": m.table,
+            "column": m.column,
+            "target": m.target,
+            "sure": m.sure,
+            "reasons": m.reasons,
+            "personal": m.personal,
+            "source": "rules",
+            "ai_reason": None,
+        }
+        for m in found.columns
+    ]
+    _ask_ai(found, columns, ai)
     return {
         "tables": tables,
-        "links": links,
+        "links": [LinkOut(**vars(link)).model_dump() for link in found.links],
+        "columns": columns,
         "not_read": [n.model_dump() for n in not_read],
         "answers": answers,
+        "column_answers": column_answers,
+        "ai": {"state": ai.state, "spent_eur": round(ai.budget.spent_eur, 4)},
+        "confirmed": None,
     }
+
+
+def _ask_ai(found: Any, columns: list[dict[str, Any]], ai: Ai) -> None:
+    """Columns the rules did not match, with the fields still free in their table."""
+    free: dict[str, set[str]] = {}
+    for c in columns:
+        for f in _flat(c["target"]):
+            free.setdefault(c["table"], set()).add(f)
+    open_columns = []
+    for c in columns:
+        r = found.role_of(c["table"])
+        if c["target"] is not None or c["personal"] or r is None or r.role is None:
+            continue
+        table = next(t for t in found.tables if t.id == c["table"])
+        values = frozenset(str(row.get(c["column"]) or "") for row in table.rows[:200])
+        fields = [f for f in role_fields(r.role) if f not in free.get(c["table"], set())]
+        if fields:
+            open_columns.append(OpenColumn(c["table"], r.role, c["column"], values, fields))
+    if not open_columns:
+        return
+    try:
+        suggestions = suggest_columns(ai, open_columns)
+    except AiUnavailableError:
+        return
+    by = {(c["table"], c["column"]): c for c in columns}
+    for s in suggestions:
+        c = by[(s.table, s.column)]
+        c.update(target=s.target, sure=s.sure, source="ai", ai_reason=s.reason)
+
+
+def _flat(target: Any) -> list[str]:
+    if isinstance(target, str):
+        return [target]
+    if isinstance(target, list):
+        return [str(t) for t in target]
+    if isinstance(target, dict):
+        return [str(t) for t in target.values()]
+    return []
 
 
 def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
@@ -241,6 +365,39 @@ def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
         )
         for key, roles in MINIMUM
     ]
+    placed = {t.table for t in tables if t.role is not None and t.sure != "unsure"}
+    column_answers: dict[str, str] = stored.get("column_answers", {})
+    columns = []
+    for raw in stored.get("columns", []):
+        if raw["table"] not in placed:
+            continue
+        target = raw["target"]
+        part = None
+        if isinstance(target, dict):
+            ((key, target),) = target.items()
+            part = "date" if key.startswith("date") else "time"
+        c = FoundColumnOut(
+            table=raw["table"],
+            column=raw["column"],
+            fields=[] if raw["personal"] else _flat(target),
+            part=part,  # type: ignore[arg-type]
+            sure=raw["sure"],
+            source=raw["source"],
+            reasons=raw["reasons"],
+            ai_reason=raw.get("ai_reason"),
+            personal=raw["personal"],
+        )
+        answer = column_answers.get(f"{c.table}{SEP}{c.column}")
+        if answer == "skip":
+            c.fields, c.part, c.sure, c.source, c.skipped = [], None, "confirmed", "client", True
+        elif answer is not None:
+            if answer not in c.fields:
+                c.fields, c.part = [answer], None
+            c.sure, c.source = "confirmed", "client"
+        c.question = not c.personal and (c.sure in (None, "likely", "unsure"))
+        columns.append(c)
+    roles = {t.role for t in tables if t.role is not None}
+    confirmed = stored.get("confirmed")
     return RecognisedOut(
         tables=tables,
         links=[LinkOut.model_validate(link) for link in stored["links"]],
@@ -251,4 +408,9 @@ def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
             for t in tables
             if t.problem is None and not t.skipped and t.sure in (None, "unsure")
         ],
+        columns=columns,
+        fields={r: role_fields(r) for r in sorted(roles)},
+        column_questions=sum(c.question for c in columns),
+        ai=AiOut(state=stored.get("ai", {}).get("state", "not_connected")),
+        confirmed=ConfirmedOut.model_validate(confirmed) if confirmed else None,
     )

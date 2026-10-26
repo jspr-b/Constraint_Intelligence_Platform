@@ -147,9 +147,17 @@ def test_wizard_links_the_event_log_to_the_steps_list(name: str) -> None:
     assert want in {(k.table, k.column, k.to_table, k.to_column) for k in links}
 
 
-@pytest.mark.xfail(
-    strict=True, reason="CI0005 sequences 03-05 build column, code and format matching"
-)
+@pytest.mark.parametrize("name", NAMES)
+def test_wizard_matches_every_column_by_rules(name: str) -> None:
+    """Sequence 03: every column of every placed table gets the field of the plant's true
+    mapping from rules alone, and personal columns are only listed as dropped."""
+    exp = _expected(name)
+    summary = recognise_export(_files(name)).summary()
+    placed = {t: c for t, c in summary["columns"].items() if summary["files"][t]["role"]}
+    assert placed == exp["columns"]
+
+
+@pytest.mark.xfail(strict=True, reason="CI0005 sequences 04-05 build code and format matching")
 @pytest.mark.parametrize("name", NAMES)
 def test_wizard_matches_columns_codes_and_formats(name: str) -> None:
     exp = _expected(name)

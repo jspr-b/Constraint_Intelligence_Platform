@@ -3,7 +3,9 @@
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
+from typing import cast
 
+import httpx
 import pytest
 import yaml
 from sqlalchemy import Engine, text
@@ -61,7 +63,7 @@ def test_loaded_imports_plants_a_to_d_through_the_api(demo: World, tmp_path: Pat
     assert client.post("/auth/dev-login", json=body).status_code == 204
     for folder in DEMO_PLANTS:
         plant = demo_plant(folder)
-        import_id = load_plant(client, plant)
+        import_id = load_plant(cast(httpx.Client, client), plant)
         state = client.get(f"/imports/{import_id}").json()
         assert state["status"] == "done" and state["facts"]["status"] == "ready"
     codes = {p["plant_code"] for p in client.get("/plants").json()}
@@ -79,7 +81,9 @@ def test_plant_a_goes_through_the_lifecycle_and_keeps_its_known_answer(
     client = make_client(Settings(env="dev", data_dir=tmp_path, run_jobs_inline=True))
     body = {"tenant_id": str(TEST_DEMO), "email": DEMO_EMAIL}
     assert client.post("/auth/dev-login", json=body).status_code == 204
-    load_plant_lifecycle(client, demo_plant("plant_a"), SYNTHETIC / "import_cases")
+    load_plant_lifecycle(
+        cast(httpx.Client, client), demo_plant("plant_a"), SYNTHETIC / "import_cases"
+    )
     history = sorted(client.get("/plants/PLANT-A/imports").json(), key=lambda i: i["created_at"])
     assert [i["status"] for i in history] == ["done", "replaced", "done", "done", "deleted"]
     events = "SELECT count(*) FROM operation_events WHERE tenant_id = :t"

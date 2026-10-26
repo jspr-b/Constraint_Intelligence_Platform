@@ -26,6 +26,8 @@ const BARE_NUMBERS = () => {
 
 for (const role of ["it", "coo"]) {
   test(`every number on every page opens its source (${role})`, async ({ page }) => {
+    // Walks every page and tab, so it needs more than the default 30 s under a full run.
+    test.setTimeout(120_000);
     await stubApi(page, { role });
     await stubPages(page);
     const found: Record<string, string[]> = {};

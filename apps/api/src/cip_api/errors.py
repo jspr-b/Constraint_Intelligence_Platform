@@ -137,6 +137,15 @@ CATALOG: dict[str, tuple[int, str]] = {
         "with them.",
     ),
     "table_not_found": (404, "That file or sheet is not in this upload. Reload the page."),
+    "column_not_found": (404, "That column is not in this file. Reload the page."),
+    "field_not_allowed": (
+        422,
+        "That is not something this file can hold. Choose from the list, or skip the column.",
+    ),
+    "mapping_not_ready": (
+        409,
+        "Some questions are still open. Answer them on the Import page, then confirm.",
+    ),
     "file_too_large": (
         413,
         "A file is larger than {limit_mb} MB. Split the export or ask support.",

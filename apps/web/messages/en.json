@@ -671,7 +671,89 @@
       "totalsLines": "{count, plural, one {A totals line at the end} other {# totals lines at the end}}: not read as rows."
     },
     "fileRead": "Read: see What we found",
-    "runNotMatched": "We know what each file is. Next: check how the columns match (step 2)."
+    "runNotMatched": "We know what each file is. Next: answer the questions and confirm the summary in step 2 (Map columns).",
+    "columns": {
+      "label": "What the columns hold",
+      "questionsShort": "{count, plural, one {# question} other {# questions}}",
+      "readyShort": "Ready to confirm",
+      "confirmedShort": "Confirmed",
+      "questionsLabel": "Questions",
+      "questionsIntro": "{count, plural, one {We need your answer on one column.} other {We need your answer on # columns.}} Everything else was clear from the data.",
+      "isIt": "Is “{column}” in {table} the {field}?",
+      "whatIs": "What is in “{column}” of {table}?",
+      "fromContent": "We think so from its values; its name does not say.",
+      "byAi": "Suggested by AI",
+      "yes": "Yes",
+      "yesOf": "Yes, {column} is that",
+      "noChoose": "No, choose",
+      "noOf": "No, choose what {column} is",
+      "choose": "Choose what it holds",
+      "skip": "Not needed: skip this column",
+      "summaryLabel": "Summary: what each file is and which columns are used",
+      "tableCaption": "Columns of {table} and what each is used as",
+      "colColumn": "Column",
+      "colUsedAs": "Used as",
+      "colSure": "How sure",
+      "changeOf": "What is “{column}” in {table}?",
+      "alsoFills": "Also gives: {fields}",
+      "part": {
+        "date": "The date part; the time comes from another column.",
+        "time": "The time part; the date comes from another column."
+      },
+      "personal": "Personal: not read, never stored or shown",
+      "skippedByYou": "Skipped by you",
+      "notMatched": "Not matched yet",
+      "sure": {
+        "sure": "Sure: its values and name agree",
+        "likely": "Likely: from its values; please check",
+        "unsure": "Unsure: from its name only; please check",
+        "confirmed": "Confirmed by you",
+        "none": "Not matched: please choose",
+        "ai": "Suggested by AI: please check",
+        "personal": "Never read"
+      },
+      "role": {
+        "events": "Event log: a start, finish or stop per job and step",
+        "hour_bookings": "Hour bookings: time booked per job and step",
+        "steps": "Steps list: your machines, benches and stations",
+        "calendar": "Shift sheet: shifts, breaks and maintenance per step",
+        "orders": "Jobs (orders): due dates, quantities and value",
+        "products": "Products: prices and variable costs",
+        "routings": "Routings: the steps each product goes through",
+        "teams": "Teams: which steps a team covers",
+        "team_shifts": "Team plan: team size per shift",
+        "overtime": "Overtime per step and week",
+        "capacity_costs": "Cost of overtime and extra shifts per step",
+        "changeovers": "Changeover times between product groups",
+        "outsourcing": "Outsourcing prices per operation"
+      },
+      "blocked": {
+        "tables": "{count, plural, one {First say what one file holds (step 1).} other {First say what # files hold (step 1).}}",
+        "columns": "{count, plural, one {Answer the question above first.} other {Answer the # questions above first.}}",
+        "minimum": "An event log, a steps list and a shift sheet are needed. Add the missing file in step 1."
+      },
+      "confirm": "Confirm this summary",
+      "confirmNote": "Check the summary, then confirm. You can change any choice later.",
+      "confirmed": "Confirmed by {by} on {at}. Change any choice above and confirm again.",
+      "askIt": "IT or the planner confirms this summary. Ask them, or switch role.",
+      "ai": {
+        "not_connected": {
+          "title": "AI not connected.",
+          "it": "Columns are matched by rules only. To get suggestions for unclear columns, connect the AI (IT guide, “Connecting the AI”).",
+          "other": "Columns are matched by rules only. Ask IT to connect it."
+        },
+        "limit_reached": {
+          "title": "AI cost limit reached.",
+          "body": "This upload was matched by rules only. Answer the open questions yourself, or ask IT to raise the limit."
+        },
+        "error": {
+          "title": "AI did not answer.",
+          "body": "This upload was matched by rules only. Answer the open questions yourself; the next upload tries the AI again."
+        }
+      },
+      "someone": "a colleague"
+    },
+    "runColumnsConfirmed": "Columns confirmed. Next: the app checks your codes and date formats; the import runs after that step."
   },
   "setup": {
     "label": "Plant setup",
@@ -1019,7 +1101,8 @@
       "routings": "Routings",
       "stations": "Stations",
       "team_shifts": "Team sizes per shift",
-      "teams": "Teams"
+      "teams": "Teams",
+      "bookings": "Hour bookings"
     },
     "fields": {
       "alternative_resource_codes": "other steps that can do it",
@@ -1066,7 +1149,8 @@
       "status": "status",
       "team_code": "team code",
       "to_setup_family": "to colour/setup group",
-      "truly_variable_cost_eur_cents": "truly variable cost (€)"
+      "truly_variable_cost_eur_cents": "truly variable cost (€)",
+      "duration_min": "duration (min)"
     },
     "conversions": {
       "code_table": "your codes translated",

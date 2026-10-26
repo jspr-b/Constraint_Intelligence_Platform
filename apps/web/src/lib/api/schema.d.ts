@@ -300,6 +300,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Answer Column
+         * @description The client confirms, changes or skips what a column is (ADR-0011 §3).
+         */
+        put: operations["answer_column_imports__import_id__columns_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/corrections": {
         parameters: {
             query?: never;
@@ -380,6 +400,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/mapping/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Mapping
+         * @description The client confirms the summary: what each file is and which columns are used. Only
+         *     when nothing is left to answer and the three a diagnostic needs are found.
+         */
+        post: operations["confirm_mapping_imports__import_id__mapping_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/preview": {
         parameters: {
             query?: never;
@@ -450,7 +491,8 @@ export interface paths {
         get?: never;
         /**
          * Answer Table
-         * @description The client says what a table is, or skips it (ADR-0011 §1: the client confirms).
+         * @description The client says what a table is, or skips it (ADR-0011 §1: the client confirms). Its
+         *     columns are matched again for the role given.
          */
         put: operations["answer_table_imports__import_id__tables_put"];
         post?: never;
@@ -1117,6 +1159,14 @@ export interface components {
             /** Users */
             users: components["schemas"]["UserOut"][];
         };
+        /** AiOut */
+        AiOut: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "not_connected" | "connected" | "limit_reached" | "error";
+        };
         /** AuditOut */
         AuditOut: {
             /** Action */
@@ -1210,6 +1260,15 @@ export interface components {
             /** To Setup Family */
             to_setup_family: string;
         };
+        /** ColumnAnswer */
+        ColumnAnswer: {
+            /** Column */
+            column: string;
+            /** Field */
+            field: string;
+            /** Table */
+            table: string;
+        };
         /** ColumnOut */
         ColumnOut: {
             /** Conversions */
@@ -1222,6 +1281,15 @@ export interface components {
             name: string;
             /** Status */
             status: string;
+        };
+        /** ConfirmedOut */
+        ConfirmedOut: {
+            /** At */
+            at: string;
+            /** By */
+            by: string;
+            /** By Role */
+            by_role?: string | null;
         };
         /**
          * CorrectionIn
@@ -1568,6 +1636,46 @@ export interface components {
             rejected: number;
             /** Rows */
             rows: number;
+        };
+        /**
+         * FoundColumnOut
+         * @description One column of a placed table and the field it fills (ADR-0011 §3).
+         */
+        FoundColumnOut: {
+            /** Ai Reason */
+            ai_reason?: string | null;
+            /** Column */
+            column: string;
+            /** Fields */
+            fields: string[];
+            /** Part */
+            part?: ("date" | "time") | null;
+            /**
+             * Personal
+             * @default false
+             */
+            personal: boolean;
+            /**
+             * Question
+             * @default false
+             */
+            question: boolean;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Skipped
+             * @default false
+             */
+            skipped: boolean;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "rules" | "ai" | "client";
+            /** Sure */
+            sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
+            /** Table */
+            table: string;
         };
         /** GapOut */
         GapOut: {
@@ -2053,9 +2161,31 @@ export interface components {
         };
         /**
          * RecognisedOut
-         * @description What the app found in the upload (ADR-0011 §2).
+         * @description What the app found in the upload (ADR-0011 §2-3).
          */
         RecognisedOut: {
+            /** @default {
+             *       "state": "not_connected"
+             *     } */
+            ai: components["schemas"]["AiOut"];
+            /**
+             * Column Questions
+             * @default 0
+             */
+            column_questions: number;
+            /**
+             * Columns
+             * @default []
+             */
+            columns: components["schemas"]["FoundColumnOut"][];
+            confirmed?: components["schemas"]["ConfirmedOut"] | null;
+            /**
+             * Fields
+             * @default {}
+             */
+            fields: {
+                [key: string]: string[];
+            };
             /** Links */
             links: components["schemas"]["LinkOut"][];
             /** Minimum */
@@ -3001,6 +3131,45 @@ export interface operations {
             };
         };
     };
+    answer_column_imports__import_id__columns_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColumnAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     make_correction_imports__import_id__corrections_post: {
         parameters: {
             query?: never;
@@ -3125,6 +3294,41 @@ export interface operations {
             path: {
                 import_id: string;
                 name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_mapping_imports__import_id__mapping_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
             };
             cookie?: never;
         };

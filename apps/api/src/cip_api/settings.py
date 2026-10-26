@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +39,18 @@ class Settings(BaseSettings):
     """A recalculation still running after this long counts as failed: the page offers a retry."""
     data_old_after_days: int = 7
     """From this age (days since the newest touchpoint) pages ask for new events."""
+    anthropic_api_key: SecretStr | None = None
+    """The mapping wizard's AI (ADR-0011 §4). Unset: rules only and "AI not connected". Only
+    from the environment or the host's secret store, never in code, git or logs."""
+    ai_model: str = "claude-sonnet-5-5"
+    ai_max_eur_per_import: float = 0.5
+    ai_max_eur_per_month: float = 20.0
+    """Above a limit the wizard falls back to rules and says so."""
+    ai_eur_per_mtok_in: float = 3.0
+    ai_eur_per_mtok_out: float = 15.0
+    """Price per million tokens used to count the cost; set to the contract's prices."""
+    ai_timeout_s: float = 20.0
+    ai_retries: int = 2
     """Run jobs in the request instead of a worker (tests only)."""
 
     def db_url(self, as_owner: bool = False) -> str:

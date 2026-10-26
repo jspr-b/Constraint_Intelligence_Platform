@@ -24,6 +24,8 @@ What a mapping contains:
 
 **Check before running.** After uploading, the Import page shows every column of every file: what it maps to, an example value, the conversion, and which columns are *not imported* because they are personal data. Personal columns never show an example value.
 
+**Exports in another layout: the mapping wizard.** When your export does not match a built-in mapping, upload it as it is (whole export, zip or workbook). Step 1 on the Import page says what each file is; step 2 (*Map columns*) says which column fills which field, asks only about columns it cannot tell, and shows one summary for you to confirm. Columns are matched by rules first (column names in English, Dutch and German, and what the values look like: times, numbers, codes that appear in another file). You can change any choice before confirming.
+
 ## 2. How data comes in
 
 | Stage | How | Status |
@@ -78,3 +80,13 @@ Settings for single sign-on are in `docs/auth.md` (Keycloak realm, client id, is
 | Uploaded files | Stored per tenant and plant; personal columns are removed before any value is read |
 | Region and encryption | EU region, encryption at rest and in transit: set by the deployment. The Connections page says *not verified* where it cannot confirm this, e.g. on a local test install |
 | On-premise | The same container images run in a private cloud or on-premise for regulated plants |
+
+## 6. Connecting the AI (optional)
+
+The mapping wizard works without AI. With the AI connected it also suggests a field for columns the rules cannot place; each suggestion is marked *Suggested by AI* and stays a question until someone in your team says yes. To connect it:
+
+1. Agree the data processing terms with us (the AI provider is Anthropic; only the content below is sent).
+2. Set the key as the environment variable `CIP_ANTHROPIC_API_KEY` in the host's secret store (never in a file under version control). Optional: `CIP_AI_MODEL`, and the cost limits `CIP_AI_MAX_EUR_PER_IMPORT` (default €0.50) and `CIP_AI_MAX_EUR_PER_MONTH` (default €20).
+3. Restart the API. The "AI not connected" note on the Import page disappears.
+
+What is sent per unclear column: the file and column name, what the file holds (e.g. "event log"), the fields it may be, and at most 5 example values reduced to their shape (`JOB-24000` is sent as `AAA-99999`). Never whole files, real values, personal columns, numbers to calculate, or plant, company or account names. Above a cost limit, on an error or a timeout, the wizard falls back to rules for that upload and says so.

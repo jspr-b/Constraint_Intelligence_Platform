@@ -13,6 +13,7 @@ import { conversionLabel, fieldLabel } from "@/lib/model";
 import { Count } from "../Figure";
 import { ImportChanges, type ImportEvents } from "../ImportChanges";
 import { DeletePlantData } from "../DeleteImport";
+import { ColumnsFound } from "../ColumnsFound";
 import { ExportFound } from "../ExportFound";
 import { ImportHistory } from "../ImportHistory";
 import { ImportPreview } from "../ImportPreview";
@@ -186,7 +187,9 @@ export function ImportPage() {
     usable.length > 0 && formatReadsLog
       ? null
       : found && found.minimum.every((m) => m.tables.length > 0)
-        ? t("runNotMatched")
+        ? found.confirmed
+          ? t("runColumnsConfirmed")
+          : t("runNotMatched")
         : t("runNoFiles");
   const n = (value: number) => value.toLocaleString(locale);
 
@@ -625,6 +628,13 @@ export function ImportPage() {
         <TabPanel id="map" className="flex flex-col gap-4 pt-4 outline-none">
           {!latest ? (
             <p className="m-0 text-sm text-muted">{t("noImport")}</p>
+          ) : found && !(usable.length > 0 && formatReadsLog) ? (
+            <ColumnsFound
+              importId={latest.import_id}
+              found={found}
+              canAnswer={changeable}
+              onChanged={() => void refresh()}
+            />
           ) : (
             latest.sources
               .filter((s) => s.file)

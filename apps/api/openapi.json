@@ -79,6 +79,25 @@
         "title": "AccountsOut",
         "type": "object"
       },
+      "AiOut": {
+        "properties": {
+          "state": {
+            "enum": [
+              "not_connected",
+              "connected",
+              "limit_reached",
+              "error"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "AiOut",
+        "type": "object"
+      },
       "AuditOut": {
         "properties": {
           "action": {
@@ -381,6 +400,29 @@
         "title": "ChangeoverOut",
         "type": "object"
       },
+      "ColumnAnswer": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column",
+          "field"
+        ],
+        "title": "ColumnAnswer",
+        "type": "object"
+      },
       "ColumnOut": {
         "properties": {
           "conversions": {
@@ -425,6 +467,35 @@
           "conversions"
         ],
         "title": "ColumnOut",
+        "type": "object"
+      },
+      "ConfirmedOut": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "by": {
+            "title": "By",
+            "type": "string"
+          },
+          "by_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By Role"
+          }
+        },
+        "required": [
+          "by",
+          "at"
+        ],
+        "title": "ConfirmedOut",
         "type": "object"
       },
       "CorrectionIn": {
@@ -1595,6 +1666,110 @@
           "examples"
         ],
         "title": "FileOut",
+        "type": "object"
+      },
+      "FoundColumnOut": {
+        "description": "One column of a placed table and the field it fills (ADR-0011 §3).",
+        "properties": {
+          "ai_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Reason"
+          },
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "part": {
+            "anyOf": [
+              {
+                "enum": [
+                  "date",
+                  "time"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Part"
+          },
+          "personal": {
+            "default": false,
+            "title": "Personal",
+            "type": "boolean"
+          },
+          "question": {
+            "default": false,
+            "title": "Question",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "skipped": {
+            "default": false,
+            "title": "Skipped",
+            "type": "boolean"
+          },
+          "source": {
+            "enum": [
+              "rules",
+              "ai",
+              "client"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "sure": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sure",
+                  "likely",
+                  "unsure",
+                  "confirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sure"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column",
+          "fields",
+          "sure",
+          "source",
+          "reasons"
+        ],
+        "title": "FoundColumnOut",
         "type": "object"
       },
       "GapOut": {
@@ -2995,8 +3170,48 @@
         "type": "object"
       },
       "RecognisedOut": {
-        "description": "What the app found in the upload (ADR-0011 §2).",
+        "description": "What the app found in the upload (ADR-0011 §2-3).",
         "properties": {
+          "ai": {
+            "$ref": "#/components/schemas/AiOut",
+            "default": {
+              "state": "not_connected"
+            }
+          },
+          "column_questions": {
+            "default": 0,
+            "title": "Column Questions",
+            "type": "integer"
+          },
+          "columns": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FoundColumnOut"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "confirmed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfirmedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fields": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "default": {},
+            "title": "Fields",
+            "type": "object"
+          },
           "links": {
             "items": {
               "$ref": "#/components/schemas/LinkOut"
@@ -5277,6 +5492,108 @@
         ]
       }
     },
+    "/imports/{import_id}/columns": {
+      "put": {
+        "description": "The client confirms, changes or skips what a column is (ADR-0011 §3).",
+        "operationId": "answer_column_imports__import_id__columns_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ColumnAnswer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Column",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/imports/{import_id}/corrections": {
       "post": {
         "description": "Fix a value or leave a line out; checked by the import's rules, then the plant rebuilds.",
@@ -5674,6 +5991,98 @@
         ]
       }
     },
+    "/imports/{import_id}/mapping/confirm": {
+      "post": {
+        "description": "The client confirms the summary: what each file is and which columns are used. Only\nwhen nothing is left to answer and the three a diagnostic needs are found.",
+        "operationId": "confirm_mapping_imports__import_id__mapping_confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Mapping",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/imports/{import_id}/preview": {
       "get": {
         "description": "Rebuild the plant with this upload in a transaction that is rolled back, and compare.",
@@ -6007,7 +6416,7 @@
     },
     "/imports/{import_id}/tables": {
       "put": {
-        "description": "The client says what a table is, or skips it (ADR-0011 §1: the client confirms).",
+        "description": "The client says what a table is, or skips it (ADR-0011 §1: the client confirms). Its\ncolumns are matched again for the role given.",
         "operationId": "answer_table_imports__import_id__tables_put",
         "parameters": [
           {

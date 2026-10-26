@@ -55,6 +55,20 @@ test("IT uploads an unseen export in one go and sees what each file is", async (
   );
   // Nothing runs yet: matching the columns of this export is the next step.
   await expect(
-    page.getByText("We know what each file is. Next: check how the columns match"),
+    page.getByText("We know what each file is. Next: answer the questions"),
   ).toBeVisible();
+
+  // Step 2: every column of this export is clear from the data; IT checks and confirms.
+  await page.getByRole("tab", { name: /Map columns/ }).click();
+  const columns = page.getByRole("region", { name: "What the columns hold" });
+  await expect(columns.getByRole("note")).toContainText("AI not connected.");
+  await expect(
+    columns.getByRole("row").filter({ hasText: "Timestamp" }).getByRole("combobox"),
+  ).toHaveValue("events.at");
+  await expect(columns.getByRole("row").filter({ hasText: "Employee" })).toContainText(
+    "Personal: not read",
+  );
+  await columns.getByRole("button", { name: "Confirm this summary" }).click();
+  await expect(columns).toContainText("Confirmed by IT / ERP owner");
+  await expect(page.getByText("Columns confirmed. Next: the app checks your codes")).toBeVisible();
 });

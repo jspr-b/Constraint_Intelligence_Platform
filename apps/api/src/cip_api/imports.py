@@ -13,7 +13,7 @@ import shutil
 import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -22,6 +22,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import Connection, text
 
+from cip_api.ai import Ai, Provider, get_ai_provider
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit, tenant_conn
 from cip_api.db.plant_store import (
@@ -39,11 +40,14 @@ from cip_api.jobs import enqueue
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 from cip_api.wizard import (
+    SEP,
+    ColumnAnswer,
     NotRead,
     RecognisedOut,
     TableAnswer,
     recognise_folder,
     recognised_out,
+    role_fields,
     save_export,
 )
 from cip_connectors.importer import Fixes, import_export
@@ -72,6 +76,7 @@ INPUT_DATA = REPO / "docs" / "input-data.md"
 SAFE_NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}\.(csv|txt|tsv|xlsx)$")
 View = Annotated[Ctx, Depends(require(page="import"))]
 Run = Annotated[Ctx, Depends(require(page="import", decision=Decision.IMPORT_RUN_DIAGNOSTIC))]
+AiProvider = Annotated[Provider | None, Depends(get_ai_provider)]
 
 
 def import_dir(settings: Settings, tenant: uuid.UUID, plant: str, import_id: uuid.UUID) -> Path:
@@ -375,7 +380,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
         file_names=[f["name"] for f in stored_files],
         deleted_at=row.deleted_at,
         deleted_by_role=_role_of(db, row.deleted_by) if row.deleted_by else None,
-        recognised=recognised_out(row.wizard),
+        recognised=_with_roles(db, recognised_out(row.wizard)),
     )
 
 
@@ -407,15 +412,40 @@ def _row(db: Connection, import_id: uuid.UUID) -> Any:
     return row
 
 
+def _with_roles(db: Connection, found: RecognisedOut | None) -> RecognisedOut | None:
+    if found is not None and found.confirmed is not None:
+        found.confirmed.by_role = _role_of(db, found.confirmed.by)
+    return found
+
+
+def _ai(
+    db: Connection, settings: Settings, provider: Provider | None, import_id: uuid.UUID | None
+) -> Ai:
+    """The AI for one recognition, with what this tenant's imports spent this month and what
+    this import spent before (its earlier recognitions count towards its limit)."""
+    month, this = db.execute(
+        text(
+            "SELECT COALESCE(SUM((wizard->'ai'->>'spent_eur')::float), 0), "
+            "COALESCE(SUM((wizard->'ai'->>'spent_eur')::float) "
+            "FILTER (WHERE import_id = :i), 0) "
+            "FROM imports WHERE created_at >= date_trunc('month', now())"
+        ),
+        {"i": import_id},
+    ).one()
+    return Ai.build(provider, settings, float(month), float(this))
+
+
 def _check_folder(
     db: Connection,
     folder: Path,
     import_id: uuid.UUID,
+    ai: Ai,
     not_read: list[NotRead] | None = None,
     answers: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Run the file check and the wizard's recognition on every file in the source folder and
-    store both. Without ``not_read``/``answers`` the stored ones are kept."""
+    store both. Without ``not_read``/``answers`` the stored ones are kept; the column answers
+    are kept for the files that remain. Any change clears the confirmation."""
     present = sorted(p for p in folder.iterdir() if p.is_file() and not p.name.endswith(".part"))
     mapping = choose_mapping(p.name for p in present)
     stored = [check_file(p, mapping) for p in present]
@@ -433,7 +463,12 @@ def _check_folder(
         for k, v in (before.get("answers", {}) if answers is None else answers).items()
         if k.split("#", 1)[0] in tables
     }
-    wizard = recognise_folder(folder, not_read, kept)
+    kept_columns = {
+        k: v
+        for k, v in before.get("column_answers", {}).items()
+        if k.split("#", 1)[0].split(SEP, 1)[0] in tables
+    }
+    wizard = recognise_folder(folder, not_read, kept, kept_columns, ai)
     db.execute(
         text("UPDATE imports SET files = :f, wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"f": json.dumps(stored), "w": json.dumps(wizard), "i": import_id},
@@ -447,6 +482,7 @@ async def upload(
     files: list[UploadFile],
     ctx: Run,
     settings: Annotated[Settings, Depends(get_settings)],
+    provider: AiProvider,
 ) -> ImportOut:
     """Store uploaded CSV/Excel exports for a plant. Nothing is read into the platform yet."""
     ctx.check_plant(plant_code)
@@ -472,7 +508,9 @@ async def upload(
     except ApiProblem:
         shutil.rmtree(folder.parent, ignore_errors=True)
         raise
-    stored = _check_folder(ctx.db, folder, import_id, not_read, {})
+    stored = _check_folder(
+        ctx.db, folder, import_id, _ai(ctx.db, settings, provider, import_id), not_read, {}
+    )
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -584,6 +622,7 @@ async def change_files(
     files: list[UploadFile],
     ctx: Run,
     settings: Annotated[Settings, Depends(get_settings)],
+    provider: AiProvider,
 ) -> ImportOut:
     """Add or replace files. Before the run the upload changes; after it, a new version."""
     row = _changeable(ctx.db, import_id, ctx)
@@ -609,7 +648,7 @@ async def change_files(
             ),
             {"o": row.import_id, "n": target},
         )
-    _check_folder(ctx.db, folder, target, not_read)
+    _check_folder(ctx.db, folder, target, _ai(ctx.db, settings, provider, target), not_read)
     for f in written:
         audit(
             ctx.db,
@@ -628,6 +667,7 @@ def remove_file(
     name: str,
     ctx: Run,
     settings: Annotated[Settings, Depends(get_settings)],
+    provider: AiProvider,
 ) -> ImportOut:
     """Remove a file. Before the run the upload changes; after it, a new version."""
     row = _changeable(ctx.db, import_id, ctx)
@@ -648,7 +688,7 @@ def remove_file(
             {"o": row.import_id, "n": target},
         )
     (folder / name).unlink()
-    _check_folder(ctx.db, folder, target)
+    _check_folder(ctx.db, folder, target, _ai(ctx.db, settings, provider, target))
     audit(
         ctx.db,
         ctx.principal.tenant_id,
@@ -666,17 +706,18 @@ def answer_table(
     answer: TableAnswer,
     ctx: Run,
     settings: Annotated[Settings, Depends(get_settings)],
+    provider: AiProvider,
 ) -> ImportOut:
-    """The client says what a table is, or skips it (ADR-0011 §1: the client confirms)."""
+    """The client says what a table is, or skips it (ADR-0011 §1: the client confirms). Its
+    columns are matched again for the role given."""
     row = _changeable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     if answer.table not in {t["table"] for t in stored.get("tables", [])}:
         raise ApiProblem("table_not_found")
     answers = {**stored.get("answers", {}), answer.table: answer.role}
-    stored["answers"] = answers
-    ctx.db.execute(
-        text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
-        {"w": json.dumps(stored), "i": import_id},
+    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, row.import_id) / "source"
+    _check_folder(
+        ctx.db, folder, import_id, _ai(ctx.db, settings, provider, import_id), answers=answers
     )
     audit(
         ctx.db,
@@ -685,6 +726,83 @@ def answer_table(
         "import_table_named",
         f"import:{import_id}",
         f"{row.plant_code}: {answer.table} = {answer.role}",
+    )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
+
+
+@router.put("/imports/{import_id}/columns", response_model=ImportOut)
+def answer_column(
+    import_id: uuid.UUID,
+    answer: ColumnAnswer,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client confirms, changes or skips what a column is (ADR-0011 §3)."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    found = recognised_out(stored)
+    table = next((t for t in found.tables if t.table == answer.table), None) if found else None
+    if table is None or table.role is None:
+        raise ApiProblem("table_not_found")
+    if not any(
+        c["table"] == answer.table and c["column"] == answer.column for c in stored["columns"]
+    ):
+        raise ApiProblem("column_not_found")
+    if answer.field != "skip" and answer.field not in role_fields(table.role):
+        raise ApiProblem("field_not_allowed")
+    stored["column_answers"] = {
+        **stored.get("column_answers", {}),
+        f"{answer.table}{SEP}{answer.column}": answer.field,
+    }
+    stored["confirmed"] = None
+    ctx.db.execute(
+        text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
+        {"w": json.dumps(stored), "i": import_id},
+    )
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        "import_column_named",
+        f"import:{import_id}",
+        f"{row.plant_code}: {answer.table} > {answer.column} = {answer.field}",
+    )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
+
+
+@router.post("/imports/{import_id}/mapping/confirm", response_model=ImportOut)
+def confirm_mapping(
+    import_id: uuid.UUID,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client confirms the summary: what each file is and which columns are used. Only
+    when nothing is left to answer and the three a diagnostic needs are found."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    found = recognised_out(stored)
+    if (
+        found is None
+        or found.to_answer
+        or found.column_questions
+        or not all(m.tables for m in found.minimum)
+    ):
+        raise ApiProblem("mapping_not_ready")
+    stored["confirmed"] = {
+        "by": ctx.principal.actor,
+        "at": datetime.now(UTC).isoformat(timespec="seconds"),
+    }
+    ctx.db.execute(
+        text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
+        {"w": json.dumps(stored), "i": import_id},
+    )
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        "import_mapping_confirmed",
+        f"import:{import_id}",
+        row.plant_code,
     )
     return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
 
