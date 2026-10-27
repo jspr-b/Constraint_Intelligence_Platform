@@ -13,7 +13,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 
+from cip_api.ai import AiExplanationsOut
+from cip_api.corrections import _example
 from cip_api.figures import FigureOut
+from cip_api.imports import choose_mapping, import_dir
+from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 
 router = APIRouter(tags=["data quality"])
@@ -53,11 +57,17 @@ class DataQualityOut(BaseModel):
     event_period_weeks: FigureOut | None
     event_period_start_at: datetime | None
     event_period_end_at: datetime | None
+    datetime_format: str | None = None
+    """How the export writes a date and time, e.g. ``20-07-2026 10:11``, for the reasons."""
+    ai_explanations: AiExplanationsOut | None = None
+    """The AI's explanations of the rejected rows, when IT asked for them on the Import page."""
 
 
 @router.get("/plants/{plant_code}/data-quality", response_model=DataQualityOut)
 def data_quality(
-    plant_code: str, ctx: Annotated[Ctx, Depends(require(page="data"))]
+    plant_code: str,
+    ctx: Annotated[Ctx, Depends(require(page="data"))],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> DataQualityOut:
     ctx.check_plant(plant_code)
     row = ctx.db.execute(
@@ -67,7 +77,8 @@ def data_quality(
         ),
         {"p": plant_code},
     ).first()
-    quality = json.loads(row.report).get("quality") if row else None
+    report = json.loads(row.report) if row and row.report else {}
+    quality = report.get("quality")
     if row is None or quality is None:
         return DataQualityOut(
             plant_code=plant_code,
@@ -84,5 +95,19 @@ def data_quality(
             event_period_end_at=None,
         )
     return DataQualityOut(
-        plant_code=plant_code, import_id=row.import_id, imported_at=row.created_at, **quality
+        plant_code=plant_code,
+        import_id=row.import_id,
+        imported_at=row.created_at,
+        datetime_format=_datetime_example(settings, ctx, plant_code, row.import_id),
+        ai_explanations=report.get("ai_explanations"),
+        **quality,
     )
+
+
+def _datetime_example(
+    settings: Settings, ctx: Ctx, plant_code: str, import_id: uuid.UUID
+) -> str | None:
+    folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id) / "source"
+    if not folder.exists():
+        return None
+    return _example(choose_mapping(p.name for p in folder.iterdir()))

@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from cip_connectors.wizard.codes import CodeMatch, StepFound, match_codes, steps_found
 from cip_connectors.wizard.columns import ColumnMatch, Target, match_all
+from cip_connectors.wizard.formats import DEFAULT_TIMEZONE, Formats, read_formats
 from cip_connectors.wizard.profile import profile
 from cip_connectors.wizard.roles import _T, MINIMUM, TARGETS, Link, Role, TableRole, classify
 from cip_connectors.wizard.tables import ExportTable, read_export
@@ -23,6 +25,9 @@ class Recognised:
     roles: list[TableRole]
     links: list[Link]
     columns: list[ColumnMatch]
+    codes: list[CodeMatch]
+    steps: list[StepFound]
+    formats: Formats
 
     def role_of(self, table_id: str) -> TableRole | None:
         return next((r for r in self.roles if r.table == table_id), None)
@@ -34,8 +39,22 @@ class Recognised:
             for key, roles in MINIMUM
         }
 
-    def summary(self) -> dict[str, Any]:
-        """The shape of the test exports' ``expected.yaml`` (files section)."""
+    def code_tables(self) -> dict[str, dict[str, str]]:
+        """What each code means, per field; steps and stations keep the plant's own codes."""
+        out: dict[str, dict[str, str]] = {}
+        for c in self.codes:
+            if c.meaning is not None:
+                out.setdefault(c.target, {})[c.code] = c.meaning
+        if self.steps:
+            out["resources.resource_code"] = {s.code: s.code for s in self.steps}
+        stations = [s.station for s in self.steps if s.station]
+        if stations:
+            out["stations.station_code"] = {s: s for s in dict.fromkeys(stations)}
+        return out
+
+    def summary(self, timezone: str = DEFAULT_TIMEZONE) -> dict[str, Any]:
+        """The shape of the test exports' ``expected.yaml``: files, columns, code tables and
+        formats. ``timezone`` is the plant's, from Plant setup."""
         files: dict[str, Any] = {}
         for r in self.roles:
             if r.role is None or r.sure == "unsure":
@@ -48,7 +67,12 @@ class Recognised:
             columns.setdefault(m.table, {})[m.column] = (
                 _shown(m.target) if m.sure != "unsure" else None
             )
-        return {"files": dict(sorted(files.items())), "columns": columns}
+        return {
+            "files": dict(sorted(files.items())),
+            "columns": columns,
+            "code_tables": self.code_tables(),
+            "format": self.formats.summary(timezone),
+        }
 
 
 BOOKING = {"bookings.start_at": "booking start", "bookings.duration_min": "booking duration_min"}
@@ -77,4 +101,13 @@ def recognise_export(
         elif given is not None:
             r.role, r.sure = given, "confirmed"
     ts = [_T(t, profile(t)) for t in tables if t.readable]
-    return Recognised(tables, roles, links, match_all(ts, roles, links))
+    columns = match_all(ts, roles, links)
+    return Recognised(
+        tables,
+        roles,
+        links,
+        columns,
+        match_codes(tables, columns),
+        steps_found(tables, columns),
+        read_formats(tables, columns),
+    )

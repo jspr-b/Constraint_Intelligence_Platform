@@ -11,6 +11,7 @@ import { Count, Figure } from "../Figure";
 import { PageHeader } from "../PageHeader";
 import { CorrectionsList } from "../CorrectionsList";
 import { PlantPicker, usePlant } from "../PlantPicker";
+import { ProblemExplanations } from "../ProblemExplanations";
 import { termTags } from "../terms";
 
 const TH =
@@ -49,6 +50,11 @@ export function DataQualityPage() {
   const rule = (reason: string) =>
     tr.has(`codeShort.${reason}`) ? tr(`codeShort.${reason}`) : reason;
   const rejected = (q?.files ?? []).reduce((n, f) => n + f.rejected, 0);
+  const reasons: Record<string, number> = {};
+  for (const f of q?.files ?? []) {
+    for (const [reason, n] of Object.entries(f.reasons))
+      reasons[reason] = (reasons[reason] ?? 0) + n;
+  }
   const tf = useTranslations("figure");
   const when = q?.imported_at ? date(q.imported_at) : "";
   const fromImport = (file: string) => ({
@@ -202,6 +208,13 @@ export function DataQualityPage() {
                 </tbody>
               </table>
             )}
+            <div className="mt-4">
+              <ProblemExplanations
+                codes={reasons}
+                example={q.datetime_format}
+                explanations={q.ai_explanations}
+              />
+            </div>
           </Panel>
           <Panel label={t("gapsLabel")} status={<span>{t("missingShown")}</span>}>
             {q.gaps.length === 0 ? (

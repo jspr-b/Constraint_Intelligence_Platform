@@ -79,6 +79,63 @@
         "title": "AccountsOut",
         "type": "object"
       },
+      "AiExplanationOut": {
+        "description": "Why rows were rejected for one reason and how to fix the export, suggested by AI.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "fix": {
+            "title": "Fix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "explanation",
+          "fix"
+        ],
+        "title": "AiExplanationOut",
+        "type": "object"
+      },
+      "AiExplanationsOut": {
+        "properties": {
+          "asked_at": {
+            "format": "date-time",
+            "title": "Asked At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AiExplanationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "not_connected",
+              "connected",
+              "limit_reached",
+              "error"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "items",
+          "asked_at"
+        ],
+        "title": "AiExplanationsOut",
+        "type": "object"
+      },
       "AiOut": {
         "properties": {
           "state": {
@@ -398,6 +455,29 @@
           "changeover_min"
         ],
         "title": "ChangeoverOut",
+        "type": "object"
+      },
+      "CodeAnswer": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "meaning": {
+            "title": "Meaning",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "code",
+          "meaning"
+        ],
+        "title": "CodeAnswer",
         "type": "object"
       },
       "ColumnAnswer": {
@@ -780,6 +860,27 @@
       },
       "DataQualityOut": {
         "properties": {
+          "ai_explanations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiExplanationsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "datetime_format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datetime Format"
+          },
           "event_period_end_at": {
             "anyOf": [
               {
@@ -1668,6 +1769,315 @@
         "title": "FileOut",
         "type": "object"
       },
+      "FormatAnswer": {
+        "description": "One answer at a time: the date order, the decimal mark, or a duration column's unit.",
+        "properties": {
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "date_order": {
+            "anyOf": [
+              {
+                "enum": [
+                  "day",
+                  "month"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Order"
+          },
+          "decimal": {
+            "anyOf": [
+              {
+                "enum": [
+                  ",",
+                  "."
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimal"
+          },
+          "table": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "min",
+                  "h"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "title": "FormatAnswer",
+        "type": "object"
+      },
+      "FormatsOut": {
+        "description": "How the export writes dates, times and numbers (ADR-0011 §4).",
+        "properties": {
+          "byte_order_mark": {
+            "title": "Byte Order Mark",
+            "type": "boolean"
+          },
+          "date_example": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Example"
+          },
+          "date_order": {
+            "anyOf": [
+              {
+                "enum": [
+                  "day",
+                  "month"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Order"
+          },
+          "date_order_question": {
+            "default": false,
+            "title": "Date Order Question",
+            "type": "boolean"
+          },
+          "date_readings": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Date Readings",
+            "type": "object"
+          },
+          "decimal": {
+            "enum": [
+              ",",
+              "."
+            ],
+            "title": "Decimal",
+            "type": "string"
+          },
+          "decimal_question": {
+            "default": false,
+            "title": "Decimal Question",
+            "type": "boolean"
+          },
+          "delimiter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delimiter"
+          },
+          "no_words": {
+            "items": {
+              "type": "string"
+            },
+            "title": "No Words",
+            "type": "array"
+          },
+          "times": {
+            "items": {
+              "$ref": "#/components/schemas/TimeFormatOut"
+            },
+            "title": "Times",
+            "type": "array"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "title_lines": {
+            "title": "Title Lines",
+            "type": "integer"
+          },
+          "totals_line": {
+            "title": "Totals Line",
+            "type": "boolean"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/UnitOut"
+            },
+            "title": "Units",
+            "type": "array"
+          },
+          "yes_words": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Yes Words",
+            "type": "array"
+          }
+        },
+        "required": [
+          "times",
+          "decimal",
+          "delimiter",
+          "title_lines",
+          "totals_line",
+          "byte_order_mark",
+          "units",
+          "yes_words",
+          "no_words"
+        ],
+        "title": "FormatsOut",
+        "type": "object"
+      },
+      "FoundCodeOut": {
+        "description": "One code of a status column and what it means (ADR-0011 §4).",
+        "properties": {
+          "ai_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Reason"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "meaning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meaning"
+          },
+          "question": {
+            "default": false,
+            "title": "Question",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "skipped": {
+            "default": false,
+            "title": "Skipped",
+            "type": "boolean"
+          },
+          "source": {
+            "enum": [
+              "rules",
+              "ai",
+              "client"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "sure": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sure",
+                  "likely",
+                  "unsure",
+                  "confirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sure"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "table",
+          "column",
+          "code",
+          "meaning",
+          "sure",
+          "source",
+          "reasons",
+          "rows"
+        ],
+        "title": "FoundCodeOut",
+        "type": "object"
+      },
       "FoundColumnOut": {
         "description": "One column of a placed table and the field it fills (ADR-0011 §3).",
         "properties": {
@@ -1770,6 +2180,65 @@
           "reasons"
         ],
         "title": "FoundColumnOut",
+        "type": "object"
+      },
+      "FoundStepOut": {
+        "description": "A step of the steps list, with the plant's own code (ADR-0011 §4: never invented).",
+        "properties": {
+          "changed": {
+            "default": false,
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "machine",
+                  "manual"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "station": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "station",
+          "kind"
+        ],
+        "title": "FoundStepOut",
         "type": "object"
       },
       "GapOut": {
@@ -3178,6 +3647,19 @@
               "state": "not_connected"
             }
           },
+          "code_questions": {
+            "default": 0,
+            "title": "Code Questions",
+            "type": "integer"
+          },
+          "codes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FoundCodeOut"
+            },
+            "title": "Codes",
+            "type": "array"
+          },
           "column_questions": {
             "default": 0,
             "title": "Column Questions",
@@ -3212,12 +3694,38 @@
             "title": "Fields",
             "type": "object"
           },
+          "format_questions": {
+            "default": 0,
+            "title": "Format Questions",
+            "type": "integer"
+          },
+          "formats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormatsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "links": {
             "items": {
               "$ref": "#/components/schemas/LinkOut"
             },
             "title": "Links",
             "type": "array"
+          },
+          "meanings": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "default": {},
+            "title": "Meanings",
+            "type": "object"
           },
           "minimum": {
             "items": {
@@ -3231,6 +3739,14 @@
               "$ref": "#/components/schemas/NotRead"
             },
             "title": "Not Read",
+            "type": "array"
+          },
+          "steps": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FoundStepOut"
+            },
+            "title": "Steps",
             "type": "array"
           },
           "tables": {
@@ -3470,6 +3986,26 @@
       },
       "RejectedRowsOut": {
         "properties": {
+          "ai": {
+            "enum": [
+              "not_connected",
+              "connected",
+              "limit_reached",
+              "error"
+            ],
+            "title": "Ai",
+            "type": "string"
+          },
+          "ai_explanations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiExplanationsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "codes": {
             "additionalProperties": {
               "type": "integer"
@@ -3518,7 +4054,9 @@
           "shown",
           "offset",
           "rows",
-          "datetime_format"
+          "datetime_format",
+          "ai",
+          "ai_explanations"
         ],
         "title": "RejectedRowsOut",
         "type": "object"
@@ -3881,6 +4419,47 @@
         "title": "StationOut",
         "type": "object"
       },
+      "StepAnswer": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "machine",
+                  "manual"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "StepAnswer",
+        "type": "object"
+      },
       "StepOut": {
         "properties": {
           "detail": {
@@ -4131,6 +4710,158 @@
           "size_max"
         ],
         "title": "TeamOut",
+        "type": "object"
+      },
+      "TimeFormatOut": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "example": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example"
+          },
+          "example_read": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example Read"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "part": {
+            "anyOf": [
+              {
+                "enum": [
+                  "date",
+                  "time"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Part"
+          },
+          "real_dates": {
+            "default": false,
+            "title": "Real Dates",
+            "type": "boolean"
+          },
+          "sure": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sure",
+                  "likely",
+                  "unsure",
+                  "confirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sure"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column",
+          "part",
+          "format",
+          "options",
+          "sure",
+          "example"
+        ],
+        "title": "TimeFormatOut",
+        "type": "object"
+      },
+      "UnitOut": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "field_unit": {
+            "enum": [
+              "min",
+              "h"
+            ],
+            "title": "Field Unit",
+            "type": "string"
+          },
+          "sure": {
+            "enum": [
+              "sure",
+              "likely",
+              "unsure",
+              "confirmed"
+            ],
+            "title": "Sure",
+            "type": "string"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "min",
+              "h"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column",
+          "target",
+          "unit",
+          "field_unit",
+          "sure"
+        ],
+        "title": "UnitOut",
         "type": "object"
       },
       "UserOut": {
@@ -5492,6 +6223,108 @@
         ]
       }
     },
+    "/imports/{import_id}/codes": {
+      "put": {
+        "description": "The client says what a code means, or that its rows are left out (ADR-0011 §4).",
+        "operationId": "answer_code_imports__import_id__codes_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeAnswer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Code",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/imports/{import_id}/columns": {
       "put": {
         "description": "The client confirms, changes or skips what a column is (ADR-0011 §3).",
@@ -5991,6 +6824,108 @@
         ]
       }
     },
+    "/imports/{import_id}/formats": {
+      "put": {
+        "description": "The client says how the export writes dates or numbers: the date order, the decimal\nmark, or a duration column's unit (ADR-0011 §4).",
+        "operationId": "answer_format_imports__import_id__formats_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormatAnswer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Format",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
     "/imports/{import_id}/mapping/confirm": {
       "post": {
         "description": "The client confirms the summary: what each file is and which columns are used. Only\nwhen nothing is left to answer and the three a diagnostic needs are found.",
@@ -6322,6 +7257,98 @@
         ]
       }
     },
+    "/imports/{import_id}/rejected-rows/explain": {
+      "post": {
+        "description": "Ask the AI why the rows were rejected and how to fix the export (ADR-0011 §4). It gets\nthe reason codes, file and column names and at most 5 anonymised values per reason; never\npersonal columns, lines or counts. The answer is kept with the import, marked as the AI's.",
+        "operationId": "explain_rejected_rows_imports__import_id__rejected_rows_explain_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiExplanationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Explain Rejected Rows",
+        "tags": [
+          "corrections"
+        ]
+      }
+    },
     "/imports/{import_id}/run": {
       "post": {
         "description": "Start the connector in a worker. The page polls this import until it is done or failed.",
@@ -6409,6 +7436,108 @@
           }
         },
         "summary": "Run",
+        "tags": [
+          "imports"
+        ]
+      }
+    },
+    "/imports/{import_id}/steps": {
+      "put": {
+        "description": "The client names a step or says whether it is a machine or handmade. The plant's own\ncode stays (ADR-0011 §4).",
+        "operationId": "answer_step_imports__import_id__steps_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepAnswer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Step",
         "tags": [
           "imports"
         ]

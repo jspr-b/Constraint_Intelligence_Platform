@@ -1,5 +1,6 @@
-"""Mapping wizard, step 1 (ADR-0011 §2): take the whole export as it comes and say what each
-table is and how the tables link. The client names or skips a table the app cannot place.
+"""Mapping wizard (ADR-0011): take the whole export as it comes and say what each table is and
+how the tables link (§2), which field each column fills (§3), and what the plant's codes and
+formats mean (§4). The client names or skips what the app cannot place, and confirms.
 
 The recognition is stored with the import (``imports.wizard``), with the client's answers, so
 the page shows it without reading the files again.
@@ -7,17 +8,28 @@ the page shows it without reading the files again.
 
 import re
 import zipfile
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from cip_api.ai import Ai, AiState, AiUnavailableError, OpenColumn, suggest_columns
+from cip_api.ai import (
+    Ai,
+    AiState,
+    AiUnavailableError,
+    OpenCode,
+    OpenColumn,
+    suggest_codes,
+    suggest_columns,
+)
 from cip_api.errors import ApiProblem
 from cip_api.settings import Settings
 from cip_connectors.wizard import recognise_export
+from cip_connectors.wizard.codes import CODE_FIELDS, MEANINGS, code_values, meaning_of, yes_no
 from cip_connectors.wizard.columns import FIELDS
+from cip_connectors.wizard.formats import day_first, is_time_field, unit_of
 from cip_connectors.wizard.roles import MINIMUM, Role, Sure
 
 TABLE_SUFFIXES = (".csv", ".txt", ".tsv", ".xlsx")
@@ -209,6 +221,91 @@ class ConfirmedOut(BaseModel):
     at: str
 
 
+class FoundCodeOut(BaseModel):
+    """One code of a status column and what it means (ADR-0011 §4)."""
+
+    target: str
+    """The status field: ``events.event_type``, ``orders.status``, ``calendar.kind`` or
+    ``resources.kind``."""
+    table: str
+    column: str
+    code: str
+    """As written in the export."""
+    meaning: str | None
+    """None: not known yet; asked. Rows with an unanswered code are not used."""
+    sure: Sure | None
+    source: Literal["rules", "ai", "client"]
+    reasons: list[str]
+    ai_reason: str | None = None
+    rows: int
+    skipped: bool = False
+    """The client said: leave the rows with this code out."""
+    question: bool = False
+
+
+class FoundStepOut(BaseModel):
+    """A step of the steps list, with the plant's own code (ADR-0011 §4: never invented)."""
+
+    code: str
+    name: str | None
+    station: str | None
+    kind: Literal["machine", "manual"] | None
+    """None: the export does not say; the client may."""
+    changed: bool = False
+    """The client gave the name or kind."""
+
+
+class TimeFormatOut(BaseModel):
+    table: str
+    column: str
+    part: Literal["date", "time"] | None
+    format: str | None
+    """A ``strftime`` format; None while the date order is asked."""
+    options: list[str]
+    sure: Sure | None
+    example: str | None
+    """One value as written in the export."""
+    example_read: str | None = None
+    """That value as read, ``YYYY-MM-DDTHH:MM`` in plant time, for the page to word."""
+    real_dates: bool = False
+
+
+class UnitOut(BaseModel):
+    table: str
+    column: str
+    target: str
+    unit: Literal["min", "h"]
+    field_unit: Literal["min", "h"]
+    sure: Sure
+    """sure: the column name says; likely: the field's own unit, assumed; confirmed: the
+    client said."""
+
+
+class FormatsOut(BaseModel):
+    """How the export writes dates, times and numbers (ADR-0011 §4)."""
+
+    times: list[TimeFormatOut]
+    """Columns used as a time."""
+    date_order: Literal["day", "month"] | None = None
+    """The client's answer when the values do not tell day-month from month-day."""
+    date_order_question: bool = False
+    date_example: str | None = None
+    """A value that reads both ways, for the question."""
+    date_readings: dict[str, str] = {}
+    """That value read day-month (``day``) and month-day (``month``)."""
+    decimal: Literal[",", "."]
+    decimal_question: bool = False
+    delimiter: str | None
+    title_lines: int
+    totals_line: bool
+    byte_order_mark: bool
+    units: list[UnitOut]
+    yes_words: list[str]
+    no_words: list[str]
+    timezone: str | None = None
+    """The plant's, from Plant setup: times are read in it and stored as UTC."""
+
+
 class RecognisedOut(BaseModel):
     """What the app found in the upload (ADR-0011 §2-3)."""
 
@@ -225,11 +322,41 @@ class RecognisedOut(BaseModel):
     ai: AiOut = AiOut(state="not_connected")
     confirmed: ConfirmedOut | None = None
     """Who confirmed the summary and when; cleared by any later answer."""
+    codes: list[FoundCodeOut] = []
+    meanings: dict[str, list[str]] = {}
+    """For each status field, the meanings a code can have: the client's choices."""
+    code_questions: int = 0
+    steps: list[FoundStepOut] = []
+    formats: FormatsOut | None = None
+    format_questions: int = 0
 
 
 class TableAnswer(BaseModel):
     table: str
     role: Role | Literal["skip"]
+
+
+class CodeAnswer(BaseModel):
+    target: str
+    code: str
+    meaning: str
+    """One of the field's meanings, or ``skip``: leave the rows with this code out."""
+
+
+class FormatAnswer(BaseModel):
+    """One answer at a time: the date order, the decimal mark, or a duration column's unit."""
+
+    date_order: Literal["day", "month"] | None = None
+    decimal: Literal[",", "."] | None = None
+    table: str | None = None
+    column: str | None = None
+    unit: Literal["min", "h"] | None = None
+
+
+class StepAnswer(BaseModel):
+    code: str
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    kind: Literal["machine", "manual"] | None = None
 
 
 class ColumnAnswer(BaseModel):
@@ -247,16 +374,22 @@ def role_fields(role: str | None) -> list[str]:
     return [f.target for f in FIELDS.get(role, ())] if role else []  # type: ignore[call-overload]
 
 
+ANSWER_KEYS = ("code_answers", "format_answers", "step_answers")
+"""Answers about codes, formats and steps, kept as they are when the upload is read again."""
+
+
 def recognise_folder(
     folder: Path,
     not_read: list[NotRead],
     answers: dict[str, str],
     column_answers: dict[str, str],
     ai: Ai,
+    kept: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Recognise every table in the import's source folder and match its columns, with the
-    roles the client gave; stored as JSON with the import. Columns the rules cannot match go to
-    the AI when it is connected; it only suggests."""
+    roles the client gave; stored as JSON with the import. Columns and codes the rules cannot
+    place go to the AI when it is connected; it only suggests. ``kept`` holds the answers about
+    codes, formats and steps."""
     found = recognise_export(
         sorted(p for p in folder.iterdir() if p.suffix in TABLE_SUFFIXES),
         answers,  # type: ignore[arg-type]
@@ -294,7 +427,25 @@ def recognise_folder(
         for m in found.columns
     ]
     _ask_ai(found, columns, ai)
+    values = code_values(found.tables)
+    f = found.formats
     return {
+        "code_values": [
+            {"table": table, "column": column, "codes": codes}
+            for (table, column), codes in values.items()
+        ],
+        "ai_codes": _ask_ai_codes(found, ai),
+        "steps": [vars(s) for s in found.steps],
+        "formats": {
+            "times": [vars(tf) for tf in f.times],
+            "decimal": f.decimal,
+            "decimal_sure": f.decimal_sure,
+            "delimiter": f.delimiter,
+            "title_lines": f.title_lines,
+            "totals_line": f.totals_line,
+            "byte_order_mark": f.byte_order_mark,
+        },
+        **{k: (kept or {}).get(k, {}) for k in ANSWER_KEYS},
         "tables": tables,
         "links": [LinkOut(**vars(link)).model_dump() for link in found.links],
         "columns": columns,
@@ -334,6 +485,28 @@ def _ask_ai(found: Any, columns: list[dict[str, Any]], ai: Ai) -> None:
         c.update(target=s.target, sure=s.sure, source="ai", ai_reason=s.reason)
 
 
+def _ask_ai_codes(found: Any, ai: Ai) -> dict[str, dict[str, Any]]:
+    """AI meanings for the codes the rules do not know, keyed ``field SEP code``."""
+    open_codes: dict[tuple[str, str, str], list[str]] = {}
+    for c in found.codes:
+        if c.meaning is None:
+            open_codes.setdefault((c.target, c.table, c.column), []).append(c.code)
+    if not open_codes:
+        return {}
+    asked = [
+        OpenCode(target, table, column, codes, list(MEANINGS[target]))
+        for (target, table, column), codes in open_codes.items()
+    ]
+    try:
+        suggestions = suggest_codes(ai, asked)
+    except AiUnavailableError:
+        return {}
+    return {
+        f"{s.target}{SEP}{s.code}": {"meaning": s.meaning, "sure": s.sure, "reason": s.reason}
+        for s in suggestions
+    }
+
+
 def _flat(target: Any) -> list[str]:
     if isinstance(target, str):
         return [target]
@@ -344,8 +517,10 @@ def _flat(target: Any) -> list[str]:
     return []
 
 
-def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
-    """The stored recognition with the client's answers applied."""
+def recognised_out(
+    stored: dict[str, Any] | None, timezone: str | None = None
+) -> RecognisedOut | None:
+    """The stored recognition with the client's answers applied. ``timezone`` is the plant's."""
     if not stored:
         return None
     answers: dict[str, str] = stored.get("answers", {})
@@ -398,6 +573,8 @@ def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
         columns.append(c)
     roles = {t.role for t in tables if t.role is not None}
     confirmed = stored.get("confirmed")
+    codes = _codes_out(stored, columns)
+    formats = _formats_out(stored, columns, timezone)
     return RecognisedOut(
         tables=tables,
         links=[LinkOut.model_validate(link) for link in stored["links"]],
@@ -413,4 +590,173 @@ def recognised_out(stored: dict[str, Any] | None) -> RecognisedOut | None:
         column_questions=sum(c.question for c in columns),
         ai=AiOut(state=stored.get("ai", {}).get("state", "not_connected")),
         confirmed=ConfirmedOut.model_validate(confirmed) if confirmed else None,
+        codes=codes,
+        meanings={f: list(MEANINGS[f]) for f in sorted({c.target for c in codes})},
+        code_questions=sum(c.question for c in codes),
+        steps=_steps_out(stored),
+        formats=formats,
+        format_questions=_format_questions(formats),
     )
+
+
+def _codes_out(stored: dict[str, Any], columns: list[FoundColumnOut]) -> list[FoundCodeOut]:
+    """The codes of every column used as a status field, with the rules', the AI's or the
+    client's meaning. A code is never left out: without a meaning it is a question."""
+    values = {(v["table"], v["column"]): v["codes"] for v in stored.get("code_values", [])}
+    ai: dict[str, dict[str, Any]] = stored.get("ai_codes", {})
+    answers: dict[str, str] = stored.get("code_answers", {})
+    out = []
+    for c in columns:
+        if c.personal or c.skipped:
+            continue
+        for target in (f for f in c.fields if f in CODE_FIELDS):
+            for code, rows in values.get((c.table, c.column), {}).items():
+                meaning, sure, reason = meaning_of(target, code)
+                found = FoundCodeOut(
+                    target=target,
+                    table=c.table,
+                    column=c.column,
+                    code=code,
+                    meaning=meaning,
+                    sure=sure,
+                    source="rules",
+                    reasons=[reason],
+                    rows=rows,
+                )
+                key = f"{target}{SEP}{code}"
+                if meaning is None and key in ai:
+                    found.meaning, found.sure = ai[key]["meaning"], ai[key]["sure"]
+                    found.source, found.ai_reason = "ai", ai[key]["reason"]
+                answer = answers.get(key)
+                if answer == "skip":
+                    found.meaning, found.sure, found.source, found.skipped = (
+                        None,
+                        "confirmed",
+                        "client",
+                        True,
+                    )
+                elif answer is not None:
+                    found.meaning, found.sure, found.source = answer, "confirmed", "client"
+                found.question = not found.skipped and found.sure in (None, "likely", "unsure")
+                out.append(found)
+    return out
+
+
+def _steps_out(stored: dict[str, Any]) -> list[FoundStepOut]:
+    answers: dict[str, dict[str, Any]] = stored.get("step_answers", {})
+    out = []
+    for raw in stored.get("steps", []):
+        step = FoundStepOut.model_validate(raw)
+        given = answers.get(step.code, {})
+        if given:
+            step.name = given.get("name") or step.name
+            step.kind = given.get("kind") or step.kind
+            step.changed = True
+        out.append(step)
+    return out
+
+
+def _read(example: str | None, fmt: str | None) -> str | None:
+    """A value as read with a format: ``YYYY-MM-DDTHH:MM``, ``YYYY-MM-DD`` or ``HH:MM``."""
+    if example is None or fmt is None:
+        return None
+    try:
+        at = datetime.strptime(example, fmt)
+    except ValueError:
+        return None
+    has_date = any(d in fmt for d in ("%d", "%Y", "%y"))
+    has_time = any(h in fmt for h in ("%H", "%I"))
+    if has_date and has_time:
+        return at.strftime("%Y-%m-%dT%H:%M")
+    return at.strftime("%Y-%m-%d") if has_date else at.strftime("%H:%M")
+
+
+def _formats_out(
+    stored: dict[str, Any], columns: list[FoundColumnOut], timezone: str | None
+) -> FormatsOut | None:
+    f = stored.get("formats")
+    if not f:
+        return None
+    answers: dict[str, Any] = stored.get("format_answers", {})
+    order = answers.get("date_order")
+    by_column = {(x["table"], x["column"]): x for x in f["times"]}
+    times, units = [], []
+    asked_example = None
+    readings: dict[str, str] = {}
+    for c in columns:
+        if c.personal or c.skipped:
+            continue
+        for target in c.fields:
+            given = answers.get("units", {}).get(f"{c.table}{SEP}{c.column}")
+            unit = unit_of(c.table, c.column, target)
+            if unit:
+                units.append(
+                    UnitOut(
+                        table=c.table,
+                        column=c.column,
+                        target=target,
+                        unit=given or unit.unit,  # type: ignore[arg-type]
+                        field_unit=unit.field_unit,  # type: ignore[arg-type]
+                        sure="confirmed" if given else unit.sure,
+                    )
+                )
+        if c.part is None and not any(is_time_field(x) for x in c.fields):
+            continue
+        x = by_column.get((c.table, c.column), {})
+        fmt, sure, options = x.get("format"), x.get("sure"), x.get("options", [])
+        if fmt is None and len(options) == 2 and order is not None:
+            fmt = next(o for o in options if day_first(o) == (order == "day"))
+            sure = "confirmed"
+        elif fmt is None and len(options) == 2 and asked_example is None:
+            asked_example = x.get("example")
+            for o in options:
+                read = _read(asked_example, o)
+                if read:
+                    readings["day" if day_first(o) else "month"] = read
+        times.append(
+            TimeFormatOut(
+                table=c.table,
+                column=c.column,
+                part=c.part,
+                format=fmt,
+                options=options,
+                sure=sure,
+                example=x.get("example"),
+                example_read=_read(x.get("example"), fmt),
+                real_dates=x.get("real_dates", False),
+            )
+        )
+    values = {(v["table"], v["column"]): v["codes"] for v in stored.get("code_values", [])}
+    words = [
+        w
+        for c in columns
+        if "calendar.covered" in c.fields and not c.skipped
+        for w in values.get((c.table, c.column), {})
+    ]
+    decimal = answers.get("decimal") or f["decimal"]
+    return FormatsOut(
+        times=times,
+        date_order=order,
+        date_order_question=asked_example is not None,
+        date_example=asked_example,
+        date_readings=readings,
+        decimal=decimal,
+        decimal_question=f["decimal_sure"] is None and "decimal" not in answers,
+        delimiter=f["delimiter"],
+        title_lines=f["title_lines"],
+        totals_line=f["totals_line"],
+        byte_order_mark=f["byte_order_mark"],
+        units=units,
+        yes_words=sorted(w for w in words if yes_no(w) is True),
+        no_words=sorted(w for w in words if yes_no(w) is False),
+        timezone=timezone,
+    )
+
+
+def _format_questions(formats: FormatsOut | None) -> int:
+    """Open questions about formats: the date order, the decimal mark, and each time column
+    whose values fit no format (to skip, or fix in the export)."""
+    if formats is None:
+        return 0
+    unreadable = sum(1 for t in formats.times if t.format is None and len(t.options) != 2)
+    return int(formats.date_order_question) + int(formats.decimal_question) + unreadable

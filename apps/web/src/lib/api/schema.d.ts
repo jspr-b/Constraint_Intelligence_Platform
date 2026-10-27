@@ -300,6 +300,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Answer Code
+         * @description The client says what a code means, or that its rows are left out (ADR-0011 §4).
+         */
+        put: operations["answer_code_imports__import_id__codes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/columns": {
         parameters: {
             query?: never;
@@ -400,6 +420,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/formats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Answer Format
+         * @description The client says how the export writes dates or numbers: the date order, the decimal
+         *     mark, or a duration column's unit (ADR-0011 §4).
+         */
+        put: operations["answer_format_imports__import_id__formats_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/mapping/confirm": {
         parameters: {
             query?: never;
@@ -461,6 +502,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/{import_id}/rejected-rows/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Explain Rejected Rows
+         * @description Ask the AI why the rows were rejected and how to fix the export (ADR-0011 §4). It gets
+         *     the reason codes, file and column names and at most 5 anonymised values per reason; never
+         *     personal columns, lines or counts. The answer is kept with the import, marked as the AI's.
+         */
+        post: operations["explain_rejected_rows_imports__import_id__rejected_rows_explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{import_id}/run": {
         parameters: {
             query?: never;
@@ -475,6 +538,27 @@ export interface paths {
          * @description Start the connector in a worker. The page polls this import until it is done or failed.
          */
         post: operations["run_imports__import_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{import_id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Answer Step
+         * @description The client names a step or says whether it is a machine or handmade. The plant's own
+         *     code stays (ADR-0011 §4).
+         */
+        put: operations["answer_step_imports__import_id__steps_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1159,6 +1243,33 @@ export interface components {
             /** Users */
             users: components["schemas"]["UserOut"][];
         };
+        /**
+         * AiExplanationOut
+         * @description Why rows were rejected for one reason and how to fix the export, suggested by AI.
+         */
+        AiExplanationOut: {
+            /** Code */
+            code: string;
+            /** Explanation */
+            explanation: string;
+            /** Fix */
+            fix: string;
+        };
+        /** AiExplanationsOut */
+        AiExplanationsOut: {
+            /**
+             * Asked At
+             * Format: date-time
+             */
+            asked_at: string;
+            /** Items */
+            items: components["schemas"]["AiExplanationOut"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "not_connected" | "connected" | "limit_reached" | "error";
+        };
         /** AiOut */
         AiOut: {
             /**
@@ -1259,6 +1370,15 @@ export interface components {
             resource_code: string;
             /** To Setup Family */
             to_setup_family: string;
+        };
+        /** CodeAnswer */
+        CodeAnswer: {
+            /** Code */
+            code: string;
+            /** Meaning */
+            meaning: string;
+            /** Target */
+            target: string;
         };
         /** ColumnAnswer */
         ColumnAnswer: {
@@ -1378,6 +1498,9 @@ export interface components {
         };
         /** DataQualityOut */
         DataQualityOut: {
+            ai_explanations?: components["schemas"]["AiExplanationsOut"] | null;
+            /** Datetime Format */
+            datetime_format?: string | null;
             /** Event Period End At */
             event_period_end_at: string | null;
             /** Event Period Start At */
@@ -1638,6 +1761,111 @@ export interface components {
             rows: number;
         };
         /**
+         * FormatAnswer
+         * @description One answer at a time: the date order, the decimal mark, or a duration column's unit.
+         */
+        FormatAnswer: {
+            /** Column */
+            column?: string | null;
+            /** Date Order */
+            date_order?: ("day" | "month") | null;
+            /** Decimal */
+            decimal?: ("," | ".") | null;
+            /** Table */
+            table?: string | null;
+            /** Unit */
+            unit?: ("min" | "h") | null;
+        };
+        /**
+         * FormatsOut
+         * @description How the export writes dates, times and numbers (ADR-0011 §4).
+         */
+        FormatsOut: {
+            /** Byte Order Mark */
+            byte_order_mark: boolean;
+            /** Date Example */
+            date_example?: string | null;
+            /** Date Order */
+            date_order?: ("day" | "month") | null;
+            /**
+             * Date Order Question
+             * @default false
+             */
+            date_order_question: boolean;
+            /**
+             * Date Readings
+             * @default {}
+             */
+            date_readings: {
+                [key: string]: string;
+            };
+            /**
+             * Decimal
+             * @enum {string}
+             */
+            decimal: "," | ".";
+            /**
+             * Decimal Question
+             * @default false
+             */
+            decimal_question: boolean;
+            /** Delimiter */
+            delimiter: string | null;
+            /** No Words */
+            no_words: string[];
+            /** Times */
+            times: components["schemas"]["TimeFormatOut"][];
+            /** Timezone */
+            timezone?: string | null;
+            /** Title Lines */
+            title_lines: number;
+            /** Totals Line */
+            totals_line: boolean;
+            /** Units */
+            units: components["schemas"]["UnitOut"][];
+            /** Yes Words */
+            yes_words: string[];
+        };
+        /**
+         * FoundCodeOut
+         * @description One code of a status column and what it means (ADR-0011 §4).
+         */
+        FoundCodeOut: {
+            /** Ai Reason */
+            ai_reason?: string | null;
+            /** Code */
+            code: string;
+            /** Column */
+            column: string;
+            /** Meaning */
+            meaning: string | null;
+            /**
+             * Question
+             * @default false
+             */
+            question: boolean;
+            /** Reasons */
+            reasons: string[];
+            /** Rows */
+            rows: number;
+            /**
+             * Skipped
+             * @default false
+             */
+            skipped: boolean;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "rules" | "ai" | "client";
+            /** Sure */
+            sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
+            /** Table */
+            table: string;
+            /** Target */
+            target: string;
+        };
+        /**
          * FoundColumnOut
          * @description One column of a placed table and the field it fills (ADR-0011 §3).
          */
@@ -1676,6 +1904,25 @@ export interface components {
             sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
             /** Table */
             table: string;
+        };
+        /**
+         * FoundStepOut
+         * @description A step of the steps list, with the plant's own code (ADR-0011 §4: never invented).
+         */
+        FoundStepOut: {
+            /**
+             * Changed
+             * @default false
+             */
+            changed: boolean;
+            /** Code */
+            code: string;
+            /** Kind */
+            kind: ("machine" | "manual") | null;
+            /** Name */
+            name: string | null;
+            /** Station */
+            station: string | null;
         };
         /** GapOut */
         GapOut: {
@@ -2169,6 +2416,16 @@ export interface components {
              *     } */
             ai: components["schemas"]["AiOut"];
             /**
+             * Code Questions
+             * @default 0
+             */
+            code_questions: number;
+            /**
+             * Codes
+             * @default []
+             */
+            codes: components["schemas"]["FoundCodeOut"][];
+            /**
              * Column Questions
              * @default 0
              */
@@ -2186,12 +2443,30 @@ export interface components {
             fields: {
                 [key: string]: string[];
             };
+            /**
+             * Format Questions
+             * @default 0
+             */
+            format_questions: number;
+            formats?: components["schemas"]["FormatsOut"] | null;
             /** Links */
             links: components["schemas"]["LinkOut"][];
+            /**
+             * Meanings
+             * @default {}
+             */
+            meanings: {
+                [key: string]: string[];
+            };
             /** Minimum */
             minimum: components["schemas"]["MinimumRoleOut"][];
             /** Not Read */
             not_read: components["schemas"]["NotRead"][];
+            /**
+             * Steps
+             * @default []
+             */
+            steps: components["schemas"]["FoundStepOut"][];
             /** Tables */
             tables: components["schemas"]["TableOut"][];
             /** To Answer */
@@ -2248,6 +2523,12 @@ export interface components {
         };
         /** RejectedRowsOut */
         RejectedRowsOut: {
+            /**
+             * Ai
+             * @enum {string}
+             */
+            ai: "not_connected" | "connected" | "limit_reached" | "error";
+            ai_explanations: components["schemas"]["AiExplanationsOut"] | null;
             /** Codes */
             codes: {
                 [key: string]: number;
@@ -2400,6 +2681,15 @@ export interface components {
             /** Station Code */
             station_code: string;
         };
+        /** StepAnswer */
+        StepAnswer: {
+            /** Code */
+            code: string;
+            /** Kind */
+            kind?: ("machine" | "manual") | null;
+            /** Name */
+            name?: string | null;
+        };
         /** StepOut */
         StepOut: {
             /** Detail */
@@ -2469,6 +2759,54 @@ export interface components {
             size_max: number | null;
             /** Team Code */
             team_code: string;
+        };
+        /** TimeFormatOut */
+        TimeFormatOut: {
+            /** Column */
+            column: string;
+            /** Example */
+            example: string | null;
+            /** Example Read */
+            example_read?: string | null;
+            /** Format */
+            format: string | null;
+            /** Options */
+            options: string[];
+            /** Part */
+            part: ("date" | "time") | null;
+            /**
+             * Real Dates
+             * @default false
+             */
+            real_dates: boolean;
+            /** Sure */
+            sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
+            /** Table */
+            table: string;
+        };
+        /** UnitOut */
+        UnitOut: {
+            /** Column */
+            column: string;
+            /**
+             * Field Unit
+             * @enum {string}
+             */
+            field_unit: "min" | "h";
+            /**
+             * Sure
+             * @enum {string}
+             */
+            sure: "sure" | "likely" | "unsure" | "confirmed";
+            /** Table */
+            table: string;
+            /** Target */
+            target: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "min" | "h";
         };
         /** UserOut */
         UserOut: {
@@ -3131,6 +3469,45 @@ export interface operations {
             };
         };
     };
+    answer_code_imports__import_id__codes_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     answer_column_imports__import_id__columns_put: {
         parameters: {
             query?: never;
@@ -3319,6 +3696,45 @@ export interface operations {
             };
         };
     };
+    answer_format_imports__import_id__formats_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormatAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     confirm_mapping_imports__import_id__mapping_confirm_post: {
         parameters: {
             query?: never;
@@ -3429,6 +3845,41 @@ export interface operations {
             };
         };
     };
+    explain_rejected_rows_imports__import_id__rejected_rows_explain_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiExplanationsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     run_imports__import_id__run_post: {
         parameters: {
             query?: never;
@@ -3446,6 +3897,45 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answer_step_imports__import_id__steps_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

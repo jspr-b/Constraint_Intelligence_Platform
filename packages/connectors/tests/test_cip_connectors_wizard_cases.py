@@ -157,11 +157,49 @@ def test_wizard_matches_every_column_by_rules(name: str) -> None:
     assert placed == exp["columns"]
 
 
-@pytest.mark.xfail(strict=True, reason="CI0005 sequences 04-05 build code and format matching")
+ALIAS = {
+    "event_status": "events.event_type",
+    "action": "events.event_type",
+    "order_status": "orders.status",
+    "job_status": "orders.status",
+    "calendar_kind": "calendar.kind",
+    "window": "calendar.kind",
+    "step_kind": "resources.kind",
+    "resource": "resources.resource_code",
+    "station": "stations.station_code",
+}
+"""The code tables of the two hand-written mappings, by the field they fill."""
+
+
 @pytest.mark.parametrize("name", NAMES)
-def test_wizard_matches_columns_codes_and_formats(name: str) -> None:
-    exp = _expected(name)
-    summary = recognise_export(_files(name)).summary()
-    assert summary["columns"] == exp["columns"]
-    assert summary["code_tables"] == exp["code_tables"]
-    assert summary["format"] == exp["format"]
+def test_wizard_gives_every_code_in_the_data_its_meaning(name: str) -> None:
+    """Sequence 04: each status code in the export means what the plant's true mapping says,
+    and no code is left without a meaning. A known answer may list codes this export does not
+    use (SAP's ABG); only the codes in the data count."""
+    found = recognise_export(_files(name))
+    tables = found.code_tables()
+    for table, want in _expected(name)["code_tables"].items():
+        f = ALIAS[table]
+        if f in ("resources.resource_code", "stations.station_code"):
+            # Steps and stations keep the plant's own codes (ADR-0011 §4): the same codes.
+            assert set(tables[f]) == set(want), (name, table)
+            assert all(code == own for code, own in tables[f].items())
+            continue
+        in_data = {c.code for c in found.codes if c.target == f}
+        assert in_data, (name, table)
+        assert in_data <= set(want), (name, table, in_data - set(want))
+        assert tables.get(f, {}) == {k: v for k, v in want.items() if k in in_data}, (name, table)
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_wizard_reads_the_export_format(name: str) -> None:
+    """Separator, decimal mark, date-time format, title and totals lines and the byte-order
+    mark, from the files alone; the time zone is the plant's. A workbook has no separator."""
+    exp = _expected(name)["format"]
+    found = recognise_export(_files(name)).summary(timezone=exp["timezone"])["format"]
+    if all(f.endswith(".xlsx") for f in _expected(name)["files"]) or all(
+        "#" in f for f in _expected(name)["files"]
+    ):
+        assert found.pop("delimiter") is None
+        exp = {k: v for k, v in exp.items() if k != "delimiter"}
+    assert found == exp

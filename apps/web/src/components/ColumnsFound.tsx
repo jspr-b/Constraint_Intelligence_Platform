@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button, Panel } from "@cip/ui";
+import { CodesFound } from "@/components/CodesFound";
 import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { fieldLabel } from "@/lib/model";
@@ -12,9 +13,10 @@ type Recognised = components["schemas"]["RecognisedOut"];
 type Column = components["schemas"]["FoundColumnOut"];
 
 /**
- * Step 2 of the mapping wizard (ADR-0011 §3): the open questions about columns in plain words,
- * then one summary of what each file is and which columns are used, to confirm. The AI only
- * suggests; its suggestions stay questions until the client says yes.
+ * Step 2 of the mapping wizard (ADR-0011 §3-4): the open questions about columns, codes and
+ * formats in plain words, then one summary of what each file is, which columns are used, what
+ * the codes mean and how dates and numbers are read, to confirm. The AI only suggests; its
+ * suggestions stay questions until the client says yes.
  */
 export function ColumnsFound({
   importId,
@@ -59,14 +61,18 @@ export function ColumnsFound({
   const placed = found.tables.filter((tb) => tb.role !== null && tb.problem === null);
   const questions = found.columns.filter((c) => c.question);
   const missing = found.minimum.filter((m) => m.tables.length === 0);
+  const codeQuestions = found.code_questions + found.format_questions;
+  const open = questions.length + codeQuestions;
   const blocked =
     found.to_answer.length > 0
       ? t("blocked.tables", { count: found.to_answer.length })
       : questions.length > 0
         ? t("blocked.columns", { count: questions.length })
-        : missing.length > 0
-          ? t("blocked.minimum")
-          : null;
+        : codeQuestions > 0
+          ? t("blocked.codes", { count: codeQuestions })
+          : missing.length > 0
+            ? t("blocked.minimum")
+            : null;
 
   const choices = (c: Column) => found.fields[roleOf.get(c.table) ?? ""] ?? [];
   const send = (c: Column, field: string) =>
@@ -79,8 +85,8 @@ export function ColumnsFound({
         <span>
           {found.confirmed
             ? t("confirmedShort")
-            : questions.length > 0
-              ? t("questionsShort", { count: questions.length })
+            : open > 0
+              ? t("questionsShort", { count: open })
               : t("readyShort")}
         </span>
       }
@@ -88,14 +94,16 @@ export function ColumnsFound({
       <div className="flex flex-col gap-4 text-sm">
         <AiBanner state={found.ai.state} canAnswer={canAnswer} />
 
-        {questions.length > 0 && (
-          <section aria-label={t("questionsLabel")}>
+        {open > 0 && (
+          <section aria-label={t("questionsLabel")} className="flex flex-col gap-3">
             <h3 className="m-0 mb-1.5 text-xs font-medium tracking-[0.08em] text-muted uppercase">
               {t("questionsLabel")}
             </h3>
-            <p role="status" className="m-0 mb-2 border-l-2 border-warn pl-3">
-              {t("questionsIntro", { count: questions.length })}
-            </p>
+            {questions.length > 0 && (
+              <p role="status" className="m-0 border-l-2 border-warn pl-3">
+                {t("questionsIntro", { count: questions.length })}
+              </p>
+            )}
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {questions.map((c) => (
                 <Question
@@ -109,6 +117,14 @@ export function ColumnsFound({
                 />
               ))}
             </ul>
+            <CodesFound
+              importId={importId}
+              found={found}
+              canAnswer={canAnswer}
+              part="questions"
+              onChanged={onChanged}
+              onSkipColumn={(table, column) => answer.mutate({ table, column, field: "skip" })}
+            />
           </section>
         )}
 
@@ -194,6 +210,15 @@ export function ColumnsFound({
             );
           })}
         </section>
+
+        <CodesFound
+          importId={importId}
+          found={found}
+          canAnswer={canAnswer}
+          part="summary"
+          onChanged={onChanged}
+          onSkipColumn={(table, column) => answer.mutate({ table, column, field: "skip" })}
+        />
 
         {answer.error && (
           <p role="alert" className="m-0 text-bad">

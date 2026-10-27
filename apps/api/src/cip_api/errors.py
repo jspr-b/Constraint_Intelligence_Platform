@@ -142,6 +142,22 @@ CATALOG: dict[str, tuple[int, str]] = {
         422,
         "That is not something this file can hold. Choose from the list, or skip the column.",
     ),
+    "code_not_found": (404, "That code is not in this upload. Reload the page."),
+    "meaning_not_allowed": (
+        422,
+        "That is not something this code can mean. Choose from the list, or leave its rows out.",
+    ),
+    "step_not_found": (404, "That step is not in the steps list of this upload. Reload the page."),
+    "no_answer": (422, "Nothing was chosen. Choose an answer, then save."),
+    "nothing_to_explain": (
+        409,
+        "This import has no rejected rows, so there is nothing to explain. The page will refresh.",
+    ),
+    "ai_not_connected": (
+        409,
+        "The AI is not connected, so the standard explanations are shown. IT can connect it "
+        "(IT guide, “Connecting the AI”).",
+    ),
     "mapping_not_ready": (
         409,
         "Some questions are still open. Answer them on the Import page, then confirm.",

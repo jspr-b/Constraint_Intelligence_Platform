@@ -67,6 +67,12 @@ const RECOGNISED = {
   column_questions: 2,
   ai: { state: "connected" },
   confirmed: null,
+  codes: [],
+  meanings: {},
+  code_questions: 0,
+  steps: [],
+  formats: null,
+  format_questions: 0,
 };
 
 test.beforeEach(async ({ page }) => {

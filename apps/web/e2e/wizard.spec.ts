@@ -56,6 +56,12 @@ const RECOGNISED = {
   ],
   not_read: [{ name: "read me.pdf", problem: "not_a_table_file" }],
   to_answer: ["Customers.csv"],
+  codes: [],
+  meanings: {},
+  code_questions: 0,
+  steps: [],
+  formats: null,
+  format_questions: 0,
 };
 
 test.beforeEach(async ({ page }) => {

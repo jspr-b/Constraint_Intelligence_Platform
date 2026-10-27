@@ -8,6 +8,7 @@ import { api, problemOf } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { Count } from "./Figure";
 import { FIELD, Field, FormDialog } from "./FormDialog";
+import { ProblemExplanations } from "./ProblemExplanations";
 import { ReadOnlyNote } from "./ReadOnlyNote";
 
 type RejectedRow = components["schemas"]["RejectedRowOut"];
@@ -63,6 +64,21 @@ export function RejectedRows({
     },
     onSettled: () => void refresh(),
   });
+  const explain = useMutation({
+    mutationFn: async () => {
+      const { data, error, response } = await api.POST(
+        "/imports/{import_id}/rejected-rows/explain",
+        { params: { path: { import_id: importId } } },
+      );
+      if (!data) throw new Error(problemOf(error, response.status).message);
+      return data;
+    },
+    onSettled: () =>
+      Promise.all([
+        queries.invalidateQueries({ queryKey: ["rejected-rows", importId] }),
+        queries.invalidateQueries({ queryKey: ["data-quality", plant] }),
+      ]),
+  });
   const r = rows.data;
   if (!r || r.total === 0) return null;
   const reason = (row: RejectedRow) =>
@@ -103,6 +119,18 @@ export function RejectedRows({
         <Count value={r.fixed} label={t("fixedLabel")} source={{ what: tf("src.fixedRows") }} />{" "}
         {t("leadFixed")}
       </p>
+      <ProblemExplanations
+        codes={r.codes}
+        example={r.datetime_format}
+        explanations={r.ai_explanations}
+        ask={{
+          ai: r.ai,
+          canAsk: canFix,
+          pending: explain.isPending,
+          error: explain.error?.message ?? null,
+          onAsk: () => explain.mutate(),
+        }}
+      />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <Field label={t("filter")}>
           {(id) => (

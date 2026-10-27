@@ -730,7 +730,8 @@
       "blocked": {
         "tables": "{count, plural, one {First say what one file holds (step 1).} other {First say what # files hold (step 1).}}",
         "columns": "{count, plural, one {Answer the question above first.} other {Answer the # questions above first.}}",
-        "minimum": "An event log, a steps list and a shift sheet are needed. Add the missing file in step 1."
+        "minimum": "An event log, a steps list and a shift sheet are needed. Add the missing file in step 1.",
+        "codes": "{count, plural, one {Answer the question about a code or format above first.} other {Answer the # questions about codes and formats above first.}}"
       },
       "confirm": "Confirm this summary",
       "confirmNote": "Check the summary, then confirm. You can change any choice later.",
@@ -751,9 +752,171 @@
           "body": "This upload was matched by rules only. Answer the open questions yourself; the next upload tries the AI again."
         }
       },
-      "someone": "a colleague"
+      "someone": "a colleague",
+      "codes": {
+        "questionsIntro": "{count, plural, one {One code or format is unclear.} other {# codes or formats are unclear.}} Until you answer, the rows that use them are not imported.",
+        "isIt": "Does “{code}” in {column} ({table}) mean “{meaning}”?",
+        "whatIs": "What does “{code}” in {column} ({table}) mean?",
+        "rowsWith": "rows with this code",
+        "why": {
+          "word_in_code": "We think so because a known word is in the code; please check.",
+          "shortened_word": "We think so because it looks like a shortened word; please check.",
+          "start_end_letter": "We think so from the letter at the end (A for start, E for end); please check.",
+          "not_known": "We do not know this code."
+        },
+        "yes": "Yes",
+        "yesOf": "Yes, {code} means that",
+        "noChoose": "No, choose",
+        "noOf": "No, choose what {code} means",
+        "choose": "Choose what it means",
+        "leaveOut": "Leave these rows out",
+        "label": "Codes and what they mean",
+        "intro": "Your export uses its own words for what happened. This is what each one means.",
+        "caption": "Codes in {column} of {table} and what each means",
+        "colCode": "Code",
+        "colMeans": "Means",
+        "colRows": "Rows",
+        "colSure": "How sure",
+        "changeOf": "What does {code} mean?",
+        "leftOut": "Left out by you: its rows are not imported",
+        "rowsLabel": "Rows with {code} in {table}",
+        "sure": {
+          "sure": "Sure: a known word",
+          "likely": "Likely: please check",
+          "confirmed": "Confirmed by you",
+          "none": "Unknown: please choose",
+          "ai": "Suggested by AI: please check"
+        }
+      },
+      "meaning": {
+        "events_event_type": {
+          "start": "Work started",
+          "end": "Work finished",
+          "setup_start": "Setup started",
+          "setup_end": "Setup finished",
+          "down_start": "Stop or breakdown started",
+          "down_end": "Running again after a stop",
+          "scrap": "Scrap (rejected parts)",
+          "scan": "Arrived at the step (scan)",
+          "move": "Left the step (moved on)"
+        },
+        "orders_status": {
+          "open": "Open",
+          "released": "Released to the floor",
+          "in_progress": "In progress",
+          "shipped": "Shipped",
+          "cancelled": "Cancelled"
+        },
+        "calendar_kind": {
+          "shift": "Shift (working time)",
+          "break": "Break",
+          "maintenance": "Planned maintenance",
+          "holiday": "Holiday (closed)",
+          "overtime": "Overtime"
+        },
+        "resources_kind": {
+          "machine": "Machine",
+          "manual": "Handmade"
+        }
+      },
+      "steps": {
+        "label": "Steps found",
+        "intro": "Each step keeps your own code. You can give it a name and say whether it is a machine or handmade.",
+        "caption": "Steps in the steps list",
+        "colCode": "Code",
+        "colName": "Name",
+        "colKind": "Machine or handmade",
+        "colStation": "Station",
+        "nameOf": "Name of step {code}",
+        "kindOf": "Is step {code} a machine or handmade?",
+        "notSaid": "Not said",
+        "save": "Save name",
+        "saveOf": "Save the name of step {code}",
+        "changed": "Changed by you"
+      },
+      "formats": {
+        "label": "Dates and numbers",
+        "dateOrder": "Is “{example}” {day} or {month}?",
+        "dateOrderWhy": "Every date in your export has a day of 12 or lower, so it can be read both ways. Your answer is used for all dates.",
+        "decimal": "Your numbers use both a comma and a point. Which one separates the decimals?",
+        "comma": "Comma (7,5)",
+        "point": "Point (7.5)",
+        "unreadable": "We could not read the dates in {column} ({table}). Skip the column, or fix the export and upload it again.",
+        "skipColumn": "Skip {column}",
+        "timesCaption": "Date and time columns and how one value is read",
+        "colColumn": "Column",
+        "colExample": "In your export",
+        "colRead": "We read it as",
+        "readAs": "{when}",
+        "realDates": "Real Excel dates: read as they are",
+        "notYet": "Not read yet: answer the question above",
+        "timezone": "Times are read as {zone} time (Plant setup) and stored as UTC.",
+        "noTimezone": "Times are read in the plant's time zone (Plant setup) and stored as UTC.",
+        "decimalIs": "Decimal mark: {mark}",
+        "markComma": "comma",
+        "markPoint": "point",
+        "separator": "Separator between columns: {sep}",
+        "sep": {
+          "semicolon": "semicolon (;)",
+          "comma": "comma (,)",
+          "tab": "tab",
+          "pipe": "pipe (|)",
+          "other": "“{sep}”"
+        },
+        "titleLines": "{count, plural, one {One title line above the header is not read.} other {# title lines above the header are not read.}}",
+        "totalsLine": "A totals line at the end is not read.",
+        "bom": "Files start with a byte-order mark (Excel “CSV UTF-8”); that is fine.",
+        "yesNo": "Yes/no column: “{yes}” means yes, “{no}” means no.",
+        "yesOnly": "Yes/no column: “{yes}” means yes.",
+        "noOnly": "Yes/no column: “{no}” means no.",
+        "unitsCaption": "Duration columns and their unit",
+        "unitOf": "Unit of {column}",
+        "unit": {
+          "min": "minutes",
+          "h": "hours"
+        },
+        "unitSure": {
+          "sure": "From the column name",
+          "likely": "Assumed: the name does not say; please check",
+          "confirmed": "Confirmed by you"
+        },
+        "colUnit": "Unit",
+        "colSure": "How sure"
+      }
     },
-    "runColumnsConfirmed": "Columns confirmed. Next: the app checks your codes and date formats; the import runs after that step."
+    "runColumnsConfirmed": "Columns confirmed. Next: the app checks your codes and date formats; the import runs after that step.",
+    "explain": {
+      "label": "What went wrong and how to fix it in your export",
+      "rows": "{count, plural, one {row} other {rows}}",
+      "rowsOf": "Rejected rows: {reason}",
+      "dateUnreadable": "The date and time cannot be read.",
+      "fix": {
+        "not_a_datetime": "Fix in your export: fill in every date and time, written the same way as the other rows. Rows typed by hand at a terminal are the usual cause.",
+        "not_a_number": "Fix in your export: let this column hold only numbers, without units or words such as “pcs” or “n/a”. Leave it empty when there is no value.",
+        "not_whole": "Fix in your export: export pieces as whole numbers. If the column holds kilograms or metres, tell support.",
+        "too_many_decimals": "Fix in your export: round euro amounts to cents (two decimals).",
+        "not_yes_no": "Fix in your export: use one pair of words in this column, such as yes/no or ja/nee.",
+        "unknown_code": "Fix in your export: add the code to the steps list or code list you export, or correct the typing in the row. A new step can also be added on Plant setup.",
+        "no_code_table": "Fix in your export: add the code list file (for example the steps list) to the upload, then upload again.",
+        "empty": "Fix in your export: fill in this field in your ERP before you export, or leave the row out here with a reason.",
+        "other": "Fix in your export: open the rows below to see the value, then fix it in the export or here."
+      },
+      "byAi": "Suggested by AI for your export: please check",
+      "aiFix": "How to fix it:",
+      "ask": "Ask the AI how to fix this in your export",
+      "askAgain": "Ask the AI again",
+      "asking": "Asking the AI…",
+      "sent": "The AI sees only the reasons, the file and column names and up to 5 masked example values (letters and digits replaced). Never whole rows, people or numbers to calculate.",
+      "askWho": "IT or the planner can ask the AI for a fix tailored to your export.",
+      "notConnected": "AI not connected: these are the standard explanations. Once IT connects the AI (IT guide, “Connecting the AI”), it can suggest a fix for your own export.",
+      "onImport": "For a fix tailored to your export, IT can ask the AI next to the rejected rows on the Import page.",
+      "toImport": "Go to Import",
+      "failed": {
+        "not_connected": "AI not connected: these are the standard explanations.",
+        "limit_reached": "The AI was not asked: this month's AI cost limit is reached. The standard explanations stay.",
+        "error": "The AI did not answer. The standard explanations stay; try again later."
+      }
+    }
   },
   "setup": {
     "label": "Plant setup",
@@ -1334,7 +1497,8 @@
       "corrections": "Fixes in use for this plant: values fixed, rows left out and imported rows removed in the app.",
       "deleteRemoved": "Events in use now that are gone after the delete: they came only from this upload. Counted by the engine by comparing the plant now with the plant rebuilt without it.",
       "found": {
-        "rows": "Rows of this file or sheet as read, without the header, title lines above it, a totals line at the end and empty lines."
+        "rows": "Rows of this file or sheet as read, without the header, title lines above it, a totals line at the end and empty lines.",
+        "codeRows": "Rows with this code in the upload, counted when it was read"
       }
     },
     "pages": {

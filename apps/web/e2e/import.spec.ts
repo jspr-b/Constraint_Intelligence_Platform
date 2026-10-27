@@ -117,6 +117,8 @@ const REJECTED = {
   shown: 1,
   offset: 0,
   datetime_format: "20-07-2026 10:11",
+  ai: "not_connected",
+  ai_explanations: null,
   rows: [
     {
       file: "mes_events.csv",

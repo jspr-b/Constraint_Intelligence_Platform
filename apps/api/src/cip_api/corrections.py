@@ -20,12 +20,22 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import Connection, text
 
+from cip_api.ai import (
+    AiExplanationOut,
+    AiExplanationsOut,
+    AiState,
+    AiUnavailableError,
+    OpenProblem,
+    Provider,
+    explain_problems,
+    get_ai_provider,
+)
 from cip_api.auth.roles import Decision
 from cip_api.auth.sessions import audit
 from cip_api.db.plant_store import merge_imports, rebuild_plant_data, row_fixes
 from cip_api.errors import ApiProblem
 from cip_api.facts import Reason
-from cip_api.imports import choose_mapping, import_dir, kept_imports, refresh_quality
+from cip_api.imports import _ai, choose_mapping, import_dir, kept_imports, refresh_quality
 from cip_api.refresh import refresh_after_change
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
@@ -113,6 +123,10 @@ class RejectedRowsOut(BaseModel):
     rows: list[RejectedRowOut]
     datetime_format: str
     """How the plant's export writes a date and time, e.g. ``20-07-2026 10:11``."""
+    ai: AiState
+    """``not_connected`` without a key: the page shows the standard explanations only."""
+    ai_explanations: AiExplanationsOut | None
+    """The AI's last explanations of this import's reasons, if asked."""
 
 
 def _out(row: Any) -> CorrectionOut:
@@ -195,6 +209,7 @@ def rejected_rows(
     import_id: uuid.UUID,
     ctx: Annotated[Ctx, Depends(require(page="import"))],
     settings: Annotated[Settings, Depends(get_settings)],
+    provider: Annotated[Provider | None, Depends(get_ai_provider)],
     code: str | None = None,
     file: str | None = None,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -241,7 +256,74 @@ def rejected_rows(
             for e in chosen[offset : offset + limit]
         ],
         datetime_format=_example(mapping),
+        ai="connected" if provider is not None else "not_connected",
+        ai_explanations=report.get("ai_explanations"),
     )
+
+
+@router.post("/imports/{import_id}/rejected-rows/explain", response_model=AiExplanationsOut)
+def explain_rejected_rows(
+    import_id: uuid.UUID,
+    ctx: Fix,
+    settings: Annotated[Settings, Depends(get_settings)],
+    provider: Annotated[Provider | None, Depends(get_ai_provider)],
+) -> AiExplanationsOut:
+    """Ask the AI why the rows were rejected and how to fix the export (ADR-0011 §4). It gets
+    the reason codes, file and column names and at most 5 anonymised values per reason; never
+    personal columns, lines or counts. The answer is kept with the import, marked as the AI's."""
+    row = _import(ctx.db, ctx, import_id)
+    report = json.loads(row.report) if row.report else {}
+    errors = (report.get("import") or {}).get("row_errors", [])
+    if not errors:
+        raise ApiProblem("nothing_to_explain")
+    if provider is None:
+        raise ApiProblem("ai_not_connected")
+    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id) / "source"
+    mapping = choose_mapping(p.name for p in folder.iterdir()) if folder.exists() else None
+    personal = personal_column_rule(mapping.personal_columns if mapping else ())
+    problems: dict[str, OpenProblem] = {}
+    for e in errors:
+        column = e.get("column")
+        if column and personal(column):
+            continue  # never sent; dropped on read, so this is only a guard
+        code = e.get("code") or "other"
+        p = problems.setdefault(
+            code,
+            OpenProblem(code, _rule(e.get("code"), mapping) if mapping else "", [], frozenset()),
+        )
+        if column and (e["file"], column) not in p.columns:
+            p.columns.append((e["file"], column))
+        if e.get("value"):
+            p.values = p.values | {str(e["value"])}
+    ai = _ai(ctx.db, settings, provider, import_id)
+    before = ai.budget.spent_eur
+    try:
+        items = explain_problems(ai, list(problems.values()))
+    except AiUnavailableError:
+        items = []
+    out = AiExplanationsOut(
+        state=ai.state,
+        items=[AiExplanationOut(**vars(i)) for i in items],
+        asked_at=datetime.now(UTC),
+    )
+    earlier = float((report.get("ai_explanations") or {}).get("spent_eur", 0))
+    report["ai_explanations"] = {
+        **out.model_dump(mode="json"),
+        "spent_eur": round(earlier + ai.budget.spent_eur - before, 4),
+    }
+    ctx.db.execute(
+        text("UPDATE imports SET report = :r WHERE import_id = :i"),
+        {"r": json.dumps(report, ensure_ascii=False), "i": import_id},
+    )
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        "import.explain",
+        f"import:{import_id}",
+        f"{row.plant_code}: AI {ai.state}, {len(items)} explanations",
+    )
+    return out
 
 
 @router.post("/imports/{import_id}/corrections", response_model=CorrectionOut, status_code=201)

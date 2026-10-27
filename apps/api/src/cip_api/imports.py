@@ -40,10 +40,14 @@ from cip_api.jobs import enqueue
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 from cip_api.wizard import (
+    ANSWER_KEYS,
     SEP,
+    CodeAnswer,
     ColumnAnswer,
+    FormatAnswer,
     NotRead,
     RecognisedOut,
+    StepAnswer,
     TableAnswer,
     recognise_folder,
     recognised_out,
@@ -380,7 +384,7 @@ def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> Imp
         file_names=[f["name"] for f in stored_files],
         deleted_at=row.deleted_at,
         deleted_by_role=_role_of(db, row.deleted_by) if row.deleted_by else None,
-        recognised=_with_roles(db, recognised_out(row.wizard)),
+        recognised=_with_roles(db, recognised_out(row.wizard, _timezone(db, row.plant_code))),
     )
 
 
@@ -412,6 +416,13 @@ def _row(db: Connection, import_id: uuid.UUID) -> Any:
     return row
 
 
+def _timezone(db: Connection, plant_code: str) -> str | None:
+    tz: str | None = db.execute(
+        text("SELECT timezone_iana FROM plants WHERE plant_code = :p"), {"p": plant_code}
+    ).scalar_one_or_none()
+    return tz
+
+
 def _with_roles(db: Connection, found: RecognisedOut | None) -> RecognisedOut | None:
     if found is not None and found.confirmed is not None:
         found.confirmed.by_role = _role_of(db, found.confirmed.by)
@@ -421,14 +432,14 @@ def _with_roles(db: Connection, found: RecognisedOut | None) -> RecognisedOut | 
 def _ai(
     db: Connection, settings: Settings, provider: Provider | None, import_id: uuid.UUID | None
 ) -> Ai:
-    """The AI for one recognition, with what this tenant's imports spent this month and what
-    this import spent before (its earlier recognitions count towards its limit)."""
+    """The AI for one recognition or explanation, with what this tenant's imports spent this
+    month and what this import spent before (its earlier calls count towards its limit)."""
     month, this = db.execute(
         text(
-            "SELECT COALESCE(SUM((wizard->'ai'->>'spent_eur')::float), 0), "
-            "COALESCE(SUM((wizard->'ai'->>'spent_eur')::float) "
-            "FILTER (WHERE import_id = :i), 0) "
-            "FROM imports WHERE created_at >= date_trunc('month', now())"
+            "SELECT COALESCE(SUM(spent), 0), COALESCE(SUM(spent) FILTER (WHERE import_id = :i), 0) "
+            "FROM (SELECT import_id, COALESCE((wizard->'ai'->>'spent_eur')::float, 0) "
+            "+ COALESCE((CAST(report AS jsonb)->'ai_explanations'->>'spent_eur')::float, 0) "
+            "AS spent FROM imports WHERE created_at >= date_trunc('month', now())) AS s"
         ),
         {"i": import_id},
     ).one()
@@ -468,7 +479,9 @@ def _check_folder(
         for k, v in before.get("column_answers", {}).items()
         if k.split("#", 1)[0].split(SEP, 1)[0] in tables
     }
-    wizard = recognise_folder(folder, not_read, kept, kept_columns, ai)
+    wizard = recognise_folder(
+        folder, not_read, kept, kept_columns, ai, {k: before.get(k, {}) for k in ANSWER_KEYS}
+    )
     db.execute(
         text("UPDATE imports SET files = :f, wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"f": json.dumps(stored), "w": json.dumps(wizard), "i": import_id},
@@ -770,6 +783,110 @@ def answer_column(
     return _out(settings, ctx.principal.tenant_id, _row(ctx.db, import_id), ctx.db)
 
 
+def _save_answer(
+    ctx: Ctx, settings: Settings, row: Any, stored: dict[str, Any], action: str, detail: str
+) -> ImportOut:
+    """Store an answer: it clears the confirmation, the client confirms again (ADR-0011 §1)."""
+    stored["confirmed"] = None
+    ctx.db.execute(
+        text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
+        {"w": json.dumps(stored), "i": row.import_id},
+    )
+    audit(
+        ctx.db,
+        ctx.principal.tenant_id,
+        ctx.principal.actor,
+        action,
+        f"import:{row.import_id}",
+        f"{row.plant_code}: {detail}",
+    )
+    return _out(settings, ctx.principal.tenant_id, _row(ctx.db, row.import_id), ctx.db)
+
+
+@router.put("/imports/{import_id}/codes", response_model=ImportOut)
+def answer_code(
+    import_id: uuid.UUID,
+    answer: CodeAnswer,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client says what a code means, or that its rows are left out (ADR-0011 §4)."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    found = recognised_out(stored)
+    if found is None or not any(
+        c.target == answer.target and c.code == answer.code for c in found.codes
+    ):
+        raise ApiProblem("code_not_found")
+    if answer.meaning != "skip" and answer.meaning not in found.meanings.get(answer.target, []):
+        raise ApiProblem("meaning_not_allowed")
+    stored["code_answers"] = {
+        **stored.get("code_answers", {}),
+        f"{answer.target}{SEP}{answer.code}": answer.meaning,
+    }
+    detail = f"{answer.target} {answer.code} = {answer.meaning}"
+    return _save_answer(ctx, settings, row, stored, "import_code_named", detail)
+
+
+@router.put("/imports/{import_id}/formats", response_model=ImportOut)
+def answer_format(
+    import_id: uuid.UUID,
+    answer: FormatAnswer,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client says how the export writes dates or numbers: the date order, the decimal
+    mark, or a duration column's unit (ADR-0011 §4)."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    found = recognised_out(stored)
+    if found is None or found.formats is None:
+        raise ApiProblem("mapping_not_ready")
+    given: dict[str, Any] = dict(stored.get("format_answers", {}))
+    if answer.date_order is not None:
+        given["date_order"], detail = answer.date_order, f"date order {answer.date_order}"
+    elif answer.decimal is not None:
+        given["decimal"], detail = answer.decimal, f"decimal mark {answer.decimal}"
+    elif answer.unit is not None:
+        if not any(
+            u.table == answer.table and u.column == answer.column for u in found.formats.units
+        ):
+            raise ApiProblem("column_not_found")
+        key = f"{answer.table}{SEP}{answer.column}"
+        given["units"] = {**given.get("units", {}), key: answer.unit}
+        detail = f"{answer.table} > {answer.column} in {answer.unit}"
+    else:
+        raise ApiProblem("no_answer")
+    stored["format_answers"] = given
+    return _save_answer(ctx, settings, row, stored, "import_format_named", detail)
+
+
+@router.put("/imports/{import_id}/steps", response_model=ImportOut)
+def answer_step(
+    import_id: uuid.UUID,
+    answer: StepAnswer,
+    ctx: Run,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportOut:
+    """The client names a step or says whether it is a machine or handmade. The plant's own
+    code stays (ADR-0011 §4)."""
+    row = _changeable(ctx.db, import_id, ctx)
+    stored = row.wizard or {}
+    if answer.code not in {s["code"] for s in stored.get("steps", [])}:
+        raise ApiProblem("step_not_found")
+    name = (answer.name or "").strip() or None
+    if name is None and answer.kind is None:
+        raise ApiProblem("no_answer")
+    before = stored.get("step_answers", {}).get(answer.code, {})
+    given = {
+        "name": name or before.get("name"),
+        "kind": answer.kind or before.get("kind"),
+    }
+    stored["step_answers"] = {**stored.get("step_answers", {}), answer.code: given}
+    detail = f"step {answer.code}: {given['name'] or ''} {given['kind'] or ''}".strip()
+    return _save_answer(ctx, settings, row, stored, "import_step_named", detail)
+
+
 @router.post("/imports/{import_id}/mapping/confirm", response_model=ImportOut)
 def confirm_mapping(
     import_id: uuid.UUID,
@@ -785,6 +902,8 @@ def confirm_mapping(
         found is None
         or found.to_answer
         or found.column_questions
+        or found.code_questions
+        or found.format_questions
         or not all(m.tables for m in found.minimum)
     ):
         raise ApiProblem("mapping_not_ready")

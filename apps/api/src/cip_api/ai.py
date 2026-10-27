@@ -4,9 +4,13 @@ The AI only suggests: which field an open column is, and later what a code means
 a data problem. It never decides, never changes a flow and never makes a number; every
 suggestion is marked "suggested by AI" and the client confirms it.
 
-What may leave the app is fixed here and nowhere else (``privacy_payload``): file and column
-names, and at most 5 anonymised example values per column. Never whole files, never personal
-columns, never figures to calculate, never plant, company or account names.
+What may leave the app is fixed here and nowhere else (``privacy_payload``, ``code_payload``,
+``problem_payload``): file and column names, the import's reason codes for rejected rows, and
+at most 5 anonymised example values per column. A status code is
+sent as written (its meaning is in its letters: ``GEREED``), at most 5 per column and only from
+status columns, which hold a few repeated words, never people, numbers or IDs. Never whole
+files, never personal columns, never figures to calculate, never plant, company or account
+names.
 
 Without a key (``CIP_ANTHROPIC_API_KEY``) nothing is sent and the wizard runs on rules; the
 page says "AI not connected". An error, a timeout or a cost limit gives the same fallback with
@@ -17,9 +21,11 @@ import json
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Annotated, Any, Literal, Protocol
 
 from fastapi import Depends
+from pydantic import BaseModel
 
 from cip_api.settings import Settings, get_settings
 
@@ -242,6 +248,175 @@ def suggest_columns(ai: Ai, columns: list[OpenColumn]) -> list[AiColumnSuggestio
         reason = re.sub(r"\s+", " ", str(item.get("reason") or "")).strip()[:200]
         out.append(AiColumnSuggestion(key[0], key[1], str(target), sure, reason))
     return out
+
+
+# --- code suggestions ----------------------------------------------------------------------
+
+MAX_CODE_CHARS = 40
+
+
+@dataclass
+class OpenCode:
+    """The codes of one status column that the rules could not give a meaning."""
+
+    target: str
+    """The status field (``events.event_type``)."""
+    table: str
+    column: str
+    codes: list[str]
+    meanings: list[str]
+    """The only answers accepted."""
+
+
+def code_payload(codes: list[OpenCode]) -> dict[str, Any]:
+    """Everything one code call sends: at most 5 codes per status column, as written."""
+    return {
+        "codes": [
+            {
+                "table": c.table,
+                "column": c.column,
+                "field": c.target,
+                "codes": [code[:MAX_CODE_CHARS] for code in c.codes[:MAX_EXAMPLES]],
+                "meanings": c.meanings,
+            }
+            for c in codes[:MAX_COLUMNS]
+        ]
+    }
+
+
+CODE_SYSTEM = (
+    "You help a manufacturing plant read the status codes in its own data export. For each "
+    "status column you get its table, the column name, the standard field it fills, a few "
+    "codes as written in the export (any language or ERP abbreviation) and the meanings it may "
+    'have. Answer only with JSON: {"suggestions": [{"field": ..., "code": ..., "meaning": '
+    'one of its meanings or null, "certainty": "likely" or "unsure", "reason": one short '
+    "sentence in plain English}]}. Use null when you cannot tell. Never invent meanings."
+)
+
+
+@dataclass
+class AiCodeSuggestion:
+    target: str
+    code: str
+    meaning: str
+    sure: Literal["likely", "unsure"]
+    reason: str
+
+
+def suggest_codes(ai: Ai, codes: list[OpenCode]) -> list[AiCodeSuggestion]:
+    """AI meanings for codes the rules do not know; only an allowed meaning of an asked code is
+    kept. Raises ``AiUnavailableError`` when the AI cannot be used."""
+    if not codes:
+        return []
+    payload = code_payload(codes)
+    text = ai.ask(CODE_SYSTEM, payload)
+    allowed = {
+        (c["field"], code): set(c["meanings"]) for c in payload["codes"] for code in c["codes"]
+    }
+    out = []
+    seen: set[tuple[str, str]] = set()
+    for item in _suggestions(text):
+        key = (str(item.get("field")), str(item.get("code")))
+        meaning = item.get("meaning")
+        if key in seen or key not in allowed or meaning not in allowed[key]:
+            continue
+        seen.add(key)
+        sure: Literal["likely", "unsure"] = (
+            "likely" if item.get("certainty") == "likely" else "unsure"
+        )
+        reason = re.sub(r"\s+", " ", str(item.get("reason") or "")).strip()[:200]
+        out.append(AiCodeSuggestion(key[0], key[1], str(meaning), sure, reason))
+    return out
+
+
+# --- explanations of data problems ---------------------------------------------------------
+
+MAX_EXPLANATION_CHARS = 300
+
+
+@dataclass
+class OpenProblem:
+    """One reason the import rejected rows for, with the columns it happened in."""
+
+    code: str
+    """The import's reason code (``not_a_datetime``)."""
+    rule: str
+    """What the import needs, in plain words: ``a date and time written like 20-07-2026 10:11``."""
+    columns: list[tuple[str, str]]
+    """(file, column) pairs; personal columns never get here: they are dropped on read."""
+    values: frozenset[str]
+    """The rejected values, sent only as their shape."""
+
+
+def problem_payload(problems: list[OpenProblem]) -> dict[str, Any]:
+    """Everything one explanation call sends: reason codes, rules, file and column names, and at
+    most 5 anonymised example values per reason. No row counts, no lines, no whole rows."""
+    return {
+        "problems": [
+            {
+                "reason": p.code,
+                "needs": p.rule,
+                "columns": [{"file": f, "column": c} for f, c in p.columns[:10]],
+                "examples": examples(p.values),
+            }
+            for p in problems[:MAX_COLUMNS]
+        ]
+    }
+
+
+PROBLEM_SYSTEM = (
+    "You help the IT owner of a manufacturing plant fix its data export from the ERP or MES. "
+    "For each reason rows were rejected you get the reason code, what the import needs, the "
+    "file and column names, and up to 5 example values (numbers and letters may be masked as "
+    '9 and a/A). Answer only with JSON: {"suggestions": [{"reason": ..., "explanation": one '
+    'or two short plain-English sentences on what is wrong, "fix": one or two short sentences '
+    "on how to change the export or the ERP so the rows are read}]}. No numbers, no guesses "
+    "about people. Leave out a reason when you cannot tell."
+)
+
+
+@dataclass
+class AiExplanation:
+    code: str
+    explanation: str
+    fix: str
+
+
+def explain_problems(ai: Ai, problems: list[OpenProblem]) -> list[AiExplanation]:
+    """AI explanations of why rows were rejected and how to fix the export; only answers for an
+    asked reason are kept. Raises ``AiUnavailableError`` when the AI cannot be used."""
+    if not problems:
+        return []
+    text = ai.ask(PROBLEM_SYSTEM, problem_payload(problems))
+    asked = {p.code for p in problems[:MAX_COLUMNS]}
+    out = []
+    for item in _suggestions(text):
+        code = str(item.get("reason"))
+        explanation, fix = _plain(item.get("explanation")), _plain(item.get("fix"))
+        if code not in asked or not explanation or not fix:
+            continue
+        asked.discard(code)
+        out.append(AiExplanation(code, explanation, fix))
+    return out
+
+
+class AiExplanationOut(BaseModel):
+    """Why rows were rejected for one reason and how to fix the export, suggested by AI."""
+
+    code: str
+    explanation: str
+    fix: str
+
+
+class AiExplanationsOut(BaseModel):
+    state: AiState
+    """``connected`` when the AI answered; otherwise why the standard explanations stay."""
+    items: list[AiExplanationOut]
+    asked_at: datetime
+
+
+def _plain(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()[:MAX_EXPLANATION_CHARS]
 
 
 def _suggestions(text: str) -> list[dict[str, Any]]:

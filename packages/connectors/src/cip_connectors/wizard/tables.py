@@ -47,6 +47,8 @@ class ExportTable:
     totals_lines: int = 0
     """Lines at the end that are totals, not rows."""
     encoding: str | None = None
+    byte_order_mark: bool = False
+    """The file starts with a UTF-8 byte-order mark (Excel's "CSV UTF-8")."""
     delimiter: str | None = None
     problem: str | None = None
     """empty, no_header, not_text, single_column, unreadable_excel, not_a_table_file."""
@@ -95,8 +97,10 @@ def _is_header(values: list[str]) -> bool:
 
 def _read_text(path: Path, drop: DropRule) -> ExportTable:
     table = ExportTable(path.name, path.name, None)
+    raw = path.read_bytes()
+    table.byte_order_mark = raw.startswith(b"\xef\xbb\xbf")
     try:
-        text, table.encoding = decode(path.read_bytes())
+        text, table.encoding = decode(raw)
     except UnreadableFileError as exc:
         table.problem = exc.problem
         return table

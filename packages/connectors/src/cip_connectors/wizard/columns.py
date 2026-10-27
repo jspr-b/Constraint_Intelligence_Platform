@@ -367,9 +367,11 @@ class ColumnMatch:
 
 
 def _words(name: str) -> tuple[list[str], str]:
-    text = unicodedata.normalize("NFKD", name.replace("ä", "ae").replace("ö", "oe"))
-    text = text.replace("ü", "ue").replace("ß", "ss").replace("Ä", "Ae").replace("Ö", "Oe")
-    text = "".join(c for c in text.replace("Ü", "Ue") if not unicodedata.combining(c))
+    # Umlauts first (upper case too): after decomposition "Ö" is an O plus a mark.
+    for umlaut, plain in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        name = name.replace(umlaut, plain).replace(umlaut.upper(), plain.capitalize())
+    text = unicodedata.normalize("NFKD", name)
+    text = "".join(c for c in text if not unicodedata.combining(c))
     tokens = [w for w in re.split(r"[^a-z0-9]+", text.lower()) if w]
     return tokens, " ".join(tokens)
 
