@@ -5,6 +5,7 @@ No column identifies a person on the floor (ADR-0005).
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     BigInteger,
@@ -19,7 +20,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -379,6 +380,8 @@ class Import(Base):
     """When it was deleted; its files and rows are gone, this line stays in the history."""
     deleted_by: Mapped[str | None] = mapped_column(String(64))
     """The actor who deleted it (``user:<id>``); the page shows the role, never a name."""
+    wizard: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    """What the mapping wizard found in the upload and the client's answers (ADR-0011)."""
 
 
 class Correction(Base):
