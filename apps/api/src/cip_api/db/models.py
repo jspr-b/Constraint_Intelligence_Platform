@@ -520,4 +520,15 @@ class DetectionRow(Base):
     methods: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")
 
 
+class PlantFlowRow(Base):
+    """The plant's flow as found in its touchpoints (routes, arrows, steps), from the latest
+    calculation; JSON with every share as a Figure (CI0005 seq 06)."""
+
+    __tablename__ = "plant_flows"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
+    import_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    flow: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 TENANT_TABLES = [t for t in Base.metadata.sorted_tables if t.name != "tenants"]

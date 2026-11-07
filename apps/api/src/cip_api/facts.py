@@ -31,6 +31,7 @@ from constraint_engine.fixed_rows import with_fixed_rows
 from constraint_engine.formulas.money import NO_RATE
 from constraint_engine.formulas.registry import registry
 from constraint_engine.loss import loss_facts
+from constraint_engine.reconstruct.routes import plant_flow
 
 FactStatus = Literal["calculating", "ready", "failed"]
 
@@ -229,6 +230,7 @@ def compute_facts(
     previous numbers stay until the new ones are ready. Returns the count. ``gen`` is the
     request this answers; a newer request keeps the run calculating."""
     from cip_api.detection import detect, store_detections  # detection.py reads this module
+    from cip_api.flow import store_flow
 
     try:
         with tenant_conn(settings, tenant) as conn:
@@ -258,6 +260,7 @@ def compute_facts(
             if rows:
                 conn.execute(INSERT, rows)
             store_detections(conn, tenant, plant_code, import_id, detections)
+            store_flow(conn, tenant, plant_code, import_id, plant_flow(plant))
             conn.execute(
                 text(
                     "UPDATE fact_runs SET finished_at = :now, error = NULL, "

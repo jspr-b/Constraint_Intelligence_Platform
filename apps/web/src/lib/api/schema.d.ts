@@ -898,6 +898,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Flow
+         * @description The flow found in the plant's touchpoints: routes with the share of jobs on each, arrows
+         *     with the share of jobs leaving a step, and what is less certain. Empty until data has run.
+         */
+        get: operations["read_flow_plants__plant_code__flow_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/imports": {
         parameters: {
             query?: never;
@@ -1279,6 +1300,22 @@ export interface components {
              * @enum {string}
              */
             state: "not_connected" | "connected" | "limit_reached" | "error";
+        };
+        /** ArrowOut */
+        ArrowOut: {
+            /** From Step */
+            from_step: string;
+            /** Jobs */
+            jobs: number;
+            /** Less Certain */
+            less_certain: boolean;
+            /** Rework */
+            rework: boolean;
+            share: components["schemas"]["FigureOut"];
+            /** To Step */
+            to_step: string;
+            /** Uncertain Jobs */
+            uncertain_jobs: number;
         };
         /** AuditOut */
         AuditOut: {
@@ -1761,6 +1798,45 @@ export interface components {
             rejected: number;
             /** Rows */
             rows: number;
+        };
+        /** FlowOut */
+        FlowOut: {
+            /** Arrows */
+            arrows: components["schemas"]["ArrowOut"][];
+            /** Import Id */
+            import_id: string | null;
+            /** Jobs */
+            jobs: number;
+            /** Other Routes Jobs */
+            other_routes_jobs: number;
+            /** Overlapping Jobs */
+            overlapping_jobs: number;
+            /** Period End At */
+            period_end_at: string | null;
+            /** Period Start At */
+            period_start_at: string | null;
+            /** Plant Code */
+            plant_code: string;
+            /** Routes */
+            routes: components["schemas"]["RouteOut"][];
+            /** Rule */
+            rule: string;
+            run: components["schemas"]["FactRunOut"] | null;
+            /** Steps */
+            steps: components["schemas"]["FlowStepOut"][];
+        };
+        /** FlowStepOut */
+        FlowStepOut: {
+            /** Code */
+            code: string;
+            /** First Jobs */
+            first_jobs: number;
+            /** Jobs */
+            jobs: number;
+            /** Last Jobs */
+            last_jobs: number;
+            /** Missing Finish */
+            missing_finish: number;
         };
         /**
          * FormatAnswer
@@ -2601,6 +2677,20 @@ export interface components {
             role: components["schemas"]["Role"];
             /** Start Page */
             start_page: string;
+        };
+        /** RouteOut */
+        RouteOut: {
+            /** Jobs */
+            jobs: number;
+            /** Less Certain */
+            less_certain: boolean;
+            /** Rework */
+            rework: boolean;
+            share: components["schemas"]["FigureOut"];
+            /** Steps */
+            steps: string[];
+            /** Uncertain Jobs */
+            uncertain_jobs: number;
         };
         /** SetupOut */
         SetupOut: {
@@ -4628,6 +4718,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PeriodOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_flow_plants__plant_code__flow_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowOut"];
                 };
             };
             /** @description Validation Error */

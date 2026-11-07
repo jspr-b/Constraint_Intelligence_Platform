@@ -155,6 +155,48 @@
         "title": "AiOut",
         "type": "object"
       },
+      "ArrowOut": {
+        "properties": {
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "jobs": {
+            "title": "Jobs",
+            "type": "integer"
+          },
+          "less_certain": {
+            "title": "Less Certain",
+            "type": "boolean"
+          },
+          "rework": {
+            "title": "Rework",
+            "type": "boolean"
+          },
+          "share": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          },
+          "uncertain_jobs": {
+            "title": "Uncertain Jobs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "jobs",
+          "share",
+          "rework",
+          "uncertain_jobs",
+          "less_certain"
+        ],
+        "title": "ArrowOut",
+        "type": "object"
+      },
       "AuditOut": {
         "properties": {
           "action": {
@@ -1767,6 +1809,146 @@
           "examples"
         ],
         "title": "FileOut",
+        "type": "object"
+      },
+      "FlowOut": {
+        "properties": {
+          "arrows": {
+            "items": {
+              "$ref": "#/components/schemas/ArrowOut"
+            },
+            "title": "Arrows",
+            "type": "array"
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "jobs": {
+            "title": "Jobs",
+            "type": "integer"
+          },
+          "other_routes_jobs": {
+            "title": "Other Routes Jobs",
+            "type": "integer"
+          },
+          "overlapping_jobs": {
+            "title": "Overlapping Jobs",
+            "type": "integer"
+          },
+          "period_end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End At"
+          },
+          "period_start_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start At"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteOut"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/FlowStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plant_code",
+          "run",
+          "import_id",
+          "jobs",
+          "routes",
+          "other_routes_jobs",
+          "arrows",
+          "steps",
+          "overlapping_jobs",
+          "period_start_at",
+          "period_end_at",
+          "rule"
+        ],
+        "title": "FlowOut",
+        "type": "object"
+      },
+      "FlowStepOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "first_jobs": {
+            "title": "First Jobs",
+            "type": "integer"
+          },
+          "jobs": {
+            "title": "Jobs",
+            "type": "integer"
+          },
+          "last_jobs": {
+            "title": "Last Jobs",
+            "type": "integer"
+          },
+          "missing_finish": {
+            "title": "Missing Finish",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "jobs",
+          "first_jobs",
+          "last_jobs",
+          "missing_finish"
+        ],
+        "title": "FlowStepOut",
         "type": "object"
       },
       "FormatAnswer": {
@@ -4183,6 +4365,46 @@
           "decisions"
         ],
         "title": "RoleAccessOut",
+        "type": "object"
+      },
+      "RouteOut": {
+        "properties": {
+          "jobs": {
+            "title": "Jobs",
+            "type": "integer"
+          },
+          "less_certain": {
+            "title": "Less Certain",
+            "type": "boolean"
+          },
+          "rework": {
+            "title": "Rework",
+            "type": "boolean"
+          },
+          "share": {
+            "$ref": "#/components/schemas/FigureOut"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "uncertain_jobs": {
+            "title": "Uncertain Jobs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "steps",
+          "jobs",
+          "share",
+          "rework",
+          "uncertain_jobs",
+          "less_certain"
+        ],
+        "title": "RouteOut",
         "type": "object"
       },
       "SetupOut": {
@@ -9419,6 +9641,97 @@
         "summary": "Read Periods",
         "tags": [
           "facts"
+        ]
+      }
+    },
+    "/plants/{plant_code}/flow": {
+      "get": {
+        "description": "The flow found in the plant's touchpoints: routes with the share of jobs on each, arrows\nwith the share of jobs leaving a step, and what is less certain. Empty until data has run.",
+        "operationId": "read_flow_plants__plant_code__flow_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Flow",
+        "tags": [
+          "flow"
         ]
       }
     },
