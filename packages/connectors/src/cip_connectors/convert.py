@@ -1,5 +1,6 @@
 """Value conversion for mapped fields. Every failure raises ConversionError with a reason."""
 
+import re
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo
@@ -35,10 +36,16 @@ def _decimal(value: Cell, mapping: MappingSet) -> Decimal:
         raise ConversionError(f"not a number: {raw!r}", "not_a_number") from exc
 
 
+def _scaled(value: Cell, rule: FieldRule, mapping: MappingSet) -> Decimal:
+    number = _decimal(value, mapping)
+    return number * Decimal(rule.scale) if rule.scale else number
+
+
 EXCEL_EPOCH = datetime(1899, 12, 30)
 
 
-def _datetime(value: Cell, mapping: MappingSet) -> str:
+def _datetime(value: Cell, mapping: MappingSet, fmt: str | None = None) -> str:
+    fmt = fmt or mapping.datetime_format
     if isinstance(value, datetime):
         local = value
     elif isinstance(value, int | float):
@@ -46,10 +53,10 @@ def _datetime(value: Cell, mapping: MappingSet) -> str:
         local = EXCEL_EPOCH + timedelta(seconds=round(float(value) * 86400))
     else:
         try:
-            local = datetime.strptime(_text(value), mapping.datetime_format)
+            local = datetime.strptime(_text(value), fmt)
         except ValueError as exc:
             raise ConversionError(
-                f"not a date/time in format {mapping.datetime_format}: {_text(value)!r}",
+                f"not a date/time in format {fmt}: {_text(value)!r}",
                 "not_a_datetime",
             ) from exc
     if local.tzinfo is None:
@@ -77,9 +84,9 @@ def convert(value: Cell, rule: FieldRule, mapping: MappingSet, column: str) -> s
             return None
         raise ConversionError(f"column {column!r} is empty", "empty")
     if rule.type == "decimal":
-        return str(_decimal(value, mapping).normalize())
+        return str(_scaled(value, rule, mapping).normalize())
     if rule.type == "int":
-        number = _decimal(value, mapping)
+        number = _scaled(value, rule, mapping)
         if number != number.to_integral_value():
             raise ConversionError(f"not a whole number: {_text(value)!r}", "not_whole")
         return str(int(number))
@@ -91,7 +98,7 @@ def convert(value: Cell, rule: FieldRule, mapping: MappingSet, column: str) -> s
             )
         return str(int(cents))
     if rule.type == "datetime":
-        return _datetime(value, mapping)
+        return _datetime(value, mapping, rule.format)
     if rule.type == "bool":
         raw = _text(value).lower()
         if raw in mapping.true_values:
@@ -104,7 +111,16 @@ def convert(value: Cell, rule: FieldRule, mapping: MappingSet, column: str) -> s
         parts = [p.strip() for p in raw.split(";") if p.strip()]
         if rule.values is not None or rule.code_table:
             parts = [_code(p, rule, mapping, column) for p in parts]
+        if rule.as_code:
+            parts = [as_code(p) for p in parts]
         return ";".join(rule.prefix + p for p in parts)
     if rule.values is not None or rule.code_table:
         raw = _code(raw, rule, mapping, column)
-    return rule.prefix + raw
+    return rule.prefix + (as_code(raw) if rule.as_code else raw)
+
+
+def as_code(text: str) -> str:
+    """A plant's code or station name as a standard code: ``Welding cell`` -> ``WELDING-CELL``,
+    ``1000-LASER`` stays. Capitals, other characters as ``-``, at most 32 characters."""
+    code = re.sub(r"[^A-Z0-9]+", "-", text.strip().upper()).strip("-")
+    return code[:32].rstrip("-")

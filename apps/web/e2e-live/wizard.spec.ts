@@ -70,5 +70,7 @@ test("IT uploads an unseen export in one go and sees what each file is", async (
   );
   await columns.getByRole("button", { name: "Confirm this summary" }).click();
   await expect(columns).toContainText("Confirmed by IT / ERP owner");
-  await expect(page.getByText("Columns confirmed. Next: the app checks your codes")).toBeVisible();
+  // The import now runs the way it was confirmed.
+  await expect(page.getByText(/^Reads 10 files the way you confirmed/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Run import/ })).toBeEnabled();
 });

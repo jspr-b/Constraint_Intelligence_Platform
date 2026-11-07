@@ -34,6 +34,7 @@ from constraint_engine.formulas.registry import Calc, Resolved, formula
 from constraint_engine.io.plant_loader import LoadedPlant
 from constraint_engine.reconstruct.durations import NO_END, Operations, pair_operations
 from constraint_engine.reconstruct.timeline import to_min
+from constraint_engine.time_source import BOOKED_STEP_PCT, time_sources
 
 CAUSES: tuple[tuple[str, str], ...] = (
     ("breakdowns", "down"),
@@ -44,6 +45,16 @@ CAUSES: tuple[tuple[str, str], ...] = (
     ("maintenance", "maintenance"),
 )
 """(cause, machine state) pairs; scrap is added separately."""
+
+NOT_BOOKED = {
+    cause: Missing(
+        f"{cause} time",
+        "times come from hour bookings, which do not record setups, stops or waiting",
+        Confidence.MEDIUM,
+    )
+    for cause in ("breakdowns", "setup", "starved", "blocked")
+}
+"""Causes hour bookings cannot tell: their lost time is not available (ADR-0011 §5)."""
 ALL_CAUSES = (*(c for c, _ in CAUSES), "scrap")
 
 NO_PRICES = Missing(
@@ -61,7 +72,7 @@ NO_PRICES = Missing(
     "hours the bottleneck did not produce for this cause = its minutes for the cause ÷ 60",
     unit="h",
 )
-def lost_hours(cause: str, minutes: Figure, period: Period) -> Calc:
+def lost_hours(cause: str, minutes: Figure | Missing, period: Period) -> Calc:
     def compute(i: Resolved) -> float:
         return round(float(i["minutes"]) / 60, 3)
 
@@ -362,16 +373,20 @@ def loss_facts(
         for f in facts
         if f.family == "state"
     }
+    sources = time_sources(plant)
     out: list[Fact] = []
     for kind, d in detections:
         code = d.resource_code
         if code is None or d.kind != "internal" or not (d.period_start_at and d.period_end_at):
             continue
         period = Period(kind, (to_min(d.period_start_at), to_min(d.period_end_at)))
+        booked = sources is not None and sources.shares(period.window, code)[0] >= BOOKED_STEP_PCT
         hours: dict[str, Figure] = {}
         for cause, state in CAUSES:
             minutes = states.get((kind, d.period_start_at, code, f"{state}_min"))
-            if minutes is not None:
+            if minutes is not None and booked and cause in NOT_BOOKED:
+                hours[cause] = lost_hours(cause, NOT_BOOKED[cause], period)
+            elif minutes is not None:
                 hours[cause] = lost_hours(cause, minutes, period)
         scrap = _scrap(plant, ops, code, period, d.covers)
         hours["scrap"] = lost_hours("scrap", scrap, period)

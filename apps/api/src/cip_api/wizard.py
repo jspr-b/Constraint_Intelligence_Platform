@@ -30,6 +30,7 @@ from cip_connectors.wizard import recognise_export
 from cip_connectors.wizard.codes import CODE_FIELDS, MEANINGS, code_values, meaning_of, yes_no
 from cip_connectors.wizard.columns import FIELDS
 from cip_connectors.wizard.formats import day_first, is_time_field, unit_of
+from cip_connectors.wizard.plan import Plan, PlanColumn
 from cip_connectors.wizard.roles import MINIMUM, Role, Sure
 
 TABLE_SUFFIXES = (".csv", ".txt", ".tsv", ".xlsx")
@@ -760,3 +761,36 @@ def _format_questions(formats: FormatsOut | None) -> int:
         return 0
     unreadable = sum(1 for t in formats.times if t.format is None and len(t.options) != 2)
     return int(formats.date_order_question) + int(formats.decimal_question) + unreadable
+
+
+def summary_plan(found: RecognisedOut) -> Plan:
+    """The confirmed summary as an import plan: the tables, columns, code meanings, date
+    formats, units and step names as the client left them. Skipped tables, columns and codes,
+    and personal columns, are not in it."""
+    tables = {t.table: str(t.role) for t in found.tables if t.role and not t.skipped}
+    columns = [
+        PlanColumn(c.table, c.column, list(c.fields), c.part)
+        for c in found.columns
+        if c.fields and not c.skipped and not c.personal and c.table in tables
+    ]
+    meanings: dict[str, dict[str, str]] = {}
+    for code in found.codes:
+        meaning = "skip" if code.skipped else code.meaning
+        if meaning is not None:
+            meanings.setdefault(code.target, {})[code.code] = meaning
+    f = found.formats
+    plan = Plan(
+        tables=tables,
+        columns=columns,
+        meanings=meanings,
+        steps={
+            s.code: {"name": s.name or "", "kind": s.kind or ""} for s in found.steps if s.changed
+        },
+    )
+    if f is not None:
+        plan.time_formats = {(t.table, t.column): t.format for t in f.times if t.format}
+        plan.units = {(u.table, u.column): u.unit for u in f.units}
+        plan.decimal = f.decimal
+        plan.timezone = f.timezone or plan.timezone
+        plan.yes_words, plan.no_words = list(f.yes_words), list(f.no_words)
+    return plan

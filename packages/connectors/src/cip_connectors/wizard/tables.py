@@ -41,6 +41,8 @@ class ExportTable:
     header: list[str] = field(default_factory=list)
     """Column names, personal columns left out."""
     rows: list[dict[str, Cell]] = field(default_factory=list)
+    lines: list[int] = field(default_factory=list)
+    """The line (or sheet row) of each row in the file, counted from 1, for rejected rows."""
     personal_columns: list[str] = field(default_factory=list)
     title_lines: int = 0
     """Lines above the header (a report title, an export date)."""
@@ -128,8 +130,12 @@ def _read_text(path: Path, drop: DropRule) -> ExportTable:
     table.title_lines = start
     reader = csv.reader(io.StringIO("\n".join(lines[start:])), delimiter=table.delimiter)
     header = [h.strip() for h in next(reader)]
-    data = [values for values in reader if any(v.strip() for v in values)]
-    _fill(table, header, data, drop)
+    data, numbers = [], []
+    for values in reader:
+        if any(v.strip() for v in values):
+            data.append(values)
+            numbers.append(start + reader.line_num)
+    _fill(table, header, data, drop, numbers)
     return table
 
 
@@ -158,19 +164,28 @@ def _read_workbook(path: Path, drop: DropRule) -> list[ExportTable]:
         else:
             table.title_lines = start
             header = [_str(v).strip() for v in rows[start]]
-            data = [r for r in rows[start + 1 :] if any(v not in (None, "") for v in r)]
-            _fill(table, header, data, drop)
+            numbered = [
+                (n, r)
+                for n, r in enumerate(rows[start + 1 :], start=start + 2)
+                if any(v not in (None, "") for v in r)
+            ]
+            _fill(table, header, [r for _, r in numbered], drop, [n for n, _ in numbered])
         tables.append(table)
     return tables
 
 
 def _fill(
-    table: ExportTable, header: list[str], data: Sequence[Sequence[object]], drop: DropRule
+    table: ExportTable,
+    header: list[str],
+    data: Sequence[Sequence[object]],
+    drop: DropRule,
+    numbers: list[int],
 ) -> None:
     """Rows as column → value, without personal columns and without a totals line at the end."""
     while data and _is_totals(data[-1], len(header)):
         data = data[:-1]
         table.totals_lines += 1
+    table.lines = numbers[: len(data)]
     keep = [i for i, name in enumerate(header) if name and not drop(name)]
     table.personal_columns = [n for i, n in enumerate(header) if n and i not in keep]
     table.header = [header[i] for i in keep]

@@ -183,13 +183,22 @@ export function ImportPage() {
   const logs = found?.minimum.find((m) => m.key === "events")?.tables ?? [];
   const formatReadsLog =
     !found || logs.some((tb) => usable.some((f) => f.name === tb.split("#")[0]));
+  // Files the app has no format for run the way the client confirmed them (ADR-0011).
+  const fromSummary =
+    !formatReadsLog && !!found?.confirmed && found.minimum.every((m) => m.tables.length > 0);
+  const runFiles = fromSummary
+    ? new Set(found.tables.filter((tb) => tb.role && !tb.skipped).map((tb) => tb.file)).size
+    : usable.length;
+  // Hour bookings instead of scans: the answer will be less sure (ADR-0011 §5).
+  const hourBookings = !!found?.tables.some((tb) => tb.role === "hour_bookings" && !tb.skipped);
+  // Once the import ran with its confirmed summary, the summary stays as it ran.
+  const summaryRan = latest?.status === "done" && !!found?.confirmed;
+  const summaryOpen = changeable && !summaryRan;
   const runBlocked =
-    usable.length > 0 && formatReadsLog
+    (usable.length > 0 && formatReadsLog) || fromSummary
       ? null
       : found && found.minimum.every((m) => m.tables.length > 0)
-        ? found.confirmed
-          ? t("runColumnsConfirmed")
-          : t("runNotMatched")
+        ? t("runNotMatched")
         : t("runNoFiles");
   const n = (value: number) => value.toLocaleString(locale);
 
@@ -209,8 +218,15 @@ export function ImportPage() {
             {runBlocked ??
               (missing.length > 0
                 ? t("runWithGaps", { count: missing.length })
-                : t("runExplain", { files: usable.length }))}
+                : fromSummary
+                  ? t("runFromSummary", { files: runFiles })
+                  : t("runExplain", { files: runFiles }))}
           </span>
+          {hourBookings && (
+            <p className="m-0 w-full text-sm">
+              <span aria-hidden="true">▲</span> {t("hourBookings")}
+            </p>
+          )}
           {run.error && (
             <p role="alert" className="m-0 w-full text-sm text-bad">
               {run.error.message}
@@ -328,7 +344,7 @@ export function ImportPage() {
             <ExportFound
               importId={latest.import_id}
               found={found}
-              canAnswer={changeable}
+              canAnswer={summaryOpen}
               onChanged={() => void refresh()}
             />
           )}
@@ -632,7 +648,8 @@ export function ImportPage() {
             <ColumnsFound
               importId={latest.import_id}
               found={found}
-              canAnswer={changeable}
+              canAnswer={summaryOpen}
+              ran={summaryRan}
               onChanged={() => void refresh()}
             />
           ) : (

@@ -216,6 +216,10 @@ class OperationEvent(Base):
     scrap_units: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     down_reason_code: Mapped[str | None] = mapped_column(String(32))
     scrap_reason_code: Mapped[str | None] = mapped_column(String(32))
+    # scan (exact), booking (hour booking) or estimated (a booking placed in its shift).
+    time_source: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="scan", server_default="scan"
+    )
 
 
 class Changeover(Base):

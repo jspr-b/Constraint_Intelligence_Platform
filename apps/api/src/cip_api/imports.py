@@ -7,6 +7,7 @@ plant as stored. Personal columns never leave the reader.
 """
 
 import contextlib
+import hashlib
 import json
 import re
 import shutil
@@ -53,11 +54,19 @@ from cip_api.wizard import (
     recognised_out,
     role_fields,
     save_export,
+    summary_plan,
 )
-from cip_connectors.importer import Fixes, import_export
+from cip_connectors.importer import Fixes, import_export, wizard_tables
 from cip_connectors.mapping import MappingSet, load_mapping
 from cip_connectors.privacy import personal_column_rule
-from cip_connectors.readers import choose_delimiter, decode, find_source, inspect_file
+from cip_connectors.readers import (
+    SourceTable,
+    choose_delimiter,
+    decode,
+    find_source,
+    inspect_file,
+)
+from cip_connectors.wizard.plan import build_mapping
 from constraint_engine.io.compare import compare_plants
 from constraint_engine.io.plant_loader import REQUIRED, LoadedPlant, RowError, load_plant
 from constraint_engine.quality.checklist import (
@@ -194,6 +203,19 @@ class ImportOut(BaseModel):
     (ADR-0011). None for uploads made before the wizard."""
 
 
+def _table_head(table: SourceTable | None) -> tuple[list[str], dict[str, str]]:
+    """Header and an example per column of a table as the wizard read it (personal columns
+    are named, never read)."""
+    if table is None:
+        return [], {}
+    examples: dict[str, str] = {}
+    for _line, row in table.rows[:50]:
+        for k, v in row.items():
+            if k not in examples and v not in (None, ""):
+                examples[k] = str(v)
+    return table.header + table.dropped_columns, examples
+
+
 def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
     """Header and an example per column: the first non-empty value in the first 50 rows.
     Personal columns are dropped before any value is read."""
@@ -227,6 +249,7 @@ def _head(path: Path, mapping: MappingSet) -> tuple[list[str], dict[str, str]]:
 def preview(source_dir: Path, mapping: MappingSet) -> list[SourceOut]:
     """For each source the mapping reads: which file, and what happens to each column."""
     personal = personal_column_rule(mapping.personal_columns)
+    wizard = wizard_tables(source_dir) if mapping.reader == "wizard" else {}
     out = []
     for source in dict.fromkeys(t.source for t in mapping.tables):
         tables = [t for t in mapping.tables if t.source == source]
@@ -241,12 +264,17 @@ def preview(source_dir: Path, mapping: MappingSet) -> list[SourceOut]:
                         how.append(f"code_table:{rule.code_table}")
                     if rule.type != "str" and rule.type not in how:
                         how.append(rule.type)
-        path = find_source(source_dir, source)
         readable = True
-        try:
-            header, first = _head(path, mapping) if path else ([], {})
-        except Exception:  # a corrupt or password-protected file: say so, never guess
-            header, first, readable = [], {}, False
+        if mapping.reader == "wizard":
+            table = wizard.get(source)
+            path = source_dir / source.split("#", 1)[0] if table else None
+            header, first = _table_head(table)
+        else:
+            path = find_source(source_dir, source)
+            try:
+                header, first = _head(path, mapping) if path else ([], {})
+            except Exception:  # a corrupt or password-protected file: say so, never guess
+                header, first, readable = [], {}, False
         columns = [
             ColumnOut(
                 name=c,
@@ -298,6 +326,40 @@ def choose_mapping(file_names: Iterable[str]) -> MappingSet:
     return max(_formats(), key=lambda m: len(stems & {t.source.lower() for t in m.tables}))
 
 
+WIZARD_MAPPING = "wizard_mapping.json"
+"""In an import's folder: the mapping built from the summary the client confirmed (ADR-0011)."""
+
+
+def mapping_of(folder: Path) -> MappingSet:
+    """The mapping an import runs with: the confirmed summary when there is one, else the known
+    export format its file names match. ``folder`` is the import's folder (with source/)."""
+    confirmed = folder / WIZARD_MAPPING
+    if confirmed.exists():
+        return MappingSet.model_validate_json(confirmed.read_text())
+    source = folder / "source"
+    names = [p.name for p in source.iterdir() if p.is_file()] if source.exists() else []
+    return choose_mapping(names)
+
+
+def mapping_stamp(folder: Path, fixes: Fixes | None) -> str:
+    """What the standard layout was mapped with: the fixes, and the confirmed summary if any."""
+    confirmed = folder / WIZARD_MAPPING
+    digest = fixes_digest(fixes)
+    if confirmed.exists():
+        digest += ":" + hashlib.sha256(confirmed.read_bytes()).hexdigest()[:16]
+    return digest
+
+
+def _store_mapping(folder: Path, found: RecognisedOut | None) -> None:
+    """Keep the mapping of the confirmed summary with the import, or drop it (``None``)."""
+    path = folder / WIZARD_MAPPING
+    if found is None:
+        path.unlink(missing_ok=True)
+        return
+    folder.mkdir(parents=True, exist_ok=True)
+    path.write_text(build_mapping(summary_plan(found)).model_dump_json(by_alias=True, indent=2))
+
+
 def check_file(path: Path, mapping: MappingSet) -> dict[str, Any]:
     """Inspect an uploaded file once (stored with the import); personal values are never read."""
     sources = {t.source.lower(): t.source for t in mapping.tables}
@@ -331,7 +393,10 @@ def _needed(
             sources = sorted({t.source for t in mapping.tables if t.target == target})
             if not sources:
                 continue  # this export format does not carry it (e.g. no products, ADR-0009)
-            present = any(f.readable and f.recognised_as in sources for f in files)
+            names = {s.split("#", 1)[0] for s in sources} if mapping.reader == "wizard" else set()
+            present = any(
+                f.readable and (f.recognised_as in sources or f.name in names) for f in files
+            )
             in_plant = False
             if plant and not present:
                 db, plant_code = plant
@@ -354,7 +419,7 @@ def _needed(
 def _out(settings: Settings, tenant: uuid.UUID, row: Any, db: Connection) -> ImportOut:
     folder = import_dir(settings, tenant, row.plant_code, row.import_id) / "source"
     stored_files = json.loads(row.files)
-    mapping = choose_mapping(f["name"] for f in stored_files)
+    mapping = mapping_of(folder.parent)
     report = json.loads(row.report) if row.report else None
     files = [FileCheckOut.model_validate(f) for f in stored_files if "readable" in f]
     by_role = _role_of(db, row.actor)
@@ -486,6 +551,7 @@ def _check_folder(
         text("UPDATE imports SET files = :f, wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"f": json.dumps(stored), "w": json.dumps(wizard), "i": import_id},
     )
+    _store_mapping(folder.parent, None)  # the files changed: the client confirms again
     return stored
 
 
@@ -565,9 +631,19 @@ def run(
     settings: Annotated[Settings, Depends(get_settings)],
     background: BackgroundTasks,
 ) -> ImportOut:
-    """Start the connector in a worker. The page polls this import until it is done or failed."""
+    """Start the connector in a worker. The page polls this import until it is done or failed.
+    It runs with the confirmed summary, or with the known export format that reads its event
+    log; with neither, the client is told to confirm the summary first."""
     row = _row(ctx.db, import_id)
     ctx.check_plant(row.plant_code)
+    found = recognised_out(row.wizard)
+    if (
+        found is not None
+        and found.confirmed is None
+        and all(m.tables for m in found.minimum)
+        and not _format_reads_log(row, found)
+    ):
+        raise ApiProblem("mapping_not_confirmed")
     busy = ctx.db.execute(
         text(
             "SELECT 1 FROM imports WHERE plant_code = :p AND status = 'running' UNION ALL "
@@ -609,6 +685,24 @@ def _changeable(db: Connection, import_id: uuid.UUID, ctx: Ctx) -> Any:
         raise ApiProblem("import_running")
     if row.status in ("replaced", "deleted"):
         raise ApiProblem("import_not_changeable")
+    return row
+
+
+def _format_reads_log(row: Any, found: RecognisedOut) -> bool:
+    """A known export format reads the event log the wizard found (a file that only shares a
+    name with the format, e.g. Rooster.csv in an hour-bookings export, is not enough)."""
+    files = json.loads(row.files)
+    known = {f["name"] for f in files if f.get("readable") and f.get("recognised_as")}
+    logs = next((m.tables for m in found.minimum if m.key == "events"), [])
+    return any(t.split("#", 1)[0] in known for t in logs)
+
+
+def _answerable(db: Connection, import_id: uuid.UUID, ctx: Ctx) -> Any:
+    """An import whose summary may change: not one that already ran with its confirmed summary
+    (the plant's data comes from it; a new upload reads the files again)."""
+    row = _changeable(db, import_id, ctx)
+    if row.status == "done" and (row.wizard or {}).get("confirmed"):
+        raise ApiProblem("summary_in_use")
     return row
 
 
@@ -723,7 +817,7 @@ def answer_table(
 ) -> ImportOut:
     """The client says what a table is, or skips it (ADR-0011 §1: the client confirms). Its
     columns are matched again for the role given."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     if answer.table not in {t["table"] for t in stored.get("tables", [])}:
         raise ApiProblem("table_not_found")
@@ -751,7 +845,7 @@ def answer_column(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ImportOut:
     """The client confirms, changes or skips what a column is (ADR-0011 §3)."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     found = recognised_out(stored)
     table = next((t for t in found.tables if t.table == answer.table), None) if found else None
@@ -768,6 +862,7 @@ def answer_column(
         f"{answer.table}{SEP}{answer.column}": answer.field,
     }
     stored["confirmed"] = None
+    _store_mapping(import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id), None)
     ctx.db.execute(
         text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"w": json.dumps(stored), "i": import_id},
@@ -788,6 +883,8 @@ def _save_answer(
 ) -> ImportOut:
     """Store an answer: it clears the confirmation, the client confirms again (ADR-0011 §1)."""
     stored["confirmed"] = None
+    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, row.import_id)
+    _store_mapping(folder, None)
     ctx.db.execute(
         text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"w": json.dumps(stored), "i": row.import_id},
@@ -811,7 +908,7 @@ def answer_code(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ImportOut:
     """The client says what a code means, or that its rows are left out (ADR-0011 §4)."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     found = recognised_out(stored)
     if found is None or not any(
@@ -837,7 +934,7 @@ def answer_format(
 ) -> ImportOut:
     """The client says how the export writes dates or numbers: the date order, the decimal
     mark, or a duration column's unit (ADR-0011 §4)."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     found = recognised_out(stored)
     if found is None or found.formats is None:
@@ -870,7 +967,7 @@ def answer_step(
 ) -> ImportOut:
     """The client names a step or says whether it is a machine or handmade. The plant's own
     code stays (ADR-0011 §4)."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     if answer.code not in {s["code"] for s in stored.get("steps", [])}:
         raise ApiProblem("step_not_found")
@@ -895,7 +992,7 @@ def confirm_mapping(
 ) -> ImportOut:
     """The client confirms the summary: what each file is and which columns are used. Only
     when nothing is left to answer and the three a diagnostic needs are found."""
-    row = _changeable(ctx.db, import_id, ctx)
+    row = _answerable(ctx.db, import_id, ctx)
     stored = row.wizard or {}
     found = recognised_out(stored)
     if (
@@ -911,6 +1008,8 @@ def confirm_mapping(
         "by": ctx.principal.actor,
         "at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
+    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id)
+    _store_mapping(folder, recognised_out(stored, _timezone(ctx.db, row.plant_code)))
     ctx.db.execute(
         text("UPDATE imports SET wizard = CAST(:w AS jsonb) WHERE import_id = :i"),
         {"w": json.dumps(stored), "i": import_id},
@@ -1104,8 +1203,7 @@ def refresh_quality(settings: Settings, conn: Connection, tenant: uuid.UUID, pla
     report = json.loads(row.report)
     if "quality" not in report:
         return
-    folder = import_dir(settings, tenant, plant, row.import_id) / "source"
-    mapping = choose_mapping(p.name for p in folder.iterdir())
+    mapping = mapping_of(import_dir(settings, tenant, plant, row.import_id))
     fixes = row_fixes(conn, [row.import_id]).get(row.import_id) or {}
     loaded = load_plant_from_db(conn, tenant, plant)
     issues = (report.get("import") or {}).get("row_errors", [])
@@ -1166,12 +1264,12 @@ def map_import(folder: Path, plant: dict[str, Any], fixes: Fixes | None = None) 
 
     Returns the connector report. The marker holds the stamp of the fixes it was mapped with.
     """
-    mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
+    mapping = mapping_of(folder)
     # Mapped into a folder of its own, then swapped in: the preview (API) and the run (worker)
     # may map the same upload at once, and neither may delete the files the other writes.
     fresh = folder / f".standard-{uuid.uuid4().hex}"
     report = import_export(folder / "source", mapping, fresh, plant=plant, fixes=fixes)
-    (fresh / ID_RULE).write_text(fixes_digest(fixes))
+    (fresh / ID_RULE).write_text(mapping_stamp(folder, fixes))
     old = folder / f".old-{uuid.uuid4().hex}"
     with contextlib.suppress(FileNotFoundError):
         (folder / "standard").rename(old)
@@ -1215,7 +1313,7 @@ def kept_imports(
     out = []
     for i in ids:
         folder = import_dir(settings, tenant, plant_code, i)
-        if _mapped_with(folder) != fixes_digest(fixes.get(i)):  # new id rule or other fixes
+        if _mapped_with(folder) != mapping_stamp(folder, fixes.get(i)):  # new rule, fixes, summary
             map_import(folder, dict(plant._mapping), fixes.get(i))
         out.append((i, load_plant(folder / "standard", tenant_id=tenant)))
     return out
@@ -1243,7 +1341,7 @@ def run_import(settings: Settings, tenant: uuid.UUID, import_id: uuid.UUID) -> N
             ).one()
             fixes = row_fixes(conn, [import_id]).get(import_id)
         folder = import_dir(settings, tenant, row.plant_code, import_id)
-        mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
+        mapping = mapping_of(folder)
         report = map_import(folder, dict(plant._mapping), fixes)
         step = "load"
         own = load_plant(folder / "standard", tenant_id=tenant)

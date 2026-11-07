@@ -169,3 +169,49 @@ test("the director sees the summary and who confirmed it, without changing it", 
   await expect(panel).toContainText("Confirmed by IT / ERP owner");
   await expect(panel.getByRole("note")).toContainText("Ask IT to connect it.");
 });
+
+test("a confirmed summary runs the import the way it was confirmed", async ({ page }) => {
+  await stubPages(page, {
+    latestImport: {
+      status: "uploaded",
+      needed: [],
+      recognised: {
+        ...RECOGNISED,
+        column_questions: 0,
+        confirmed: { by: "user:1", by_role: "it", at: "2026-10-26T09:30:00+00:00" },
+      },
+    },
+  });
+  let ran = false;
+  await page.route("**/api/imports/i1/run", async (route) => {
+    ran = true;
+    await route.fulfill({ status: 202, json: {} });
+  });
+  await page.goto("/import");
+  await page.getByRole("tab", { name: /Map columns/ }).click();
+  await expect(page.getByText("Reads 3 files the way you confirmed")).toBeVisible();
+  await page.getByRole("button", { name: /^Run import/ }).click();
+  await expect.poll(() => ran).toBe(true);
+});
+
+test("after the run the summary stays as it ran and says how to read it again", async ({
+  page,
+}) => {
+  await stubPages(page, {
+    latestImport: {
+      status: "done",
+      recognised: {
+        ...RECOGNISED,
+        column_questions: 0,
+        confirmed: { by: "user:1", by_role: "it", at: "2026-10-26T09:30:00+00:00" },
+      },
+    },
+  });
+  await page.goto("/import");
+  await page.getByRole("tab", { name: /Map columns/ }).click();
+  const panel = page.getByRole("region", { name: "What the columns hold" });
+  await expect(panel).toContainText("The import ran with this summary.");
+  await expect(panel).toContainText("upload them again as a new import");
+  await expect(panel.getByRole("combobox")).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Confirm this summary" })).toHaveCount(0);
+});

@@ -33,15 +33,14 @@ def test_naive_datetimes_are_rejected(value: datetime) -> None:
 
 
 @pytest.mark.parametrize(
-    "code", ["PNT-01", "WLD-02", "CUT-10", "ASMB-99", "FIN", "WELD-BENCH", "PACK", "LINE-2B"]
+    "code",
+    ["PNT-01", "WLD-02", "CUT-10", "ASMB-99", "FIN", "WELD-BENCH", "PACK", "LINE-2B", "1000-LASER"],
 )
 def test_valid_step_codes(code: str) -> None:
     assert code_adapter.validate_python(code) == code
 
 
-@pytest.mark.parametrize(
-    "code", ["pnt-01", "P", "1ST-LINE", "WELD BENCH", "WELD_1", "-FIN", "A" * 33, ""]
-)
+@pytest.mark.parametrize("code", ["pnt-01", "P", "WELD BENCH", "WELD_1", "-FIN", "A" * 33, ""])
 def test_invalid_step_codes(code: str) -> None:
     with pytest.raises(ValidationError):
         code_adapter.validate_python(code)

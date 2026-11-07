@@ -28,6 +28,10 @@ export function useDetection(plant: string | null, period: DetectionPeriod) {
   });
 }
 
+/** The answer's times come (partly) from hour bookings, not scans (ADR-0011 §5). */
+export const fromBookings = (reasons: Reason[]) =>
+  reasons.some((r) => r.code === "times_from_bookings" || r.code === "times_estimated");
+
 /** One reason in plain words; machine codes become names. */
 function ReasonText({ reason, label }: { reason: Reason; label: (code: string) => string }) {
   const t = useTranslations("detection.reason");
@@ -75,6 +79,9 @@ function ReasonText({ reason, label }: { reason: Reason; label: (code: string) =
       return <span>{t("weak", { level: t(`level.${String(v.level)}`) })}</span>;
     case "data_gap":
       return <span>{t("dataGap")}</span>;
+    case "times_from_bookings":
+    case "times_estimated":
+      return <span>{t(reason.code, { share: Math.round(Number(v.share_pct)) })}</span>;
     case "team_covers":
       return (
         <span data-raw>
@@ -97,7 +104,7 @@ function ReasonText({ reason, label }: { reason: Reason; label: (code: string) =
  * sure we are. Every number opens its calculation.
  */
 /** What the bottleneck lost in the period: hours, euros (or why not) and the biggest cause. */
-function LostLine({ loss }: { loss: Fact[] }) {
+function LostLine({ loss, booked }: { loss: Fact[]; booked: boolean }) {
   const t = useTranslations("detection.loss");
   const pick = (measure: string, cause: string) =>
     loss.find((f) => f.measure === measure && f.reason_code === cause)?.figure;
@@ -108,6 +115,9 @@ function LostLine({ loss }: { loss: Fact[] }) {
     .filter((f) => f.measure === "lost_h" && f.reason_code !== "total")
     .filter((f) => !isMissing(f.figure.value));
   const top = causes.sort((a, b) => Number(b.figure.value) - Number(a.figure.value))[0];
+  if (booked && isMissing(hours.value)) {
+    return <p className="m-0 border-t border-line pt-3 text-sm text-muted">{t("fromBookings")}</p>;
+  }
   return (
     <div className="flex flex-col gap-1 border-t border-line pt-3 text-sm">
       <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -191,7 +201,7 @@ export function ConstraintBanner({
           </li>
         ))}
       </ul>
-      {d.kind === "internal" && <LostLine loss={loss} />}
+      {d.kind === "internal" && <LostLine loss={loss} booked={fromBookings(d.reasons)} />}
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">
           <span data-raw>{t("howFound")}</span>

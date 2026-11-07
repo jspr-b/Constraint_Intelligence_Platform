@@ -22,11 +22,14 @@ export function ColumnsFound({
   importId,
   found,
   canAnswer,
+  ran = false,
   onChanged,
 }: {
   importId: string;
   found: Recognised;
   canAnswer: boolean;
+  /** The import ran with this summary: it stays as it is (a new upload reads it again). */
+  ran?: boolean;
   onChanged: () => void;
 }) {
   const t = useTranslations("import.columns");
@@ -229,7 +232,7 @@ export function ColumnsFound({
         {found.confirmed ? (
           <p className="m-0">
             <span aria-hidden="true">●</span>{" "}
-            {t("confirmed", {
+            {t(ran ? "confirmedRan" : "confirmed", {
               by:
                 found.confirmed.by_role && troles.has(found.confirmed.by_role)
                   ? troles(found.confirmed.by_role)

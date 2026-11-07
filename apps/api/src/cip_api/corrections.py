@@ -35,12 +35,12 @@ from cip_api.auth.sessions import audit
 from cip_api.db.plant_store import merge_imports, rebuild_plant_data, row_fixes
 from cip_api.errors import ApiProblem
 from cip_api.facts import Reason
-from cip_api.imports import _ai, choose_mapping, import_dir, kept_imports, refresh_quality
+from cip_api.imports import _ai, import_dir, kept_imports, mapping_of, refresh_quality
 from cip_api.refresh import refresh_after_change
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 from cip_connectors.excel import read_xlsx
-from cip_connectors.importer import Fixes, ImportReport, import_export
+from cip_connectors.importer import Fixes, ImportReport, import_export, wizard_tables
 from cip_connectors.mapping import MappingSet
 from cip_connectors.privacy import personal_column_rule
 from cip_connectors.readers import SourceTable, read_csv
@@ -159,6 +159,10 @@ def _import(db: Connection, ctx: Ctx, import_id: uuid.UUID) -> Any:
 
 
 def _read(path: Path, mapping: MappingSet) -> SourceTable:
+    if mapping.reader == "wizard":  # the file as the summary reads it: same lines as the run
+        tables = [t for t in wizard_tables(path.parent).values() if t.path == path]
+        if tables:
+            return tables[0]
     drop = personal_column_rule(mapping.personal_columns)
     if path.suffix == ".xlsx":
         return read_xlsx(path, drop)
@@ -166,7 +170,13 @@ def _read(path: Path, mapping: MappingSet) -> SourceTable:
 
 
 def _example(mapping: MappingSet) -> str:
-    return datetime(2026, 7, 20, 10, 11).strftime(mapping.datetime_format)
+    """A date and time as the export writes it: the confirmed summary's own format, if any."""
+    fmt = mapping.datetime_format
+    for rule in (r for t in mapping.tables for r in t.fields.values()):
+        if rule.type == "datetime" and rule.format:
+            fmt = f"{rule.format} {rule.time_format}" if rule.time_from else rule.format
+            break
+    return datetime(2026, 7, 20, 10, 11).strftime(fmt)
 
 
 def _rule(code: str | None, mapping: MappingSet) -> str:
@@ -179,6 +189,8 @@ def _rule(code: str | None, mapping: MappingSet) -> str:
         "not_yes_no": "yes or no",
         "unknown_code": "a code the plant's export uses",
         "empty": "a value (the field cannot be empty)",
+        "not_a_duration": "a booked time of zero or more",
+        "no_shift_for_booking": "hours booked on a day the step has a shift",
     }.get(code or "", "a value the import can read")
 
 
@@ -219,9 +231,7 @@ def rejected_rows(
     row = _import(ctx.db, ctx, import_id)
     report = json.loads(row.report) if row.report else {}
     errors = (report.get("import") or {}).get("row_errors", [])
-    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id) / "source"
-    files = [p.name for p in folder.iterdir()] if folder.exists() else []
-    mapping = choose_mapping(files)
+    mapping = mapping_of(import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id))
     fixes = {
         (c.file, c.line): c
         for c in reversed(corrections_of(ctx.db, row.plant_code))
@@ -278,9 +288,8 @@ def explain_rejected_rows(
         raise ApiProblem("nothing_to_explain")
     if provider is None:
         raise ApiProblem("ai_not_connected")
-    folder = import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id) / "source"
-    mapping = choose_mapping(p.name for p in folder.iterdir()) if folder.exists() else None
-    personal = personal_column_rule(mapping.personal_columns if mapping else ())
+    mapping = mapping_of(import_dir(settings, ctx.principal.tenant_id, row.plant_code, import_id))
+    personal = personal_column_rule(mapping.personal_columns)
     problems: dict[str, OpenProblem] = {}
     for e in errors:
         column = e.get("column")
@@ -346,7 +355,7 @@ def make_correction(
     path = folder / "source" / body.file
     if "/" in body.file or not path.is_file():
         raise ApiProblem("file_not_found")
-    mapping = choose_mapping(p.name for p in (folder / "source").iterdir())
+    mapping = mapping_of(folder)
     source = _read(path, mapping)
     line = dict(source.rows).get(body.line)
     if line is None:

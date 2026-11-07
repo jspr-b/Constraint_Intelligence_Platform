@@ -58,6 +58,12 @@ class EventType(StrEnum):
     SCAN = "scan"
 
 
+class TimeSource(StrEnum):
+    SCAN = "scan"
+    BOOKING = "booking"
+    ESTIMATED = "estimated"
+
+
 _NEEDS_ORDER = {EventType.START, EventType.END, EventType.SCRAP}
 _STATION_LEVEL = {EventType.MOVE, EventType.SCAN}
 _DOWN = {EventType.DOWN_START, EventType.DOWN_END}
@@ -77,6 +83,10 @@ class OperationEvent(BaseRecord):
     scrap_units: int = Field(default=0, ge=0)
     down_reason_code: str | None = None
     scrap_reason_code: str | None = None
+    time_source: TimeSource = TimeSource.SCAN
+    """Where the time comes from: a scan or terminal (exact), an hour booking (start and
+    duration as booked), or estimated (a booking with a date only, placed in that day's shift).
+    Bookings give no waiting, blocked or setup time (ADR-0011 §5)."""
 
     @model_validator(mode="after")
     def _fields_fit_event_type(self) -> Self:

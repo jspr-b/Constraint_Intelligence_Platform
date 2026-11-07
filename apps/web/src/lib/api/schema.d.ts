@@ -536,6 +536,8 @@ export interface paths {
         /**
          * Run
          * @description Start the connector in a worker. The page polls this import until it is done or failed.
+         *     It runs with the confirmed summary, or with the known export format that reads its event
+         *     log; with neither, the client is told to confirm the summary first.
          */
         post: operations["run_imports__import_id__run_post"];
         delete?: never;

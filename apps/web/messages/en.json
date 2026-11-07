@@ -333,6 +333,8 @@
     "runNoFiles": "No readable, recognised file in this upload yet.",
     "runWithGaps": "{count, plural, one {# needed export is} other {# needed exports are}} missing; you can still run and see what is there.",
     "runExplain": "Imports {files, plural, one {# file} other {# files}} in the background, then updates the checklist and data quality report.",
+    "runFromSummary": "Reads {files, plural, one {# file} other {# files}} the way you confirmed in step 2 (Map columns), then updates the checklist and data quality report.",
+    "hourBookings": "Times come from hour bookings, not scans: the answer will be less sure, and time lost to setups, stops and waiting is not shown. Start and finish scans per job and step would add exact times, waiting, setups and stops.",
     "running": "Importing… this page updates by itself.",
     "resultsLabel": "Results per file",
     "colRead": "Rows read",
@@ -540,7 +542,9 @@
         "not_yes_no": "This must be yes or no.",
         "unknown_code": "This code is not one the export uses (for example a step code that is not in the steps list).",
         "no_code_table": "The export's code list for this column is missing.",
-        "empty": "This field is empty but is needed."
+        "empty": "This field is empty but is needed.",
+        "not_a_duration": "The booked time must be zero or more.",
+        "no_shift_for_booking": "The hours were booked on a day this step has no shift, so the app cannot place them in time."
       },
       "codeShort": {
         "not_a_datetime": "Date or time not readable",
@@ -551,6 +555,8 @@
         "unknown_code": "Unknown code",
         "no_code_table": "Code list missing",
         "empty": "Empty field",
+        "not_a_duration": "Not a booked time",
+        "no_shift_for_booking": "No shift that day",
         "other": "Other"
       }
     },
@@ -736,6 +742,7 @@
       "confirm": "Confirm this summary",
       "confirmNote": "Check the summary, then confirm. You can change any choice later.",
       "confirmed": "Confirmed by {by} on {at}. Change any choice above and confirm again.",
+      "confirmedRan": "Confirmed by {by} on {at}. The import ran with this summary. To read the files differently, upload them again as a new import.",
       "askIt": "IT or the planner confirms this summary. Ask them, or switch role.",
       "ai": {
         "not_connected": {
@@ -884,7 +891,6 @@
         "colSure": "How sure"
       }
     },
-    "runColumnsConfirmed": "Columns confirmed. Next: the app checks your codes and date formats; the import runs after that step.",
     "explain": {
       "label": "What went wrong and how to fix it in your export",
       "rows": "{count, plural, one {row} other {rows}}",
@@ -899,6 +905,8 @@
         "unknown_code": "Fix in your export: add the code to the steps list or code list you export, or correct the typing in the row. A new step can also be added on Plant setup.",
         "no_code_table": "Fix in your export: add the code list file (for example the steps list) to the upload, then upload again.",
         "empty": "Fix in your export: fill in this field in your ERP before you export, or leave the row out here with a reason.",
+        "not_a_duration": "Fix in your export: book hours or minutes as a number of zero or more.",
+        "no_shift_for_booking": "Fix in your export: add the shift for this step and day to the shift sheet, or book a start time with the hours.",
         "other": "Fix in your export: open the rows below to see the value, then fix it in the export or here."
       },
       "byAi": "Suggested by AI for your export: please check",
@@ -1659,6 +1667,8 @@
       "material": "For {share}% of released orders the material arrived after the work was released.",
       "weak": "Confidence is lowered to {level} because some of the numbers behind the checks are less certain. Open them to see why.",
       "dataGap": "Confidence is lowered to medium because important data is missing. See Data quality for what to add.",
+      "times_from_bookings": "{share}% of the start and finish times come from hour bookings, not scans, so this answer is at most medium sure. Bookings say how long a job was worked at a step, not how long it waited, set up or stood still.",
+      "times_estimated": "{share}% of the times were placed in the shift by the app, because the hour bookings have a date but no start time. This answer is at most low sure.",
       "teamCovers": "{team} is a team shared by several steps ({steps}): together they cannot work on more jobs than the team has people on shift. The team, not one bench, limits output.",
       "other": "See how it is worked out below.",
       "level": {
@@ -1681,6 +1691,7 @@
       "worth": "worth",
       "euros": "Lost throughput",
       "noEuros": "Euros are not shown because your data has no job values or sales prices. Add jobs with value and material cost, or products with sales price and truly variable cost, on Import to see them.",
+      "fromBookings": "Lost hours in total are not shown: hour bookings do not record setups, stops or waiting. Lost time from the shift sheet (breaks, planned maintenance) is on Loss. Start and finish scans per job and step would add the rest.",
       "biggest": "Biggest cause: {cause}",
       "causeHours": "Hours lost to {cause}",
       "cause": {
@@ -1716,6 +1727,7 @@
     "hoursInMonth": "of output time in {month}.",
     "hoursLabel": "Bottleneck hours lost",
     "noEuros": "Euros are not shown because your data has no job values or sales prices. Add jobs with value and material cost, or products with sales price and truly variable cost.",
+    "scansWouldAdd": "Start and finish scans per job and step would add exact times, waiting, setups and stops: the answer would be surer, and all lost hours and euros could be shown.",
     "market": "No step limits you: you could make more if you sold more.",
     "material": "No step limits you: late material holds your output back. Get parts in on time and you can make more.",
     "busiest": "Even your busiest step, {machine}, is busy only",
@@ -1741,6 +1753,7 @@
     "causeHours": "Hours lost to {cause}",
     "causeEuros": "Euros lost to {cause}",
     "wholePeriod": "Whole data period:",
+    "wholeFromBookings": "The total for the whole data period is not shown: hour bookings do not record setups, stops or waiting.",
     "toLoss": "See every cause, week by week, on Loss",
     "evidenceLabel": "The evidence",
     "evidence": {

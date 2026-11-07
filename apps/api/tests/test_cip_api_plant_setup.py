@@ -67,7 +67,7 @@ def test_kick_off_entry_of_plant_stations_and_machines(
     assert planner.put("/plants/PLANT-K/resources/X-1", json=bad).status_code == 422
     bench = {"name": "Hand welding", "station_code": "PAINT", "parallel_units": 3}
     assert planner.put("/plants/PLANT-K/resources/weld-bench", json=bench).status_code == 200
-    for code in ["OPERATOR-1", "WELD_1", "1ST"]:
+    for code in ["OPERATOR-1", "WELD_1", "X"]:
         refused = planner.put(f"/plants/PLANT-K/resources/{code}", json=bench)
         assert refused.status_code == 422 and refused.json()["code"] == "bad_step_code"
     with world.owner.connect() as conn:

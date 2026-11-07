@@ -63,13 +63,17 @@ def _names_a_place(code: str) -> str:
     return code
 
 
-ResourceCode = Annotated[
-    str, StringConstraints(pattern=r"^[A-Z][A-Z0-9-]{1,31}$"), AfterValidator(_names_a_place)
-]
-"""A step's own short code (ADR-0009): ``PNT-01``, ``WELD-BENCH``, ``FIN``. Upper case, digits and
-hyphens, 2 to 32 characters; a machine, a handmade bench or a check, never a person."""
+CODE_PATTERN = r"^[A-Z0-9][A-Z0-9-]{1,31}$"
+"""Upper case, digits and hyphens, 2 to 32 characters. A plant's own codes may start with a
+digit (SAP work centres such as ``1000-LASER``), so a code is kept as the plant writes it."""
 
-StationCode = Annotated[str, StringConstraints(pattern=r"^[A-Z][A-Z0-9-]{1,31}$")]
+ResourceCode = Annotated[
+    str, StringConstraints(pattern=CODE_PATTERN), AfterValidator(_names_a_place)
+]
+"""A step's own short code (ADR-0009): ``PNT-01``, ``WELD-BENCH``, ``1000-LASER``. A machine, a
+handmade bench or a check, never a person."""
+
+StationCode = Annotated[str, StringConstraints(pattern=CODE_PATTERN)]
 """Station (work area) code such as ``PAINT`` or ``WELD-CELL``."""
 
 Sku = Annotated[str, StringConstraints(min_length=1, max_length=64, strip_whitespace=True)]

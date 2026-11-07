@@ -16,7 +16,7 @@ from sqlalchemy import text
 from cip_api.ai import AiExplanationsOut
 from cip_api.corrections import _example
 from cip_api.figures import FigureOut
-from cip_api.imports import choose_mapping, import_dir
+from cip_api.imports import import_dir, mapping_of
 from cip_api.settings import Settings, get_settings
 from cip_api.tenancy import Ctx, require
 
@@ -107,7 +107,7 @@ def data_quality(
 def _datetime_example(
     settings: Settings, ctx: Ctx, plant_code: str, import_id: uuid.UUID
 ) -> str | None:
-    folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id) / "source"
-    if not folder.exists():
+    folder = import_dir(settings, ctx.principal.tenant_id, plant_code, import_id)
+    if not (folder / "source").exists():
         return None
-    return _example(choose_mapping(p.name for p in folder.iterdir()))
+    return _example(mapping_of(folder))

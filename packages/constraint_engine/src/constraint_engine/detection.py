@@ -32,6 +32,7 @@ from constraint_engine.reconstruct.timeline import from_min
 
 if TYPE_CHECKING:
     from constraint_engine.facts import Fact
+    from constraint_engine.time_source import TimeSources
 
 BINDING_UTILISATION_PCT = 85.0
 MIN_BUSY_PCT = 70.0
@@ -87,6 +88,10 @@ def _key(code: str, measure: str) -> str:
 
 def _numeric(fig: Figure) -> float | None:
     return None if isinstance(fig.value, Missing) else float(fig.value)
+
+
+def _measured(figs: Mapping[str, Figure]) -> dict[str, Figure]:
+    return {c: f for c, f in figs.items() if not f.is_missing}
 
 
 def _top(figs: Mapping[str, Figure], lowest: bool = False) -> str | None:
@@ -320,8 +325,10 @@ def detect(
     starved: Mapping[str, Figure],
     blocked: Mapping[str, Figure],
     gap_impacts: Sequence[Confidence] = (),
+    sources: "TimeSources | None" = None,
 ) -> Detection:
-    """One answer for one period from the four methods (inputs are the period's facts)."""
+    """One answer for one period from the four methods (inputs are the period's facts).
+    ``sources``: where the times come from; hour bookings cap the confidence."""
     span = (from_min(window[0]), from_min(window[1]))
     minutes, total = active_period_minutes(states, window)
     shares = {c: active_share(c, m, total, span) for c, m in sorted(minutes.items())}
@@ -333,10 +340,12 @@ def detect(
         top = _top(figs, lowest)
         return MethodResult(method, top if binds and top else None, fig, top)
 
-    u = by_utilisation(busy, span)
-    q = by_queue(waiting, span)
+    # Each check compares the steps it has a number for: a step without data (e.g. added on
+    # Plant setup, never measured) is not measured, and does not hide the others' numbers.
+    u = by_utilisation(_measured(busy), span)
+    q = by_queue(_measured(waiting), span)
     a = by_active_period(shares, span)
-    s = by_starved_blocked(idle, span)
+    s = by_starved_blocked(_measured(idle), span)
     results = (
         result("utilisation", u, busy, (_numeric(u) or 0) >= BINDING_UTILISATION_PCT),
         result("queue", q, waiting, (_numeric(q) or 0) >= BINDING_WIP_ORDERS),
@@ -416,6 +425,12 @@ def detect(
             level = cap
             reasons.append(Reason("data_gap"))
             break
+    booked = sources.cap(window) if sources is not None else None
+    if booked is not None:  # said even when the answer is already less sure
+        most, code, share = booked
+        reasons.append(Reason(code, {"share_pct": share}))
+        if most.value < level.value:
+            level = most
     return Detection(
         resource_code=None if answer == NONE else answer,
         kind=kind,
@@ -439,8 +454,10 @@ def detect_periods(
     from constraint_engine.reconstruct.durations import pair_operations
     from constraint_engine.reconstruct.states import machine_states
     from constraint_engine.reconstruct.timeline import to_min
+    from constraint_engine.time_source import time_sources
 
     states = machine_states(plant, pair_operations(plant))
+    sources = time_sources(plant)
     grouped: dict[tuple[str, datetime], dict[str, dict[str, Figure]]] = {}
     for f in facts:
         start = f.figure.period_start_at
@@ -476,6 +493,7 @@ def detect_periods(
                     parts.get("starved", {}),
                     parts.get("blocked", {}),
                     gap_impacts,
+                    sources,
                 ),
             )
         )

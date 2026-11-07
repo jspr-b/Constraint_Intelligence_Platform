@@ -46,7 +46,7 @@ CATALOG: dict[str, tuple[int, str]] = {
     "bad_step_code": (
         422,
         "Use your own short code for the step: capitals, digits and -, 2 to 32 characters, "
-        "starting with a letter. A step is a place, so no words for people.",
+        "starting with a letter or digit. A step is a place, so no words for people.",
     ),
     "unknown_machine": (
         422,
@@ -157,6 +157,16 @@ CATALOG: dict[str, tuple[int, str]] = {
         409,
         "The AI is not connected, so the standard explanations are shown. IT can connect it "
         "(IT guide, “Connecting the AI”).",
+    ),
+    "mapping_not_confirmed": (
+        409,
+        "The app does not know these files yet. Answer the questions in step 2 (Map columns) "
+        "and confirm the summary, then run the import.",
+    ),
+    "summary_in_use": (
+        409,
+        "This import already ran with its confirmed summary, so the summary cannot change. "
+        "To read the files differently, upload them again as a new import.",
     ),
     "mapping_not_ready": (
         409,

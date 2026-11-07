@@ -11,7 +11,7 @@ write this layout; a resource is a step, machine or handmade (ADR-0009); the dia
 | `products.csv` | no | product | `sku`, `name`, `family`, `setup_family`, `sales_price_eur_cents`, `truly_variable_cost_eur_cents` |
 | `routings.csv` | no | routing step | `sku`, `operation_seq`, `operation`, `resource_code`, `alternative_resource_codes` (`;`-separated), `standard_setup_min`, `standard_run_min_per_unit` |
 | `orders.csv` | yes | job | `order_id`, `sku` (optional), `quantity_units`, `due_at`, `status`, `released_at`, `shipped_at`, `material_ready_at`, `order_value_eur_cents`, `material_cost_eur_cents` |
-| `events.csv` | yes | event | `event_id`, `event_type`, `at`, `resource_code`, `station_code`, `order_id`, `operation_seq`, `quantity_units`, `scrap_units`, `down_reason_code`, `scrap_reason_code` |
+| `events.csv` | yes | event | `event_id`, `event_type`, `at`, `resource_code`, `station_code`, `order_id`, `operation_seq`, `quantity_units`, `scrap_units`, `down_reason_code`, `scrap_reason_code`, `time_source` (`scan` when empty, `booking`, `estimated`) |
 | `calendar.csv` | yes | calendar window | `resource_code`, `kind`, `start_at`, `end_at`, `covered`, `positions` (shifts: staffed positions, a count) |
 | `resource_operations.csv` | no | capability | `resource_code`, `operation`, `standard_run_min_per_unit` |
 | `changeovers.csv` | no | changeover | `resource_code`, `from_setup_family`, `to_setup_family`, `changeover_min` |

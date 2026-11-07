@@ -16,6 +16,8 @@ To start, three exports are enough: the event log, a steps list and a shift shee
 | 6 | Routings with operations per step (`bewerkingen`) | Routing / operation master | Current, all active products | CSV or Excel | Adds the planned path and standard times |
 | 7 | Shared teams and team sizes per shift (`teams`, `team_plan`) | Roster | Same period | CSV or Excel | Adds capacity of steps that share people |
 
+Hour bookings only (start and duration, or a date and hours, per job and step) are accepted. The answer is then less sure, and lost hours and euros by cause are not shown, because bookings do not record waiting, setups or stops. A booking with only a date is placed in that day's shift on its step, so the shift sheet must cover those days. Start and finish scans per job and step give the full answer.
+
 Breaks and holidays usually come in the shift sheet; breaks add the stagger-breaks action and holidays the forecast. These also raise confidence but are not needed to start: overtime per step and week (`overuren`), capacity costs (`capaciteitskosten`), changeover times between setup families (`omsteltijden`), outsourcing prices (`uitbesteding`).
 
 ## Format

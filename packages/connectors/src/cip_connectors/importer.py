@@ -5,10 +5,12 @@ import hashlib
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
-from cip_connectors.convert import ConversionError, convert
-from cip_connectors.mapping import MappingSet, TableMapping
+from cip_connectors.bookings import BOOKING_COLUMNS, BOOKING_REQUIRED, Booking, booking_events
+from cip_connectors.convert import Cell, ConversionError, convert
+from cip_connectors.mapping import FieldRule, MappingSet, TableMapping
 from cip_connectors.readers import DropRule, SourceTable, find_source, read_csv
 
 # Standard layout columns per target (packages/constraint_engine/docs/plant_layout.md).
@@ -56,6 +58,7 @@ STANDARD_COLUMNS: dict[str, tuple[str, ...]] = {
         "scrap_units",
         "down_reason_code",
         "scrap_reason_code",
+        "time_source",
     ),
     "calendar": ("resource_code", "kind", "start_at", "end_at", "covered", "positions"),
     "resource_operations": ("resource_code", "operation", "standard_run_min_per_unit"),
@@ -82,6 +85,10 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "teams": ("team_code", "name", "resource_codes"),
     "team_shifts": ("team_code", "start_at", "end_at", "positions"),
 }
+
+REQUIRED["bookings"] = BOOKING_REQUIRED
+_COLUMNS = {**STANDARD_COLUMNS, "bookings": BOOKING_COLUMNS}
+"""Hour bookings are mapped like a table, then become events (``cip_connectors.bookings``)."""
 
 Reader = Callable[[Path, MappingSet, DropRule], SourceTable]
 
@@ -144,24 +151,61 @@ def _default_reader(path: Path, mapping: MappingSet, drop: DropRule) -> SourceTa
     return read_csv(path, mapping.delimiter, drop)
 
 
+def _with_time(rule: FieldRule, mapping: MappingSet) -> FieldRule:
+    """A rule whose date and time come from two columns reads them as one value."""
+    if rule.time_from is None:
+        return rule
+    fmt = f"{rule.format or mapping.datetime_format} {rule.time_format or '%H:%M'}"
+    return rule.model_copy(update={"format": fmt})
+
+
+def _cell(row: Mapping[str, Cell], rule: FieldRule) -> Cell:
+    assert rule.from_ is not None
+    value = row.get(rule.from_)
+    if rule.time_from is None:
+        return value
+    time = row.get(rule.time_from)
+    if value in (None, "") or time in (None, ""):
+        return None if value in (None, "") else value  # an empty half: rejected as empty
+    if isinstance(value, datetime):  # a real date in a workbook, with the time beside it
+        clock = time if isinstance(time, datetime) else datetime.strptime(str(time), "%H:%M:%S")
+        return value.replace(hour=clock.hour, minute=clock.minute, second=clock.second)
+    return f"{str(value).strip()} {str(time).strip()}"
+
+
 def _map_table(
-    table: TableMapping, source: SourceTable, mapping: MappingSet, report: ImportReport
+    table: TableMapping,
+    source: SourceTable,
+    mapping: MappingSet,
+    report: ImportReport,
+    lines: list[int] | None = None,
 ) -> list[dict[str, str]] | None:
+    """The table's rows in the standard layout; ``lines`` gets the source line of each."""
     missing = [f for f in REQUIRED[table.target] if f not in table.fields]
     missing += [
         f
         for f, rule in table.fields.items()
-        if rule.from_ is not None and rule.from_ not in source.header and not rule.optional
+        for column in (rule.from_, rule.time_from)
+        if column is not None and column not in source.header and not rule.optional
     ]
     if missing:
         report.missing_required += [f"{table.target}.{f}" for f in missing]
         return None
+    rules = {name: _with_time(rule, mapping) for name, rule in table.fields.items()}
+    left_out = report.excluded.setdefault(source.path.name, [])
     out: list[dict[str, str]] = []
     for line, row in source.rows:
+        if any(
+            rule.skip_values and str(row.get(rule.from_ or "") or "").strip() in rule.skip_values
+            for rule in rules.values()
+        ):
+            if line not in left_out:  # the client left rows with this code out
+                left_out.append(line)
+            continue
         record: dict[str, str] = {}
         column: str | None = None
         try:
-            for name, rule in table.fields.items():
+            for name, rule in rules.items():
                 column = rule.from_
                 if rule.generate == "content_id":
                     continue  # filled below, from the other fields
@@ -171,7 +215,7 @@ def _map_table(
                     value = rule.constant
                 else:
                     assert rule.from_ is not None
-                    value = convert(row.get(rule.from_), rule, mapping, rule.from_)
+                    value = convert(_cell(row, rule), rule, mapping, rule.from_)
                 if value is not None:
                     record[name] = value
         except ConversionError as exc:
@@ -187,12 +231,18 @@ def _map_table(
                 )
             )
             continue
+        key = _COLUMNS[table.target][0]
+        record.update(mapping.overrides.get(table.target, {}).get(record.get(key, ""), {}))
         for name, rule in table.fields.items():
             if rule.generate == "content_id":
                 record[name] = content_id(record, rule.prefix)
         if "at" in record and line in report.fixed.get(source.path.name, ()):
             report.fixed_at.setdefault(source.path.name, {})[line] = record["at"]
         out.append(record)
+        if lines is not None:
+            lines.append(line)
+    if not left_out:
+        del report.excluded[source.path.name]
     return out
 
 
@@ -234,6 +284,25 @@ def apply_fixes(source: SourceTable, fixes: Mapping[int, RowFix], report: Import
     source.rows[:] = rows
 
 
+def wizard_tables(src: Path) -> dict[str, SourceTable]:
+    """The export's tables as the mapping wizard reads them, by table id."""
+    from cip_connectors.wizard.tables import read_export
+
+    return {
+        t.id: SourceTable(
+            t.id,
+            src / t.file,
+            t.header,
+            list(zip(t.lines, t.rows, strict=True)),
+            t.personal_columns,
+            t.encoding,
+            t.delimiter,
+        )
+        for t in read_export([p for p in src.iterdir() if p.is_file()])
+        if t.readable
+    }
+
+
 def import_export(
     export_dir: Path | str,
     mapping: MappingSet,
@@ -254,23 +323,58 @@ def import_export(
     drop_rule = drop or personal_column_rule(mapping.personal_columns)
     report = ImportReport(mapping.source_system)
     written: dict[str, list[dict[str, str]]] = {}
+    wizard = wizard_tables(src) if mapping.reader == "wizard" else {}
+    bookings: list[tuple[str, dict[str, FieldRule], bool, list[tuple[int, dict[str, str]]]]] = []
     for table in mapping.tables:
-        path = find_source(src, table.source)
-        if path is None:
-            report.missing_sources.append(table.source)
-            continue
-        source = reader(path, mapping, drop_rule)
+        if mapping.reader == "wizard":
+            found = wizard.get(table.source)
+            if found is None:
+                report.missing_sources.append(table.source)
+                continue
+            source, path = found, found.path
+        else:
+            located = find_source(src, table.source)
+            if located is None:
+                report.missing_sources.append(table.source)
+                continue
+            path = located
+            source = reader(path, mapping, drop_rule)
         report.rows_read[table.source] = len(source.rows)
         if fixes and path.name in fixes:
             apply_fixes(source, fixes[path.name], report)
         if source.dropped_columns:
             report.dropped_columns[table.source] = source.dropped_columns
+        if table.target == "bookings":
+            lines: list[int] = []
+            booked = _map_table(table, source, mapping, report, lines)
+            if booked is not None:
+                start = table.fields["start_at"]
+                has_time = start.time_from is not None or "%H" in (
+                    start.format or mapping.datetime_format
+                )
+                rows_of = list(zip(lines, booked, strict=True))
+                bookings.append((path.name, dict(table.fields), has_time, rows_of))
+            continue
         rows = _map_table(table, source, mapping, report)
         if rows is None:
             continue
         if table.unique:
             rows = [dict(t) for t in dict.fromkeys(tuple(r.items()) for r in rows)]
         written.setdefault(table.target, []).extend(rows)
+    for file, fields, has_time, booked_rows in bookings:
+        events, unplaced = booking_events(
+            [Booking(line, record) for line, record in booked_rows],
+            has_time,
+            written.get("calendar", []),
+            mapping.timezone,
+        )
+        for event in events:
+            event["event_id"] = content_id(event)
+        written.setdefault("events", []).extend(events)
+        report.row_errors += [
+            ImportIssue(file, u.line, u.reason, u.code, fields[u.field].from_, u.value)
+            for u in unplaced
+        ]
     for target, rows in written.items():
         _write(out / f"{target}.csv", target, rows)
         report.rows_written[target] = len(rows)

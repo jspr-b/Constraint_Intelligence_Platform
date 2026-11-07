@@ -7351,7 +7351,7 @@
     },
     "/imports/{import_id}/run": {
       "post": {
-        "description": "Start the connector in a worker. The page polls this import until it is done or failed.",
+        "description": "Start the connector in a worker. The page polls this import until it is done or failed.\nIt runs with the confirmed summary, or with the known export format that reads its event\nlog; with neither, the client is told to confirm the summary first.",
         "operationId": "run_imports__import_id__run_post",
         "parameters": [
           {

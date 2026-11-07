@@ -92,6 +92,9 @@ export function OverviewPage() {
 
   const agree = found?.reasons.find((r) => r.code === "methods_agree");
   const teamCovers = found?.reasons.find((r) => r.code === "team_covers");
+  const booked = found?.reasons.find(
+    (r) => r.code === "times_from_bookings" || r.code === "times_estimated",
+  );
   const sure = found ? t(`sure.${found.confidence}`) : "";
   const monthFacts = monthLoss.data?.facts ?? [];
   const money = pick(monthFacts, "lost_eur_cents", "total");
@@ -140,7 +143,7 @@ export function OverviewPage() {
                   })}
                 </p>
               )}
-              {month && hours && (
+              {month && hours && !(booked && isMissing(hours.figure.value)) && (
                 <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-lg">
                   {euros && money ? (
                     <>
@@ -161,11 +164,14 @@ export function OverviewPage() {
                   )}
                 </p>
               )}
-              {money && money.figure.unit === "eur_cents" && isMissing(money.figure.value) && (
-                <p className="m-0 text-sm text-muted">
-                  {t("noEuros")} <Link href="/import">{t("toImport")}</Link>
-                </p>
-              )}
+              {!booked &&
+                money &&
+                money.figure.unit === "eur_cents" &&
+                isMissing(money.figure.value) && (
+                  <p className="m-0 text-sm text-muted">
+                    {t("noEuros")} <Link href="/import">{t("toImport")}</Link>
+                  </p>
+                )}
             </>
           ) : (
             <>
@@ -196,6 +202,13 @@ export function OverviewPage() {
             <span className="text-muted">{t.rich("confidence", termTags)}</span>
             <span className="font-medium">{t(`level.${found.confidence}`)}</span>
           </p>
+          {booked && (
+            <p className="m-0 text-sm" data-raw>
+              <span aria-hidden="true">▲</span>{" "}
+              {tReason(booked.code, { share: Math.round(Number(booked.values.share_pct)) })}{" "}
+              {t("scansWouldAdd")}
+            </p>
+          )}
         </section>
       )}
       {internal && run?.finished_at && causes.length > 0 && month && (
@@ -223,14 +236,18 @@ export function OverviewPage() {
               );
             })}
           </ol>
-          {wholeHours && (
-            <p className="m-0 mt-3 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
-              <span>{t("wholePeriod")}</span>
-              <Figure figure={wholeHours.figure as FigureLike} label={t("hoursLabel")} />
-              {wholeMoney && wholeMoney.figure.unit === "eur_cents" && (
-                <Figure figure={wholeMoney.figure as FigureLike} label={t("costLabel")} />
-              )}
-            </p>
+          {booked && wholeHours && isMissing(wholeHours.figure.value) ? (
+            <p className="m-0 mt-3 text-sm text-muted">{t("wholeFromBookings")}</p>
+          ) : (
+            wholeHours && (
+              <p className="m-0 mt-3 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">
+                <span>{t("wholePeriod")}</span>
+                <Figure figure={wholeHours.figure as FigureLike} label={t("hoursLabel")} />
+                {wholeMoney && wholeMoney.figure.unit === "eur_cents" && (
+                  <Figure figure={wholeMoney.figure as FigureLike} label={t("costLabel")} />
+                )}
+              </p>
+            )
           )}
           <p className="m-0 mt-2 text-sm">
             <Link href="/loss">{t("toLoss")}</Link>
