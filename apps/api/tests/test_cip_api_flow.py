@@ -54,7 +54,10 @@ def test_an_upload_finds_the_known_flow_with_every_share_explained(
     assert body["other_routes_jobs"] == KNOWN["other_routes_jobs"]
     share = body["routes"][0]["share"]
     assert share["formula_id"] == "flow_share_pct_v1"
-    assert share["inputs"] == {"jobs": KNOWN["routes"][0]["jobs"], "of_jobs": KNOWN["jobs"]}
+    assert share["inputs"] == {
+        "jobs_this_way": KNOWN["routes"][0]["jobs"],
+        "jobs_counted": KNOWN["jobs"],
+    }
     assert share["period_start_at"] and share["period_end_at"]
     assert {(a["from_step"], a["to_step"], a["jobs"]) for a in body["arrows"]} == {
         (a["from"], a["to"], a["jobs"]) for a in KNOWN["arrows"]

@@ -60,4 +60,6 @@ def test_the_flow_of_each_export_matches_its_known_answer(name: str, tmp_path: P
         (a["from"], a["to"], a["jobs"], a["share_of_leaving_pct"]) for a in want["arrows"]
     )
     assert all(a.less_certain for a in flow.arrows if a.rework)  # rework is marked
-    assert all(a.share.inputs["jobs"] == a.jobs for a in flow.arrows)  # every share explained
+    assert all(
+        a.share.inputs["jobs_this_way"] == a.jobs for a in flow.arrows
+    )  # every share explained

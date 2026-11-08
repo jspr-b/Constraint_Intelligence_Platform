@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { flowOpensThenFiles } from "./flowOpens";
 
 const BROKEN = join(process.cwd(), "../../data/synthetic/import_cases/broken/upload_1");
 
@@ -33,6 +34,7 @@ test("the COO leaves fixing rows to IT; the planner sees why and who can", async
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });
   await expect(filesPanel.getByText("UPLOADED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Run import/ }).click();
+  await flowOpensThenFiles(page);
   await expect(filesPanel.getByText("IN USE", { exact: true })).toBeVisible({ timeout: 90_000 });
 
   for (const [email, role] of [

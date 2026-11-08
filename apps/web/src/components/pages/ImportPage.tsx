@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { Button, Panel } from "@cip/ui";
 import { api, problemOf } from "@/lib/api/client";
@@ -15,6 +15,7 @@ import { ImportChanges, type ImportEvents } from "../ImportChanges";
 import { DeletePlantData } from "../DeleteImport";
 import { ColumnsFound } from "../ColumnsFound";
 import { ExportFound } from "../ExportFound";
+import { PlantFlow } from "../flow/PlantFlow";
 import { ImportHistory } from "../ImportHistory";
 import { ImportPreview } from "../ImportPreview";
 import { PageHeader } from "../PageHeader";
@@ -178,6 +179,19 @@ export function ImportPage() {
     detail: string;
   }[];
   const found = latest?.recognised ?? null;
+  // The flow opens by itself once an upload has run (CI0005 seq 06).
+  const [tab, setTab] = useState<string>("upload");
+  const running = useRef<string | null>(null);
+  const status = latest?.status;
+  const latestId = latest?.import_id;
+  useEffect(() => {
+    if (status === "running" && latestId) running.current = latestId;
+    else if (status === "done" && latestId && running.current === latestId) {
+      running.current = null;
+      setTab("flow");
+    }
+  }, [status, latestId]);
+  const calculating = latest?.facts?.status === "calculating";
   // The built-in format must read the event log the wizard found; a file that only shares a
   // name with the format (e.g. Rooster.csv in an hour-bookings export) is not enough.
   const logs = found?.minimum.find((m) => m.key === "events")?.tables ?? [];
@@ -296,7 +310,7 @@ export function ImportPage() {
           onDeleted={(id) => id === selected && setSelected(null)}
         />
       )}
-      <Tabs>
+      <Tabs selectedKey={tab} onSelectionChange={(k) => setTab(String(k))}>
         <TabList aria-label={t("steps")} className="flex border-b border-line">
           <Tab id="upload" className={TAB}>
             1 · {t("stepUpload")}
@@ -306,6 +320,9 @@ export function ImportPage() {
           </Tab>
           <Tab id="check" className={TAB}>
             3 · {t("stepCheck")}
+          </Tab>
+          <Tab id="flow" className={TAB}>
+            4 · {t("stepFlow")}
           </Tab>
         </TabList>
         <TabPanel id="upload" className="flex flex-col gap-4 pt-4 outline-none">
@@ -916,6 +933,13 @@ export function ImportPage() {
                 </Link>
               </p>
             </>
+          )}
+        </TabPanel>
+        <TabPanel id="flow" className="flex flex-col gap-4 pt-4 outline-none">
+          {plant ? (
+            <PlantFlow plant={plant} calculating={calculating} />
+          ) : (
+            <p className="m-0 text-sm text-muted">{t("noImport")}</p>
           )}
         </TabPanel>
       </Tabs>

@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { flowOpensThenFiles } from "./flowOpens";
 
 const SPLIT = join(process.cwd(), "../../data/synthetic/import_cases/split");
 
@@ -16,6 +17,7 @@ async function uploadAndRun(page: Page, folder: string) {
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });
   await expect(filesPanel.getByText("UPLOADED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Run import/ }).click();
+  await flowOpensThenFiles(page);
   await expect(filesPanel.getByText("IN USE", { exact: true })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText(/Your numbers are calculated/)).toBeVisible({ timeout: 90_000 });
 }

@@ -10,6 +10,7 @@ import type { components } from "@/lib/api/schema";
 import { FIELD, Field, FormDialog } from "../FormDialog";
 import { Count, Figure } from "../Figure";
 import { PageHeader } from "../PageHeader";
+import { PlantFlow } from "../flow/PlantFlow";
 import { ReadOnlyNote } from "../ReadOnlyNote";
 import { PlantPicker, usePlant } from "../PlantPicker";
 import { useView } from "../ViewContext";
@@ -191,6 +192,9 @@ export function SetupPage() {
             </Tab>
             <Tab id="costs" className={TAB}>
               {t("tabCosts")}
+            </Tab>
+            <Tab id="flow" className={TAB}>
+              {t("tabFlow")}
             </Tab>
           </TabList>
           <TabPanel id="stations" className="flex flex-col gap-3 pt-4 outline-none">
@@ -713,6 +717,9 @@ export function SetupPage() {
               )}
               <p className="m-0 mt-2 text-xs text-muted">{t("costsNote")}</p>
             </Panel>
+          </TabPanel>
+          <TabPanel id="flow" className="pt-4 outline-none">
+            <PlantFlow plant={s.plant_code} />
           </TabPanel>
         </Tabs>
       )}

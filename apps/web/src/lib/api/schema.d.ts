@@ -2660,6 +2660,8 @@ export interface components {
             resource_code: string;
             /** Station Code */
             station_code: string;
+            /** Station Name */
+            station_name: string | null;
         };
         /**
          * Role

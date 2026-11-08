@@ -4301,6 +4301,17 @@
           "station_code": {
             "title": "Station Code",
             "type": "string"
+          },
+          "station_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Name"
           }
         },
         "required": [
@@ -4308,6 +4319,7 @@
           "name",
           "kind",
           "station_code",
+          "station_name",
           "parallel_units",
           "positions_max"
         ],

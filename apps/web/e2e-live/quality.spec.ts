@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { flowOpensThenFiles } from "./flowOpens";
 
 const ERP = join(process.cwd(), "../../data/synthetic/plant_a/erp_export");
 const known = JSON.parse(readFileSync(join(ERP, "defects/defects.json"), "utf8")) as {
@@ -39,6 +40,7 @@ test("import plant_a with known defects, then Data quality shows the score and t
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });
   await expect(filesPanel.getByText("UPLOADED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Run import/ }).click();
+  await flowOpensThenFiles(page);
   await expect(filesPanel.getByText("IN USE", { exact: true })).toBeVisible({ timeout: 90_000 });
 
   await page.getByRole("tab", { name: /data checklist/i }).click();

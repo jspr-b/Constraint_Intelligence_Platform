@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { flowOpensThenFiles } from "./flowOpens";
 
 const CLEAN = join(process.cwd(), "../../data/synthetic/plant_a/erp_export/clean/csv");
 
@@ -32,6 +33,7 @@ test("a calendar edit recalculates the numbers by itself and every page says so"
   const filesPanel = page.getByRole("region", { name: /Files · standard layout/ });
   await expect(filesPanel.getByText("UPLOADED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Run import/ }).click();
+  await flowOpensThenFiles(page);
   await expect(filesPanel.getByText("IN USE", { exact: true })).toBeVisible({ timeout: 90_000 });
   const banner = page.getByRole("region", { name: "Numbers and data age" });
   await expect(banner).toContainText("Plant A refreshed (synthetic) updated at", {

@@ -29,15 +29,17 @@ or overlapping steps."""
 @formula(
     "flow_share_pct",
     1,
-    "share of jobs = jobs that take this route (or arrow) ÷ jobs counted × 100",
+    "share of jobs = jobs that go this way ÷ jobs counted × 100; jobs counted are all jobs for a "
+    "route and the jobs leaving the step for an arrow",
     unit="pct",
 )
 def flow_share(jobs: int, of: int, period: tuple[datetime | None, datetime | None]) -> Calc:
     def compute(i: Resolved) -> float:
-        return round(100 * int(i["jobs"]) / int(i["of_jobs"]), 1) if int(i["of_jobs"]) else 0.0
+        n, of = int(i["jobs_this_way"]), int(i["jobs_counted"])
+        return round(100 * n / of, 1) if of else 0.0
 
     return Calc(
-        inputs={"jobs": jobs, "of_jobs": of},
+        inputs={"jobs_this_way": jobs, "jobs_counted": of},
         compute=compute,
         period_start_at=period[0],
         period_end_at=period[1],

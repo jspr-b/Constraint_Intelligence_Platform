@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { flowOpensThenFiles } from "./flowOpens";
 
 const EXPORT = join(process.cwd(), "../../data/synthetic/plant_a/erp_export/clean/csv");
 
@@ -50,6 +51,7 @@ test("IT imports plant_a's ERP export: personal column dropped, checklist filled
 
   await page.getByRole("tab", { name: /Upload files/ }).click();
   await page.getByRole("button", { name: "Run import" }).click();
+  await flowOpensThenFiles(page);
   await expect(
     page
       .getByRole("region", { name: /Files · standard layout/ })

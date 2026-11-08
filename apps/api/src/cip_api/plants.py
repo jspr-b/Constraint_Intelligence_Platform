@@ -48,6 +48,8 @@ class ResourceOut(BaseModel):
     name: str
     kind: str
     station_code: str
+    station_name: str | None
+    """The station's name; None when the station has no row of its own."""
     parallel_units: int
     positions_max: int
     """Most staffed positions in any shift (a count, never who); ``parallel_units`` when the
@@ -61,11 +63,14 @@ def list_resources(plant_code: str, ctx: Annotated[Ctx, Depends(require())]) -> 
     ctx.check_plant(plant_code)
     rows = ctx.db.execute(
         text(
-            "SELECT r.resource_code, r.name, r.kind, r.station_code, r.parallel_units, "
+            "SELECT r.resource_code, r.name, r.kind, r.station_code, s.name AS station_name, "
+            "r.parallel_units, "
             "COALESCE((SELECT max(c.positions) FROM calendar_windows c "
             "WHERE c.plant_code = r.plant_code AND c.resource_code = r.resource_code "
             "AND c.kind = 'shift'), r.parallel_units) AS positions_max "
-            "FROM resources r WHERE r.plant_code = :p ORDER BY r.resource_code"
+            "FROM resources r LEFT JOIN stations s ON s.plant_code = r.plant_code "
+            "AND s.station_code = r.station_code "
+            "WHERE r.plant_code = :p ORDER BY r.resource_code"
         ),
         {"p": plant_code},
     )
