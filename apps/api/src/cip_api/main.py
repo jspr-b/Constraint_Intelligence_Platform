@@ -93,6 +93,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from cip_api.detection import router as detection_router
     from cip_api.facts import router as facts_router
     from cip_api.flow import router as flow_router
+    from cip_api.flow_edits import router as flow_edits_router
     from cip_api.imports import router as imports_router
     from cip_api.onboarding import router as onboarding_router
     from cip_api.plant_setup import router as setup_router
@@ -114,6 +115,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(facts_router)
     app.include_router(detection_router)
     app.include_router(flow_router)
+    app.include_router(flow_edits_router)
     return app
 
 

@@ -145,6 +145,8 @@ export function rounded(points: [number, number][], r = CORNER): string {
 
 export interface Route {
   d: string;
+  /** The corner points the path runs through (before rounding), for points along it. */
+  points: [number, number][];
   label: Pos;
   lane: "direct" | "over" | "under" | "stacked";
 }
@@ -190,7 +192,15 @@ export function routeArrows(positions: Positions, arrows: LayoutArrow[]): Record
       const x = s.x + CARD_W / 2;
       const y1 = down ? s.y + CARD_H : s.y;
       const y2 = down ? t.y - 6 : t.y + CARD_H + 6;
-      out[a.id] = { d: `M${x},${y1} L${x},${y2}`, label: { x, y: (y1 + y2) / 2 }, lane: "stacked" };
+      out[a.id] = {
+        d: `M${x},${y1} L${x},${y2}`,
+        points: [
+          [x, y1],
+          [x, y2],
+        ],
+        label: { x, y: (y1 + y2) / 2 },
+        lane: "stacked",
+      };
       continue;
     }
     const ui = under.indexOf(a.id);
@@ -199,13 +209,15 @@ export function routeArrows(positions: Positions, arrows: LayoutArrow[]): Record
       const y = bottom + ui * LANE_GAP;
       const sx = s.x + CARD_W / 2 + 10;
       const ex = t.x + CARD_W / 2 - 10;
+      const pts: [number, number][] = [
+        [sx, s.y + CARD_H],
+        [sx, y],
+        [ex, y],
+        [ex, t.y + CARD_H + 6],
+      ];
       out[a.id] = {
-        d: rounded([
-          [sx, s.y + CARD_H],
-          [sx, y],
-          [ex, y],
-          [ex, t.y + CARD_H + 6],
-        ]),
+        d: rounded(pts),
+        points: pts,
         label: { x: (sx + ex) / 2, y },
         lane: "under",
       };
@@ -219,36 +231,79 @@ export function routeArrows(positions: Positions, arrows: LayoutArrow[]): Record
       const y = top - oi * LANE_GAP;
       const ox = sx + 14;
       const ix = t.x - 18;
+      const pts: [number, number][] = [
+        [sx, sy],
+        [ox, sy],
+        [ox, y],
+        [ix, y],
+        [ix, ey],
+        [ex, ey],
+      ];
       out[a.id] = {
-        d: rounded([
-          [sx, sy],
-          [ox, sy],
-          [ox, y],
-          [ix, y],
-          [ix, ey],
-          [ex, ey],
-        ]),
+        d: rounded(pts),
+        points: pts,
         label: { x: (ox + ix) / 2, y },
         lane: "over",
       };
       continue;
     }
     const mx = Math.round((sx + t.x) / 2);
-    out[a.id] =
+    const pts: [number, number][] =
       Math.abs(sy - ey) < 2
-        ? { d: `M${sx},${sy} L${ex},${ey}`, label: { x: mx, y: sy }, lane: "direct" }
-        : {
-            d: rounded([
-              [sx, sy],
-              [mx, sy],
-              [mx, ey],
-              [ex, ey],
-            ]),
-            label: { x: mx, y: (sy + ey) / 2 },
-            lane: "direct",
-          };
+        ? [
+            [sx, sy],
+            [ex, ey],
+          ]
+        : [
+            [sx, sy],
+            [mx, sy],
+            [mx, ey],
+            [ex, ey],
+          ];
+    out[a.id] = {
+      d: pts.length === 2 ? `M${sx},${sy} L${ex},${ey}` : rounded(pts),
+      points: pts,
+      label: { x: mx, y: pts.length === 2 ? sy : (sy + ey) / 2 },
+      lane: "direct",
+    };
   }
   return out;
+}
+
+/** The point at fraction `t` (0-1) of the way along a route's corner points. */
+export function pointAt(points: [number, number][], t: number): Pos {
+  const segs = points.slice(1).map((p, i) => {
+    const q = points[i] ?? p;
+    return { a: q, b: p, len: Math.hypot(p[0] - q[0], p[1] - q[1]) };
+  });
+  const total = segs.reduce((sum, sg) => sum + sg.len, 0);
+  let left = Math.max(0, Math.min(1, t)) * total;
+  for (const sg of segs) {
+    if (left <= sg.len && sg.len > 0) {
+      const f = left / sg.len;
+      return { x: sg.a[0] + (sg.b[0] - sg.a[0]) * f, y: sg.a[1] + (sg.b[1] - sg.a[1]) * f };
+    }
+    left -= sg.len;
+  }
+  const last = points[points.length - 1] ?? [0, 0];
+  return { x: last[0], y: last[1] };
+}
+
+/** The route nearest to a point (by its label), for dropping a touchpoint on an arrow. */
+export function nearestRoute(routes: Record<string, Route>, at: Pos): string | null {
+  let best: string | null = null;
+  let dist = Infinity;
+  for (const [id, r] of Object.entries(routes)) {
+    for (let i = 0; i <= 10; i++) {
+      const p = pointAt(r.points, i / 10);
+      const d = Math.hypot(p.x - at.x, p.y - at.y);
+      if (d < dist) {
+        dist = d;
+        best = id;
+      }
+    }
+  }
+  return best;
 }
 
 /** Moving dots on an arrow: about one per 14 % of jobs, at least one. */

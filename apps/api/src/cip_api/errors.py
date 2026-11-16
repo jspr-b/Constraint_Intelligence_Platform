@@ -40,6 +40,15 @@ CATALOG: dict[str, tuple[int, str]] = {
     "decision_locked": (409, "This decision always stays with its role and cannot be moved."),
     # Plants and setup
     "plant_not_found": (404, "This plant does not exist (yet). Add it on Plant setup."),
+    "flow_changed_elsewhere": (
+        409,
+        "Someone else changed this flow meanwhile. Your view now shows their version; make your "
+        "change again.",
+    ),
+    "flow_unknown_step": (
+        422,
+        "That step is not in this plant's flow. Reload the page and choose a step from the flow.",
+    ),
     "plant_exists": (409, "A plant with this code already exists. Choose another code."),
     "unknown_plant": (422, "This plant does not exist. Add it on Plant setup first."),
     "unknown_station": (422, "This station does not exist for the plant."),

@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from cip_api.settings import Settings
 from cip_api_testkit import World, make_client
@@ -68,3 +69,60 @@ def test_other_tenants_see_nothing(world: World, settings: Settings) -> None:
     _import(_login(world, settings, "it"))
     body = _login(world, settings, "it", "b").get("/plants/PLANT-1/flow").json()
     assert body["jobs"] == 0
+
+
+def _edits(**doc: object) -> dict[str, object]:
+    return {"edits": doc, "version": 0, "change": "test"}
+
+
+def test_flow_edits_are_saved_logged_and_used_by_the_calculation(
+    world: World, settings: Settings
+) -> None:
+    it = _login(world, settings, "it")
+    _import(it)
+    step = {
+        "code": "NEW-01",
+        "name": "Visual check",
+        "kind": "check",
+        "after": "PNT-01",
+        "before": "ASM-01",
+    }
+    saved = it.put(
+        "/plants/PLANT-1/flow/edits",
+        json=_edits(
+            steps_added=[step],
+            parallel=[{"code": "ASM-01", "places": 3}],
+            routes_wrong=[{"from_step": "CUT-01", "to_step": "PCK-01"}],
+        ),
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["version"] == 1 and saved.json()["updated_by_role"] == "it"
+    body = it.get("/plants/PLANT-1/flow").json()
+    arrows = {(a["from_step"], a["to_step"]): a for a in body["edited_arrows"]}
+    assert arrows[("PNT-01", "ASM-01")]["hidden"]
+    added = arrows[("PNT-01", "NEW-01")]
+    assert added["added"] and not added["measured"] and added["assumed_jobs"] == 328
+    assert added["assumed_share"]["formula_id"] == "flow_share_pct_v1"
+    assert arrows[("CUT-01", "PCK-01")]["wrong"]
+    with world.owner.connect() as conn:
+        logged = (
+            conn.execute(
+                text("SELECT action FROM audit_log WHERE tenant_id = :t AND action LIKE 'flow:%'"),
+                {"t": world.a},
+            )
+            .scalars()
+            .all()
+        )
+    assert logged == ["flow:test"]
+    # A save on an older version is refused with a plain message.
+    stale = it.put("/plants/PLANT-1/flow/edits", json=_edits())
+    assert stale.status_code == 409
+
+
+def test_roles_without_setup_rights_cannot_edit_the_flow(world: World, settings: Settings) -> None:
+    _import(_login(world, settings, "it"))
+    coo = _login(world, settings, "coo")
+    refused = coo.put("/plants/PLANT-1/flow/edits", json=_edits())
+    assert refused.status_code == 403
+    assert "Planner" in refused.json()["detail"] or "IT" in refused.json()["detail"]
+    assert coo.get("/plants/PLANT-1/flow/edits").json()["version"] == 0

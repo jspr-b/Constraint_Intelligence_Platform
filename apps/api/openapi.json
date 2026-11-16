@@ -1372,6 +1372,104 @@
         "title": "DevLoginIn",
         "type": "object"
       },
+      "EditedArrowOut": {
+        "description": "An arrow as the client sees it: found in the data (``measured`` share) or added by the\nclient (``assumed`` from a route it split, or the client's ``estimate_pct``).",
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "boolean"
+          },
+          "assumed_jobs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assumed Jobs"
+          },
+          "assumed_share": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FigureOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimate_pct": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate Pct"
+          },
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "hidden": {
+            "title": "Hidden",
+            "type": "boolean"
+          },
+          "measured": {
+            "title": "Measured",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          },
+          "wrong": {
+            "title": "Wrong",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "measured",
+          "assumed_jobs",
+          "assumed_share",
+          "estimate_pct",
+          "wrong",
+          "hidden",
+          "name",
+          "added",
+          "route_id"
+        ],
+        "title": "EditedArrowOut",
+        "type": "object"
+      },
       "FactOut": {
         "properties": {
           "family": {
@@ -1811,6 +1909,316 @@
         "title": "FileOut",
         "type": "object"
       },
+      "FlowEditsDoc-Input": {
+        "description": "Everything the client changed on the found flow. Layout (positions, stations) is for\nthe drawing; the rest is used by the calculation.",
+        "properties": {
+          "merges": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MergeIn"
+            },
+            "title": "Merges",
+            "type": "array"
+          },
+          "parallel": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ParallelIn"
+            },
+            "title": "Parallel",
+            "type": "array"
+          },
+          "positions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PositionIn"
+            },
+            "title": "Positions",
+            "type": "array"
+          },
+          "route_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteNameIn"
+            },
+            "title": "Route Names",
+            "type": "array"
+          },
+          "routes_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteAddedIn"
+            },
+            "title": "Routes Added",
+            "type": "array"
+          },
+          "routes_wrong": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteIn"
+            },
+            "title": "Routes Wrong",
+            "type": "array"
+          },
+          "station_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/cip_api__flow_edits__StationIn"
+            },
+            "title": "Station Names",
+            "type": "array"
+          },
+          "stations_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/cip_api__flow_edits__StationIn"
+            },
+            "title": "Stations Added",
+            "type": "array"
+          },
+          "stations_removed": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Stations Removed",
+            "type": "array"
+          },
+          "step_kinds": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepKindIn"
+            },
+            "title": "Step Kinds",
+            "type": "array"
+          },
+          "step_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepNameIn"
+            },
+            "title": "Step Names",
+            "type": "array"
+          },
+          "step_stations": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepStationIn"
+            },
+            "title": "Step Stations",
+            "type": "array"
+          },
+          "steps_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepAddedIn"
+            },
+            "title": "Steps Added",
+            "type": "array"
+          },
+          "touchpoints": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TouchpointIn"
+            },
+            "title": "Touchpoints",
+            "type": "array"
+          }
+        },
+        "title": "FlowEditsDoc",
+        "type": "object"
+      },
+      "FlowEditsDoc-Output": {
+        "description": "Everything the client changed on the found flow. Layout (positions, stations) is for\nthe drawing; the rest is used by the calculation.",
+        "properties": {
+          "merges": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MergeIn"
+            },
+            "title": "Merges",
+            "type": "array"
+          },
+          "parallel": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ParallelIn"
+            },
+            "title": "Parallel",
+            "type": "array"
+          },
+          "positions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PositionIn"
+            },
+            "title": "Positions",
+            "type": "array"
+          },
+          "route_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteNameIn"
+            },
+            "title": "Route Names",
+            "type": "array"
+          },
+          "routes_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteAddedIn"
+            },
+            "title": "Routes Added",
+            "type": "array"
+          },
+          "routes_wrong": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RouteIn"
+            },
+            "title": "Routes Wrong",
+            "type": "array"
+          },
+          "station_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StationIn-Output"
+            },
+            "title": "Station Names",
+            "type": "array"
+          },
+          "stations_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StationIn-Output"
+            },
+            "title": "Stations Added",
+            "type": "array"
+          },
+          "stations_removed": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Stations Removed",
+            "type": "array"
+          },
+          "step_kinds": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepKindIn"
+            },
+            "title": "Step Kinds",
+            "type": "array"
+          },
+          "step_names": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepNameIn"
+            },
+            "title": "Step Names",
+            "type": "array"
+          },
+          "step_stations": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepStationIn"
+            },
+            "title": "Step Stations",
+            "type": "array"
+          },
+          "steps_added": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepAddedIn"
+            },
+            "title": "Steps Added",
+            "type": "array"
+          },
+          "touchpoints": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TouchpointIn"
+            },
+            "title": "Touchpoints",
+            "type": "array"
+          }
+        },
+        "title": "FlowEditsDoc",
+        "type": "object"
+      },
+      "FlowEditsIn": {
+        "properties": {
+          "change": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Change",
+            "type": "string"
+          },
+          "edits": {
+            "$ref": "#/components/schemas/FlowEditsDoc-Input"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "edits",
+          "version",
+          "change"
+        ],
+        "title": "FlowEditsIn",
+        "type": "object"
+      },
+      "FlowEditsOut": {
+        "properties": {
+          "edits": {
+            "$ref": "#/components/schemas/FlowEditsDoc-Output"
+          },
+          "plant_code": {
+            "title": "Plant Code",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "updated_by_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Role"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plant_code",
+          "edits",
+          "version",
+          "updated_at",
+          "updated_by_role"
+        ],
+        "title": "FlowEditsOut",
+        "type": "object"
+      },
       "FlowOut": {
         "properties": {
           "arrows": {
@@ -1818,6 +2226,14 @@
               "$ref": "#/components/schemas/ArrowOut"
             },
             "title": "Arrows",
+            "type": "array"
+          },
+          "edited_arrows": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EditedArrowOut"
+            },
+            "title": "Edited Arrows",
             "type": "array"
           },
           "import_id": {
@@ -3022,6 +3438,24 @@
         "title": "MeOut",
         "type": "object"
       },
+      "MergeIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "into": {
+            "title": "Into",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "into"
+        ],
+        "title": "MergeIn",
+        "type": "object"
+      },
       "MethodOut": {
         "properties": {
           "evidence": {
@@ -3448,6 +3882,26 @@
         "title": "PageIn",
         "type": "object"
       },
+      "ParallelIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "places": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Places",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "places"
+        ],
+        "title": "ParallelIn",
+        "type": "object"
+      },
       "PeriodOut": {
         "properties": {
           "period_end_at": {
@@ -3601,6 +4055,29 @@
         ],
         "title": "Plants",
         "type": "string"
+      },
+      "PositionIn": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "x",
+          "y"
+        ],
+        "title": "PositionIn",
+        "type": "object"
       },
       "PreviewOut": {
         "description": "The plant now against the plant after this upload, from the engine (ADR-0010).",
@@ -4042,6 +4519,7 @@
                   "delete",
                   "setup",
                   "calendar",
+                  "flow",
                   "retry"
                 ],
                 "type": "string"
@@ -4379,6 +4857,87 @@
         "title": "RoleAccessOut",
         "type": "object"
       },
+      "RouteAddedIn": {
+        "properties": {
+          "estimate_pct": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate Pct"
+          },
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "route_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Route Id",
+            "type": "string"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "route_id"
+        ],
+        "title": "RouteAddedIn",
+        "type": "object"
+      },
+      "RouteIn": {
+        "properties": {
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step"
+        ],
+        "title": "RouteIn",
+        "type": "object"
+      },
+      "RouteNameIn": {
+        "properties": {
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "name"
+        ],
+        "title": "RouteNameIn",
+        "type": "object"
+      },
       "RouteOut": {
         "properties": {
           "jobs": {
@@ -4578,16 +5137,22 @@
         "title": "StationChoiceOut",
         "type": "object"
       },
-      "StationIn": {
+      "StationIn-Output": {
         "properties": {
+          "code": {
+            "pattern": "^[A-Z0-9][A-Z0-9-]{1,31}$",
+            "title": "Code",
+            "type": "string"
+          },
           "name": {
-            "maxLength": 200,
+            "maxLength": 120,
             "minLength": 1,
             "title": "Name",
             "type": "string"
           }
         },
         "required": [
+          "code",
           "name"
         ],
         "title": "StationIn",
@@ -4653,6 +5218,74 @@
         "title": "StationOut",
         "type": "object"
       },
+      "StepAddedIn": {
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "code": {
+            "pattern": "^NEW-\\d{2,4}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "default": "check",
+            "enum": [
+              "machine",
+              "manual",
+              "check",
+              "transport",
+              "storage",
+              "station",
+              "work_centre"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "station_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Code"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "StepAddedIn",
+        "type": "object"
+      },
       "StepAnswer": {
         "properties": {
           "code": {
@@ -4692,6 +5325,53 @@
           "code"
         ],
         "title": "StepAnswer",
+        "type": "object"
+      },
+      "StepKindIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "machine",
+              "manual",
+              "check",
+              "transport",
+              "storage",
+              "station",
+              "work_centre"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "kind"
+        ],
+        "title": "StepKindIn",
+        "type": "object"
+      },
+      "StepNameIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "StepNameIn",
         "type": "object"
       },
       "StepOut": {
@@ -4740,6 +5420,31 @@
           "state"
         ],
         "title": "StepOut",
+        "type": "object"
+      },
+      "StepStationIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "station_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Code"
+          }
+        },
+        "required": [
+          "code",
+          "station_code"
+        ],
+        "title": "StepStationIn",
         "type": "object"
       },
       "TableAnswer": {
@@ -5046,6 +5751,45 @@
         "title": "TimeFormatOut",
         "type": "object"
       },
+      "TouchpointIn": {
+        "properties": {
+          "at": {
+            "default": 0.5,
+            "maximum": 0.95,
+            "minimum": 0.05,
+            "title": "At",
+            "type": "number"
+          },
+          "from_step": {
+            "title": "From Step",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "string"
+          },
+          "touchpoint_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Touchpoint Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "touchpoint_id",
+          "name"
+        ],
+        "title": "TouchpointIn",
+        "type": "object"
+      },
       "UnitOut": {
         "properties": {
           "column": {
@@ -5330,6 +6074,42 @@
           "resource_code"
         ],
         "title": "StationLoginIn",
+        "type": "object"
+      },
+      "cip_api__flow_edits__StationIn": {
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z0-9][A-Z0-9-]{1,31}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "StationIn",
+        "type": "object"
+      },
+      "cip_api__plant_setup__StationIn": {
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "StationIn",
         "type": "object"
       }
     }
@@ -9747,6 +10527,195 @@
         ]
       }
     },
+    "/plants/{plant_code}/flow/edits": {
+      "get": {
+        "operationId": "read_edits_plants__plant_code__flow_edits_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowEditsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Edits",
+        "tags": [
+          "flow"
+        ]
+      },
+      "put": {
+        "description": "Save the client's flow; the numbers are recalculated with it.",
+        "operationId": "save_edits_plants__plant_code__flow_edits_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plant_code",
+            "required": true,
+            "schema": {
+              "title": "Plant Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Role"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-plant",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plant"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowEditsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowEditsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Edits",
+        "tags": [
+          "flow"
+        ]
+      }
+    },
     "/plants/{plant_code}/imports": {
       "get": {
         "operationId": "list_imports_plants__plant_code__imports_get",
@@ -10729,7 +11698,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StationIn"
+                "$ref": "#/components/schemas/cip_api__plant_setup__StationIn"
               }
             }
           },

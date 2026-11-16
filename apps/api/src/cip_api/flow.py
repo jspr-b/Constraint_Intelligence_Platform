@@ -17,6 +17,7 @@ from sqlalchemy import Connection, text
 from cip_api.facts import FactRunOut, _plant, fact_run
 from cip_api.figures import FigureOut
 from cip_api.tenancy import Ctx, require
+from constraint_engine.flow_edits import EditedFlow
 from constraint_engine.reconstruct.routes import PlantFlow
 
 router = APIRouter(tags=["flow"])
@@ -53,6 +54,24 @@ class FlowStepOut(BaseModel):
     missing_finish: int
 
 
+class EditedArrowOut(BaseModel):
+    """An arrow as the client sees it: found in the data (``measured`` share) or added by the
+    client (``assumed`` from a route it split, or the client's ``estimate_pct``)."""
+
+    from_step: str
+    to_step: str
+    measured: bool
+    assumed_jobs: int | None
+    assumed_share: FigureOut | None
+    estimate_pct: int | None
+    wrong: bool
+    hidden: bool
+    """A found route replaced by a step the client added on it."""
+    name: str | None
+    added: bool
+    route_id: str | None
+
+
 class FlowOut(BaseModel):
     plant_code: str
     run: FactRunOut | None
@@ -66,10 +85,29 @@ class FlowOut(BaseModel):
     period_start_at: datetime | None
     period_end_at: datetime | None
     rule: str
+    edited_arrows: list[EditedArrowOut] = []
+    """The arrows with the client's edits laid over them, as calculated with them."""
 
 
-def flow_json(flow: PlantFlow) -> dict[str, Any]:
+def flow_json(view: EditedFlow) -> dict[str, Any]:
+    flow: PlantFlow = view.found
     return {
+        "edited_arrows": [
+            {
+                "from_step": a.from_step,
+                "to_step": a.to_step,
+                "measured": a.measured is not None,
+                "assumed_jobs": a.assumed_jobs,
+                "assumed_share": a.assumed_share.to_dict() if a.assumed_share else None,
+                "estimate_pct": a.estimate_pct,
+                "wrong": a.wrong,
+                "hidden": a.hidden,
+                "name": a.name,
+                "added": a.added,
+                "route_id": a.route_id,
+            }
+            for a in view.arrows
+        ],
         "jobs": flow.jobs,
         "routes": [
             {
@@ -113,7 +151,7 @@ def flow_json(flow: PlantFlow) -> dict[str, Any]:
 
 
 def store_flow(
-    conn: Connection, tenant: uuid.UUID, plant_code: str, import_id: uuid.UUID, flow: PlantFlow
+    conn: Connection, tenant: uuid.UUID, plant_code: str, import_id: uuid.UUID, flow: EditedFlow
 ) -> None:
     conn.execute(
         text(

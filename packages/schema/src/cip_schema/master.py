@@ -49,6 +49,10 @@ class ResourceKind(StrEnum):
     """Handmade work at a bench or place; the client sees "handmade" (ADR-0009)."""
     STATION = "station"
     WORK_CENTRE = "work_centre"
+    CHECK = "check"
+    """A check or inspection (CI0005 seq 06)."""
+    TRANSPORT = "transport"
+    STORAGE = "storage"
 
 
 class Resource(BaseRecord):

@@ -5,7 +5,10 @@
         "machine",
         "manual",
         "station",
-        "work_centre"
+        "work_centre",
+        "check",
+        "transport",
+        "storage"
       ],
       "title": "ResourceKind",
       "type": "string"

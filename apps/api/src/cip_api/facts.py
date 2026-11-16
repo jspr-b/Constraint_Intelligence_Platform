@@ -28,6 +28,7 @@ from cip_api.tenancy import Ctx, require
 from constraint_engine.facts import Fact, measured_facts
 from constraint_engine.figure import Figure, Missing
 from constraint_engine.fixed_rows import with_fixed_rows
+from constraint_engine.flow_edits import apply_flow_edits, edited_flow
 from constraint_engine.formulas.money import NO_RATE
 from constraint_engine.formulas.registry import registry
 from constraint_engine.loss import loss_facts
@@ -59,7 +60,7 @@ def fact_run(conn: Connection, import_id: uuid.UUID) -> FactRunOut | None:
     return FactRunOut.model_validate(dict(row._mapping)) if row else None
 
 
-Reason = Literal["import", "fix", "delete", "setup", "calendar", "retry"]
+Reason = Literal["import", "fix", "delete", "setup", "calendar", "flow", "retry"]
 MAX_ROUNDS = 5
 
 
@@ -231,6 +232,7 @@ def compute_facts(
     request this answers; a newer request keeps the run calculating."""
     from cip_api.detection import detect, store_detections  # detection.py reads this module
     from cip_api.flow import store_flow
+    from cip_api.flow_edits import load_edits, to_engine
 
     try:
         with tenant_conn(settings, tenant) as conn:
@@ -240,6 +242,9 @@ def compute_facts(
             ).one()
             # The whole plant as stored, all kept imports and app rows (ADR-0010).
             plant = load_plant_from_db(conn, tenant, plant_code)
+            # The client's corrections to the flow: merged codes, added steps, parallel places.
+            edits = to_engine(load_edits(conn, plant_code)[0])
+            plant = apply_flow_edits(plant, edits)
             fixed_at, fixed_anywhere = _fixed_rows(conn, plant_code)
         if not plant.events:
             # Nothing to calculate from: fail, so the plant's previous numbers stay.
@@ -260,7 +265,7 @@ def compute_facts(
             if rows:
                 conn.execute(INSERT, rows)
             store_detections(conn, tenant, plant_code, import_id, detections)
-            store_flow(conn, tenant, plant_code, import_id, plant_flow(plant))
+            store_flow(conn, tenant, plant_code, import_id, edited_flow(plant_flow(plant), edits))
             conn.execute(
                 text(
                     "UPDATE fact_runs SET finished_at = :now, error = NULL, "

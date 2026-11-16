@@ -919,6 +919,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plants/{plant_code}/flow/edits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Edits */
+        get: operations["read_edits_plants__plant_code__flow_edits_get"];
+        /**
+         * Save Edits
+         * @description Save the client's flow; the numbers are recalculated with it.
+         */
+        put: operations["save_edits_plants__plant_code__flow_edits_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plants/{plant_code}/imports": {
         parameters: {
             query?: never;
@@ -1665,6 +1686,34 @@ export interface components {
              */
             tenant_id: string;
         };
+        /**
+         * EditedArrowOut
+         * @description An arrow as the client sees it: found in the data (``measured`` share) or added by the
+         *     client (``assumed`` from a route it split, or the client's ``estimate_pct``).
+         */
+        EditedArrowOut: {
+            /** Added */
+            added: boolean;
+            /** Assumed Jobs */
+            assumed_jobs: number | null;
+            assumed_share: components["schemas"]["FigureOut"] | null;
+            /** Estimate Pct */
+            estimate_pct: number | null;
+            /** From Step */
+            from_step: string;
+            /** Hidden */
+            hidden: boolean;
+            /** Measured */
+            measured: boolean;
+            /** Name */
+            name: string | null;
+            /** Route Id */
+            route_id: string | null;
+            /** To Step */
+            to_step: string;
+            /** Wrong */
+            wrong: boolean;
+        };
         /** FactOut */
         FactOut: {
             /**
@@ -1799,10 +1848,189 @@ export interface components {
             /** Rows */
             rows: number;
         };
+        /**
+         * FlowEditsDoc
+         * @description Everything the client changed on the found flow. Layout (positions, stations) is for
+         *     the drawing; the rest is used by the calculation.
+         */
+        "FlowEditsDoc-Input": {
+            /**
+             * Merges
+             * @default []
+             */
+            merges: components["schemas"]["MergeIn"][];
+            /**
+             * Parallel
+             * @default []
+             */
+            parallel: components["schemas"]["ParallelIn"][];
+            /**
+             * Positions
+             * @default []
+             */
+            positions: components["schemas"]["PositionIn"][];
+            /**
+             * Route Names
+             * @default []
+             */
+            route_names: components["schemas"]["RouteNameIn"][];
+            /**
+             * Routes Added
+             * @default []
+             */
+            routes_added: components["schemas"]["RouteAddedIn"][];
+            /**
+             * Routes Wrong
+             * @default []
+             */
+            routes_wrong: components["schemas"]["RouteIn"][];
+            /**
+             * Station Names
+             * @default []
+             */
+            station_names: components["schemas"]["cip_api__flow_edits__StationIn"][];
+            /**
+             * Stations Added
+             * @default []
+             */
+            stations_added: components["schemas"]["cip_api__flow_edits__StationIn"][];
+            /**
+             * Stations Removed
+             * @default []
+             */
+            stations_removed: string[];
+            /**
+             * Step Kinds
+             * @default []
+             */
+            step_kinds: components["schemas"]["StepKindIn"][];
+            /**
+             * Step Names
+             * @default []
+             */
+            step_names: components["schemas"]["StepNameIn"][];
+            /**
+             * Step Stations
+             * @default []
+             */
+            step_stations: components["schemas"]["StepStationIn"][];
+            /**
+             * Steps Added
+             * @default []
+             */
+            steps_added: components["schemas"]["StepAddedIn"][];
+            /**
+             * Touchpoints
+             * @default []
+             */
+            touchpoints: components["schemas"]["TouchpointIn"][];
+        };
+        /**
+         * FlowEditsDoc
+         * @description Everything the client changed on the found flow. Layout (positions, stations) is for
+         *     the drawing; the rest is used by the calculation.
+         */
+        "FlowEditsDoc-Output": {
+            /**
+             * Merges
+             * @default []
+             */
+            merges: components["schemas"]["MergeIn"][];
+            /**
+             * Parallel
+             * @default []
+             */
+            parallel: components["schemas"]["ParallelIn"][];
+            /**
+             * Positions
+             * @default []
+             */
+            positions: components["schemas"]["PositionIn"][];
+            /**
+             * Route Names
+             * @default []
+             */
+            route_names: components["schemas"]["RouteNameIn"][];
+            /**
+             * Routes Added
+             * @default []
+             */
+            routes_added: components["schemas"]["RouteAddedIn"][];
+            /**
+             * Routes Wrong
+             * @default []
+             */
+            routes_wrong: components["schemas"]["RouteIn"][];
+            /**
+             * Station Names
+             * @default []
+             */
+            station_names: components["schemas"]["StationIn-Output"][];
+            /**
+             * Stations Added
+             * @default []
+             */
+            stations_added: components["schemas"]["StationIn-Output"][];
+            /**
+             * Stations Removed
+             * @default []
+             */
+            stations_removed: string[];
+            /**
+             * Step Kinds
+             * @default []
+             */
+            step_kinds: components["schemas"]["StepKindIn"][];
+            /**
+             * Step Names
+             * @default []
+             */
+            step_names: components["schemas"]["StepNameIn"][];
+            /**
+             * Step Stations
+             * @default []
+             */
+            step_stations: components["schemas"]["StepStationIn"][];
+            /**
+             * Steps Added
+             * @default []
+             */
+            steps_added: components["schemas"]["StepAddedIn"][];
+            /**
+             * Touchpoints
+             * @default []
+             */
+            touchpoints: components["schemas"]["TouchpointIn"][];
+        };
+        /** FlowEditsIn */
+        FlowEditsIn: {
+            /** Change */
+            change: string;
+            edits: components["schemas"]["FlowEditsDoc-Input"];
+            /** Version */
+            version: number;
+        };
+        /** FlowEditsOut */
+        FlowEditsOut: {
+            edits: components["schemas"]["FlowEditsDoc-Output"];
+            /** Plant Code */
+            plant_code: string;
+            /** Updated At */
+            updated_at: string | null;
+            /** Updated By Role */
+            updated_by_role: string | null;
+            /** Version */
+            version: number;
+        };
         /** FlowOut */
         FlowOut: {
             /** Arrows */
             arrows: components["schemas"]["ArrowOut"][];
+            /**
+             * Edited Arrows
+             * @default []
+             */
+            edited_arrows: components["schemas"]["EditedArrowOut"][];
             /** Import Id */
             import_id: string | null;
             /** Jobs */
@@ -2202,6 +2430,13 @@ export interface components {
              */
             tenant_id: string;
         };
+        /** MergeIn */
+        MergeIn: {
+            /** Code */
+            code: string;
+            /** Into */
+            into: string;
+        };
         /** MethodOut */
         MethodOut: {
             evidence: components["schemas"]["FigureOut"];
@@ -2355,6 +2590,13 @@ export interface components {
             page: string;
             role: components["schemas"]["Role"];
         };
+        /** ParallelIn */
+        ParallelIn: {
+            /** Code */
+            code: string;
+            /** Places */
+            places: number;
+        };
         /** PeriodOut */
         PeriodOut: {
             /**
@@ -2419,6 +2661,15 @@ export interface components {
          * @enum {string}
          */
         Plants: "all" | "own";
+        /** PositionIn */
+        PositionIn: {
+            /** Id */
+            id: string;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
         /**
          * PreviewOut
          * @description The plant now against the plant after this upload, from the engine (ADR-0010).
@@ -2572,7 +2823,7 @@ export interface components {
             /** Problem */
             problem: ("no_events" | "did_not_finish" | "error") | null;
             /** Reason */
-            reason: ("import" | "fix" | "delete" | "setup" | "calendar" | "retry") | null;
+            reason: ("import" | "fix" | "delete" | "setup" | "calendar" | "flow" | "retry") | null;
             /** Requested At */
             requested_at: string | null;
             /**
@@ -2680,6 +2931,33 @@ export interface components {
             /** Start Page */
             start_page: string;
         };
+        /** RouteAddedIn */
+        RouteAddedIn: {
+            /** Estimate Pct */
+            estimate_pct?: number | null;
+            /** From Step */
+            from_step: string;
+            /** Route Id */
+            route_id: string;
+            /** To Step */
+            to_step: string;
+        };
+        /** RouteIn */
+        RouteIn: {
+            /** From Step */
+            from_step: string;
+            /** To Step */
+            to_step: string;
+        };
+        /** RouteNameIn */
+        RouteNameIn: {
+            /** From Step */
+            from_step: string;
+            /** Name */
+            name: string;
+            /** To Step */
+            to_step: string;
+        };
         /** RouteOut */
         RouteOut: {
             /** Jobs */
@@ -2743,7 +3021,9 @@ export interface components {
             resource_name: string | null;
         };
         /** StationIn */
-        StationIn: {
+        "StationIn-Output": {
+            /** Code */
+            code: string;
             /** Name */
             name: string;
         };
@@ -2775,6 +3055,25 @@ export interface components {
             /** Station Code */
             station_code: string;
         };
+        /** StepAddedIn */
+        StepAddedIn: {
+            /** After */
+            after?: string | null;
+            /** Before */
+            before?: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Kind
+             * @default check
+             * @enum {string}
+             */
+            kind: "machine" | "manual" | "check" | "transport" | "storage" | "station" | "work_centre";
+            /** Name */
+            name: string;
+            /** Station Code */
+            station_code?: string | null;
+        };
         /** StepAnswer */
         StepAnswer: {
             /** Code */
@@ -2783,6 +3082,23 @@ export interface components {
             kind?: ("machine" | "manual") | null;
             /** Name */
             name?: string | null;
+        };
+        /** StepKindIn */
+        StepKindIn: {
+            /** Code */
+            code: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "machine" | "manual" | "check" | "transport" | "storage" | "station" | "work_centre";
+        };
+        /** StepNameIn */
+        StepNameIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
         };
         /** StepOut */
         StepOut: {
@@ -2803,6 +3119,13 @@ export interface components {
              * @enum {string}
              */
             state: "done" | "todo" | "later";
+        };
+        /** StepStationIn */
+        StepStationIn: {
+            /** Code */
+            code: string;
+            /** Station Code */
+            station_code: string | null;
         };
         /** TableAnswer */
         TableAnswer: {
@@ -2877,6 +3200,22 @@ export interface components {
             sure: ("sure" | "likely" | "unsure" | "confirmed") | null;
             /** Table */
             table: string;
+        };
+        /** TouchpointIn */
+        TouchpointIn: {
+            /**
+             * At
+             * @default 0.5
+             */
+            at: number;
+            /** From Step */
+            from_step: string;
+            /** Name */
+            name: string;
+            /** To Step */
+            to_step: string;
+            /** Touchpoint Id */
+            touchpoint_id: string;
         };
         /** UnitOut */
         UnitOut: {
@@ -3010,6 +3349,18 @@ export interface components {
             plant_code: string;
             /** Resource Code */
             resource_code: string;
+        };
+        /** StationIn */
+        cip_api__flow_edits__StationIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** StationIn */
+        cip_api__plant_setup__StationIn: {
+            /** Name */
+            name: string;
         };
     };
     responses: never;
@@ -4768,6 +5119,80 @@ export interface operations {
             };
         };
     };
+    read_edits_plants__plant_code__flow_edits_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowEditsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_edits_plants__plant_code__flow_edits_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-role"?: string | null;
+                "x-plant"?: string | null;
+            };
+            path: {
+                plant_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowEditsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowEditsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_imports_plants__plant_code__imports_get: {
         parameters: {
             query?: never;
@@ -5080,7 +5505,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StationIn"];
+                "application/json": components["schemas"]["cip_api__plant_setup__StationIn"];
             };
         };
         responses: {

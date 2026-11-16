@@ -531,4 +531,17 @@ class PlantFlowRow(Base):
     flow: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class FlowEditsRow(Base):
+    """The client's corrections to the found flow, per plant (JSON); every save is audit-logged
+    and asks for a recalculation (CI0005 seq 06)."""
+
+    __tablename__ = "flow_edits"
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    plant_code: Mapped[str] = mapped_column(String(32), primary_key=True)
+    edits: Mapped[str] = mapped_column(Text, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_by_role: Mapped[str] = mapped_column(String(32), nullable=False)
+
+
 TENANT_TABLES = [t for t in Base.metadata.sorted_tables if t.name != "tenants"]
